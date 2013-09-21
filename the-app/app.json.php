@@ -61,7 +61,7 @@
 	     */
 	    "css" => array(
 	    	array(
-	            "path" => "sdk{$the_app->get('sdk')}/resources/css/{$the_app->get('theme')}.css"),
+	            "path" => "sdk{$the_app->get('sdk')}/resources/css/{$the_app->get('theme')}.css",
 	            "update" => "delta"
 	    	)
 	    ),
