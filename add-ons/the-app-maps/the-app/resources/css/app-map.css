@@ -1,0 +1,8 @@
+/* Google Maps Styles */
+.google-map-bubble{
+	font-size:0.8em;
+	text-align:center;
+}
+.google-map-bubble .bubble-title{
+	font-weight:bold;
+}

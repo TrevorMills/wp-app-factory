@@ -1,0 +1,24 @@
+Ext.define("the_app.view.Main", {
+    extend: 'Ext.tab.Panel',
+	xtype: 'mainpanel',
+	id: 'mainpanel',
+    requires: [
+    ],
+    config: {
+		id: 'mainpanel',
+        tabBarPosition: 'bottom',
+	    tabBar: {
+			scrollable: 'horizontal', // Just in case there are too many elements.
+	    },
+		layout: {
+	        type: 'card',
+	        animation: {
+	            type: false
+	        }
+	    },
+	
+		title: 'The App',
+
+        items: []  // These get added in a run time via app.js.php
+    }
+});

@@ -1,0 +1,104 @@
+/**
+ * @author Bruno Tavares
+ * @class Ext.ux.InstallApp
+ *
+ * Styles for the floating balloon extension.
+ */
+/* line 7, ../sass/_installapp.scss */
+.x-installapp {
+  z-index: 999999;
+  width: 16em;
+  font-size: 0.8em;
+  padding: 0.5em;
+  text-align: left;
+  border: 1px solid #505050;
+  color: #333;
+  background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #ffffff), color-stop(2%, #eeeeee), color-stop(98%, #cccccc), color-stop(100%, #a3a3a3));
+  background: -webkit-linear-gradient(#ffffff, #eeeeee 2%, #cccccc 98%, #a3a3a3);
+  background: linear-gradient(#ffffff, #eeeeee 2%, #cccccc 98%, #a3a3a3);
+  -webkit-border-radius: 0.7em;
+  border-radius: 0.7em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+  -webkit-box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+/* line 20, ../sass/_installapp.scss */
+.x-installapp strong {
+  font-weight: bold;
+}
+/* line 24, ../sass/_installapp.scss */
+.x-installapp .arrow {
+  position: absolute;
+  background-image: -webkit-gradient(linear, 0 0, 100% 100%, color-stop(0, rgba(204, 204, 204, 0)), color-stop(0.4, rgba(204, 204, 204, 0)), color-stop(0.4, #cccccc));
+  border-width: 0 1px 1px 0;
+  border-style: solid;
+  border-color: #505050;
+  width: 16px;
+  height: 16px;
+  -webkit-transform: rotateZ(45deg);
+  bottom: -9px;
+  left: 50%;
+  margin-left: -8px;
+  -webkit-box-shadow: inset -1px -1px 0 darkgrey;
+  -webkit-border-bottom-right-radius: 2px;
+}
+/* line 38, ../sass/_installapp.scss */
+.x-installapp .icon-plus {
+  font-weight: bold;
+  font-size: 1.3em;
+}
+/* line 43, ../sass/_installapp.scss */
+.x-installapp .icon-share {
+  display: inline-block;
+  width: 18px;
+  height: 15px;
+  background-repeat: no-repeat;
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAPCAQAAABDj1eZAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAUdJREFUKFNtkLtLw1AYxS/qJLhXVKr2ZRulUNtiqgSb3CziICI6ucTFVYcOnaQOFRwUnNTRwUWXgpP/QdHNUEQUHGxofYBTlRs83iZNjKTncOGe7/vx3QchXUWn6FL3jhfKUdCCr5zuifV5oDiHQM+c+CIhiiCSWNu08iq9oHXKLAiqrgR4UXqlOEYZt++ExEL0wW7+OW0G10muLv9gmqfe5FAWKmTMYQYiFL7PYwyLOD8lSjNh2gdnPzMII4QUBxc4OothbAF7GCBKQ0YbSWyPQsIhqvetS+y0ygGMo/KFZfviDvR4AhwgZU9dGYnA0J/6ndc15i3ouYIMcVVUcEXIoOxCeRCfwP8sXBSdjtpUv/1QW+K16kCCIUC4id9Fa0JtkluwVkSfqPL6RwfSDA0aNlx7k/bWgViB7bMS2/1vk5sdsZLN/ALSuL3tylO4RAAAAABJRU5ErkJggg==);
+  background-size: 18px 15px;
+  text-indent: -9999em;
+  overflow: hidden;
+}
+@media all and (-webkit-min-device-pixel-ratio: 2) {
+  /* line 43, ../sass/_installapp.scss */
+  .x-installapp .icon-share {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAeCAQAAADu6HTYAAADPElEQVR4Xq3TX2gcRRzA8e/M7mVv2+TSNpc/TZtrY6jUGqgaSAmEChKLrYK0YH0RFC2CSCkEfCghiKU04J8qNigq6os+iQV98MHWFwVBrQQRWs21lBw5cw3NNb1/udu72RGG5Y77IzXW77D7sAwf5scyYoL6BGXSDKFZwaGpLvIUaeoCkvX1MmsM0Ny6oRSQYOLuIS+YZOpfQdqslpUxcZrzTVAz4qPwW2O3CeIwC/RSzeY6Ow1QhUrkr+YOWfEKDkEP8Rij7CHKJmrFSDHBdwGEE5wiGChPN+PnT8VdRtEIl1d4gRj/1EVe5ZSBKGh8iqQpo/Fo5+3C/gz0MYg4zgwbqday1/Q4B8BGQ45d/Hi54lakCrU5obOcidJpu1+Lg9whjabyaOYLnrIBFFaRD+xe2ybMDWY66GmP/WA9cGfGp0CWhy0wkMN8inepFiH2rV1j0NQSNQbFLRQnS8/8YSDBBpadfv4CYDub2fmeHDNAsL1MBWUel0iA+Xik6eHcyvD3vAMSU1TGuA/YRS+dD7ovCQN43GKRFCU20Kd3V/avDVVyAZ5niTEuLA5/zBGWg9EEEhfJKN200Tat8CmRAQb9+wv7soPlHt2tQorsz1uPbr0HTY4sJwrH47zJZwABBAKLMBoQXepwgTwdHCo+fXMkQ4lrxEmQ5AaXipPqDY9V2vn09tgvTPI71EEGYxM+/uMJLJ4svpgaWGKOi/xKgmqLSUGSUd5f2vIVJ/CgBaTIUsZ7ZBsn0+NzfMOXLFCXQyTcybN6ep5ZZgUOHn7jpfUpsZshdugPGf+E5zjbyHTSRyQ8xfRPPM/s63RHeuknSoT22mjmmnAOIMkUZ6D1xSfPPAfd1WFKM3sO2CMaHx8M1NjnXKHaAGGkOW0C02WeYHUz4qMtx+w5gUDS8NckYe5lHsMYwCZEPyEEmjLDZFmAS7CDviMdxyTkMNVBKEmYLvbiQQBIBBbCQG04bGQvFWz6CfsCQLWCigILFwcfkGYBiOpbYuOizTAyYyDdCtrGaRG1LCkIgMYEFhI0WqQZoSlbGRyHKe4qOx7iv2bVQW9dp4dlM/x6kmwnWQcd/Q3FCqwTEiT5s+6D5v/pb0SSHyg7uhMWAAAAAElFTkSuQmCC);
+  }
+}
+
+/* line 58, ../sass/_installapp.scss */
+.x-phone .x-installapp {
+  left: 50%;
+  margin-left: -8em;
+}
+
+/* line 63, ../sass/_installapp.scss */
+.x-tablet .x-installapp {
+  left: 55px;
+}
+/* line 66, ../sass/_installapp.scss */
+.x-tablet .x-installapp .arrow {
+  -webkit-transform: rotateZ(-135deg);
+  background-image: -webkit-gradient(linear, 0 0, 100% 100%, color-stop(0, rgba(238, 238, 238, 0)), color-stop(0.4, rgba(238, 238, 238, 0)), color-stop(0.4, #eeeeee));
+  -webkit-box-shadow: inset -1px -1px 0 white;
+  top: -9px;
+  bottom: auto;
+  left: 50%;
+}
+
+.x-installapp.x-android{
+	font-size:0.8em !important;
+	width:20em !important;
+	left:50% !important;
+	margin-left:-10em !important;
+}
+
+.x-installapp .icon-android {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-repeat: no-repeat;
+	background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAABA9JREFUeNqsVE1sG0UUfjM76911XCeOyY/TxjGhIRQ1bZo2UIjFqS1UgNTyJzW3SCDEkcIFJEQuCIh64q9SEAjFSBCEhBAHTlXILRJqUkiTJnHjIrXEiVrc2Fnvene9M7xZR0kjisqBkcaj9cx873vf+94QIQT8n4OMjn4E4+PjKQLwZuF2gef/zBcpUQj9D5d97ovWltZYvLnp1utn3ziXSqVMtrKy0kwIeaev79BYQ0N0cuSDEYjU7QLB783cqVTg2WeeJqVy+eXM15l3B88MjtJba38N7O3sXnzyxMlJRVFB0w1gCgOVqXeZIWAqrjhDoVAwbaci0k+kP7ftciyTGXuBdXam4t9+893NpYUFGBoagoGjaVjNr0CIGshBAAHJFAURFAQuvuIBIHsdA9fVh6GK29PTl0ChzLq6vBynnHtQccqwt6sTeg/2BtdxE1mqAdPtqYKCq5x0MwOFUiiW1kHTdBlUMCXkMxBMKDQExaIJH3/2SV8ulxvzHJsQDEWAS24koCooEVgqTtAWQpACVWhzovUtFlJ/FJI6HiO4MCku5xwikQjs7+lZmZ+bP79BMFUGXNNUP0hbBMdBBpepS0BKGW1NtM2Gw2H85FuFCgAVRUHdVuHYiaZVwzA+PXBgPxw5fJh8OPK+5nkupksRNKCGDLkkAo7jkpcGT3nNLQmYu7y0E5AqBNaLBZj8ZQJSqXY40tcDtlU8BML7iYLHEIPXMpclkngCKKXG1NSvZ5PJji8MI3InYM1v0gKzv8/CQPoRMMsbYNnO7LHjp55yqxUmuZFNwCB5IQFV4vjW4u31AhjGrp0M5ZAtqOsa0qVws1iCjZL5wIWJn897rlWHGfuBdgEclwwJFyS0J9kx3La7/XsSiLAFWPuQf1arVTA3TGQrLaGsdbTd/2XFKmk0MCOVpRIEs5daVn2uPnf6zJV4PA5XFhf/yVBWmjEGB3t6IR5vBMuyVYWzhqpr6bW6YqL4A9QXEFicUtspkRt5E8lsdz6jMvAmQzm8agVsewNM06xfyF46yT3PIFR2NtlUOzgn0ZmiqzMN9bHLm1cDgZkMK43kui60JhI421FLBrHGWHZ4ePh41XWw0/w7wGo+V1UNrt/IQ/bqNbCwiAEZz6OsbJbtPclkFE0N7e1JSCR2Q6XigO872D0WgskMOWy/PTU6lNhQX9+IW39gP/nguI7a0tJSYKE67aLruW/nctd+6O5+aE3aBz2Gmur3fL6MsIFnFQjXaUcdz9SfP/3iBdbf37+YXcplpqam3otGo9ez2azFZRv/60sutjyiMuYvL+eapn+7eN+rr71y7vH0Y3MM88aqxie6uh6MzM/PPzozM8MkQ+XuYDsAUX/RGItVH9637yvUf07XdfhbgAEAz9G8Vd6YdE0AAAAASUVORK5CYII=');
+  background-size: 18px 18px;
+  text-indent: -9999em;
+  overflow: hidden;
+}
