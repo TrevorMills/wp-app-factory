@@ -107115,6 +107115,7 @@ Ext.define('Ext.tab.Panel', {
         //<debug warn>
         if (!currentTabInstance && !tabConfig.title && !tabConfig.iconCls) {
             if (!tabConfig.title && !tabConfig.iconCls) {
+				console.log(tabConfig);
                 Ext.Logger.error('Adding a card to a tab container without specifying any tab configuration');
             }
         }

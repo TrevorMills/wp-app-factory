@@ -41,7 +41,12 @@ Ext.define('the_app.controller.Main', {
 			},
 			'htmlpage': {
 				initialize: 'onHtmlPageInitialize'
-			}
+			},
+			'lazypanel': {
+				initialize: 'onLazyPanelInitialize',
+				//activate: 'onLazyPanelActivate',
+				order: 'before'
+			},			
         },
 		routes: {
 			'tab/:id': 'goToTabAndReset',
@@ -157,7 +162,7 @@ Ext.define('the_app.controller.Main', {
 				list.up('itemlist').push({
 					xtype: 'itemdetail',
 					title: record.get('title'),
-					tpl: list.up('itemlist').meta.detail_template,
+					tpl: list.up('itemlist').getMeta().detail_template,
 					data: record.getData()
 				});
 			}
@@ -220,8 +225,8 @@ Ext.define('the_app.controller.Main', {
 	
 	onItemWrapperInitialize: function(wrapper){
 		var l = wrapper.getComponent('list'); // The List
-		l.setItemTpl(wrapper.meta.list_template);
-		l.setUi(wrapper.meta.ui);
+		l.setItemTpl(wrapper.getMeta().list_template);
+		l.setUi(wrapper.getMeta().ui);
 		
 		var store = Ext.getStore('WrapperStore'),
 			doit = function(){
@@ -230,7 +235,7 @@ Ext.define('the_app.controller.Main', {
 					}).getAt(0);
 
 				if (record){
-					wrapper.down('list').setItemTpl(wrapper.meta.list_template);
+					wrapper.down('list').setItemTpl(wrapper.getMeta().list_template);
 					wrapper.down('list').setData(record.getData().pages);
 				}
 			}
@@ -263,98 +268,130 @@ Ext.define('the_app.controller.Main', {
 	
 	onItemListInitialize: function (panel){
 		var l = panel.getComponent('list'); // The List
-		l.setStore(panel.meta.store);
-		l.setItemTpl(panel.meta.list_template);
+		console.log(['Main',panel,panel.getQueryInstance()]); // @dev
+		l.setStore(panel.getMeta().store);
+		//l.getStore().setQueryInstance( panel.getQueryInstance() );
+		l.setItemTpl(panel.getMeta().list_template);
 		
 		panel.getNavigationBar().setTitle(panel.getTitle()); // It was way trickier than it should be to set the title of the list dynamically, turns out I have to do it after the user hits the back button as well (see onItemListBack below)
 	},
 	
 	onItemListActivate: function(panel){
 		// We may need to adjust the store based on the query instance
-		var months = WP.getMonths(); // WP is a helper object, instantiated in app/helper/WP.js
-		var l = panel.getComponent('list'); // The List
-		var s = l.getStore(); // The Store
-		var q = s.getQueryInstance(); // The Query Instance
-		
-		l.suspendEvents();
-		s.suspendEvents();
+		var doit = function(){
+			var l = panel.getComponent('list'); // The List
+			var s = l.getStore(); // The Store
+			
+			if(!s.getCount()){
+				return;
+			}
+			console.log(['onItemListActivate',panel,l,s,s.isLoaded()]); // @dev
+			var q = s.getQueryInstance(); // The Query Instance
+			var months = WP.getMonths(); // WP is a helper object, instantiated in app/helper/WP.js
 
-		if (q == undefined || q != panel.query_instance){
-			// Let's see if we need to group the records
-			queryFilter = new Ext.util.Filter({
-				filterFn: function(item){
-					return item.get('query_num').match(new RegExp('_'+panel.query_instance+'_')) && (panel.meta.group_by == 'category' || item.get('spoof_id') == undefined);
-				}
-			});
-			s.clearFilter(true);
-			s.filter(queryFilter);
-			if (panel.meta.indexbar == 'true'){
-				l.setIndexBar(true);
-			}
-			if (panel.meta.grouped == 'true'){
-				var field = panel.meta.group_by;
-				s.setGrouped(true);
-				var sortProperty;
-				switch(field){
-				case 'category':
-					sortProperty = 'category';
-					break;
-				case 'month':
-					sortProperty = 'date_gmt';
-					break;
-				default:
-					sortProperty = (field == 'first_letter' ? 'title' : field);
-					break;
-				}
-				s.sort([
-					{property: sortProperty,direction: panel.meta.group_order},
-					{property: panel.meta.orderby,direction: panel.meta.order}
-				]);
-				s.setGrouper({
-					groupFn: function(r){
-						var value;
-						switch(field){
-						case 'category': value = r.get(field); break;
-						case 'month':
-							var date;
-							if (r.get('spoof_id') != undefined){
-								var r2 = s.getById(r.get('spoof_id'));
-								date = new Date(r2.get('date'));
-							}
-							else{
-								date = new Date(r.get('date'));
-							}
-							value = months[date.getMonth()]+', '+date.getFullYear();
-							break;
-						case 'first_letter': 
-							value = r.get('title');
-							if (value == ''){
-								value = '-';
-							}
-							value = value[0];
-							break;
-						default:
-							value = r.get(field);
-							break;
-						}
-						return (value == '' ? '-' : value);
-					},
-					sortProperty: sortProperty,
-					direction: panel.meta.group_order
+
+			l.suspendEvents();
+			s.suspendEvents();
+
+			if (q != panel.getQueryInstance()){
+				// Let's see if we need to group the records
+				queryFilter = new Ext.util.Filter({
+					filterFn: function(item){
+						return item.get('query_num').match(new RegExp('_'+panel.getQueryInstance()+'_')) && (panel.getMeta().group_by == 'category' || item.get('spoof_id') == undefined);
+					}
 				});
-				if (typeof l.findGroupHeaderIndices == 'function'){ // introduced in ST2.1 - I need to call this here to avoid an Uncaught Error at Ext.dataview.List line 742.  
-					l.findGroupHeaderIndices();
+				s.clearFilter(true);
+				s.filter(queryFilter);
+				s.setQueryInstance( panel.getQueryInstance() );
+				if (panel.getMeta().indexbar == 'true'){
+					l.setIndexBar(true);
 				}
-				else if(typeof l.refreshHeaderIndices == 'function'){ // The version for ST2.2.1
-					l.refreshHeaderIndices();
+				if (panel.getMeta().grouped == 'true'){
+					var field = panel.getMeta().group_by;
+					s.setGrouped(true);
+					var sortProperty;
+					switch(field){
+					case 'category':
+						sortProperty = 'category';
+						break;
+					case 'month':
+						sortProperty = 'date_gmt';
+						break;
+					default:
+						sortProperty = (field == 'first_letter' ? 'title' : field);
+						break;
+					}
+					s.sort([
+						{property: sortProperty,direction: panel.getMeta().group_order},
+						{property: panel.getMeta().orderby,direction: panel.getMeta().order}
+					]);
+					s.setGrouper({
+						groupFn: function(r){
+							var value;
+							switch(field){
+							case 'category': value = r.get(field); break;
+							case 'month':
+								var date;
+								if (r.get('spoof_id') != undefined){
+									var r2 = s.getById(r.get('spoof_id'));
+									date = new Date(r2.get('date'));
+								}
+								else{
+									date = new Date(r.get('date'));
+								}
+								value = months[date.getMonth()]+', '+date.getFullYear();
+								break;
+							case 'first_letter': 
+								value = r.get('title');
+								if (value == ''){
+									value = '-';
+								}
+								value = value[0];
+								break;
+							default:
+								value = r.get(field);
+								break;
+							}
+							return (value == '' ? '-' : value);
+						},
+						sortProperty: sortProperty,
+						direction: panel.getMeta().group_order
+					});
+					if (typeof l.findGroupHeaderIndices == 'function'){ // introduced in ST2.1 - I need to call this here to avoid an Uncaught Error at Ext.dataview.List line 742.  
+						l.findGroupHeaderIndices();
+					}
+					else if(typeof l.refreshHeaderIndices == 'function'){ // The version for ST2.2.1
+						l.refreshHeaderIndices();
+					}
+					l.setGrouped(true); // triggers a refresh of the list
 				}
-				l.setGrouped(true); // triggers a refresh of the list
+				else{
+					l.setGrouped(false);
+					s.setGrouped(false);
+				}
 			}
-			else{
-				l.setGrouped(false);
-				s.setGrouped(false);
+			
+			l.resumeEvents();
+			s.resumeEvents();
+		}
+		
+		var store = panel.down('list').getStore(); // The Store
+
+		if (store.isLoaded()){
+			doit();
+		}
+		else{
+			store.on('load',doit);
+			if (!store.getAutoLoad()){
+				store.load();
 			}
 		}
+		
+		
+		return;
+		var q = s.getQueryInstance(); // The Query Instance
+		
+
 		
 		panel.onAfter('painted',function(){
 				s.resumeEvents(false);
@@ -386,14 +423,14 @@ Ext.define('the_app.controller.Main', {
 	onHtmlPageInitialize: function(panel){
 		var store = Ext.getStore('HtmlPagesStore'),
 			doit = function(){
-				if (typeof panel.meta != 'undefined' && typeof panel.meta.template != 'undefined'){
+				if (typeof panel.meta != 'undefined' && typeof panel.getMeta().template != 'undefined'){
+					console.log('asdf');
 					panel.setTpl(panel.meta.template);
 				}
 				
-				var data = panel.getData(),
-					this_store = Ext.getStore('HtmlPagesStore'); // created so reference to store (from above) doesn't have to stay in memory
-				
-				if (!data){
+				var this_store = Ext.getStore('HtmlPagesStore'); // created so reference to store (from above) doesn't have to stay in memory
+					
+				if (!panel.getData()){
 					var record = store.queryBy(function(rec){
 							return rec.get('key') == panel.getItemId();
 						}).getAt(0);
@@ -403,7 +440,7 @@ Ext.define('the_app.controller.Main', {
 					}
 				}
 				
-				if (panel.getUseTitleBar()){
+				if (panel.getData() && panel.getUseTitleBar()){
 					panel.add({
 						xtype: 'toolbar',
 						docked: 'top',
@@ -417,12 +454,47 @@ Ext.define('the_app.controller.Main', {
 			doit();
 		}
 		else{
-			store.on('load',doit)
+			store.on('load',doit);
+			if (!store.getAutoLoad()){
+				store.load();
+			}
 		}
 		
 		
 	},
 	
+    onLazyPanelInitialize : function( panel ) { // @dev
+//		console.log( ['onLazyPanelInitialize',panel.getOriginalItem(),panel.getOriginalItem().id] );
+		
+		var original = panel.getOriginalItem(); 
+        panel.setLazyItem( original );
+
+		// Set some items on the Lazy(Tab)Panel that are important
+		panel.setItemId( original.id );
+		panel.setTitle( original.title );
+		panel.setIconCls( original.iconCls );
+
+        panel.removeAll(true);
+        panel.on('activate', this.handleLazyPanelActivate, this, { single : true });
+    },
+
+    handleLazyPanelActivate: function( panel ) {
+//		console.log(['handleLazyPanelActivate',panel,panel.getLazyItem()]); // @dev
+		console.log(panel.getDestroyOnDeactivate());
+		if (panel.getDestroyOnDeactivate()){
+	        panel.add( panel.getLazyItem() );
+	        panel.on('deactivate', this.handleLazyPanelDeactivate, this, { single : true });
+		}
+    },
+    handleLazyPanelDeactivate: function( panel ) {
+//		console.log(['handleLazyPanelDeactivate',panel]); // @dev
+
+		if (!panel.down('list')){
+	        panel.removeAll(true);
+	        panel.on('activate', this.handleLazyPanelActivate, this, { single : true });
+		}
+    },
+
 	getAssociatedTabBarButton: function(panel){
 		var matched = -1;
 		Ext.each(this.getMainPanel().getInnerItems(),function(item,index){

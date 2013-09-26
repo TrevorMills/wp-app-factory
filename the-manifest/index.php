@@ -25,7 +25,7 @@ CACHE MANIFEST
 
 	$post_ids = array();
 	foreach ($all_registered_queries as $type => $registered_queries){
-		foreach ($registered_queries as $query_instance => $registered_query){
+		foreach ($registered_queries as $queryInstance => $registered_query){
 			if (isset($registered_query['query_vars']['data_callback']) and function_exists($registered_query['query_vars']['data_callback'])){
 				// This is an outside query, so no need to get post images
 				continue;
@@ -33,7 +33,7 @@ CACHE MANIFEST
 			$registered_query['query_vars']['numberposts'] = -1;
 			$posts = get_posts($registered_query['query_vars']);
 			foreach ($posts as $post){
-				if ($query_instance > 0 and array_key_exists($post->ID,$post_ids)){
+				if ($queryInstance > 0 and array_key_exists($post->ID,$post_ids)){
 					// Already output it, no need to again
 				}
 				else{

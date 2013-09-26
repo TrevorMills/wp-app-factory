@@ -37,7 +37,7 @@
 	     */
 	    "js" => array(
 	    	array(
-	    		"path" => "sdk{$the_app->get('sdk')}/sencha-touch-debug.js" // TMILLS - note, changing this to just sencha-touch.js causes problems when it tries to Ext.Logger.warn('') about the innerHeight change.  It appears Logger doesn't get defined.  Come back to this.
+	    		"path" => "sdk{$the_app->get('sdk')}/sencha-touch-". ( $the_app->get('environment') == 'development' ? 'all' : '-debug' ) . ".js" // TMILLS - note, changing this to just sencha-touch.js causes problems when it tries to Ext.Logger.warn('') about the innerHeight change.  It appears Logger doesn't get defined.  Come back to this.
 	    	),
 			array(
 	            "path" => "app.js",

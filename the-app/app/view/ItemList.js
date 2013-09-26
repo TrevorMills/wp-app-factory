@@ -18,6 +18,10 @@ Ext.define('the_app.view.ItemList',{
 				itemTpl: '{title}',
 				itemId: 'list', 
 			}
-		]		
+		],
+		
+		queryInstance: null,
+		store: null,
+		meta: null		
 	}
 });

@@ -516,6 +516,7 @@ class TheAppFactory {
 			'icon' => 'star',
 			'title' => '',
 			'content' => '',
+			'destroyOnDeactivate' => true,
 		);
 		$meta_defaults = array(
 			'_is_default' => 'false',
@@ -555,7 +556,8 @@ class TheAppFactory {
 			'id' => '',
 			'icon' => 'info',
 			'title' => '',
-			'pages' => array()
+			'pages' => array(),
+			'destroyOnDeactivate' => true,
 		);
 		$meta_defaults = array(
 			'_is_default' => 'false',
@@ -598,6 +600,7 @@ class TheAppFactory {
 			'id' => '',
 			'icon' => 'star',
 			'title' => 'Posts',
+			'destroyOnDeactivate' => true,
 		);
 		$meta_defaults = array(
 			'_is_default' => 'false',
@@ -621,7 +624,7 @@ class TheAppFactory {
 		$meta_atts = shortcode_atts($meta_defaults,$atts);
 		
 		$index = $this->registerPostQuery($meta_atts);
-		$item_atts['query_instance'] = $index;
+		$item_atts['queryInstance'] = $index;
 		
 		$this->addItem($item_atts,$meta_atts);
 	}
@@ -686,7 +689,7 @@ class TheAppFactory {
 		function(panel){
 			return new Ext.util.Filter({
 					filterFn: function(item){
-						return item.get('query_num').match(new RegExp('_'+panel.query_instance+'_')) && (panel.meta.group_by == 'category' || item.get('spoof_id') == undefined);
+						return item.get('query_num').match(new RegExp('_'+panel.queryInstance+'_')) && (panel.meta.group_by == 'category' || item.get('spoof_id') == undefined);
 					}
 				});
 			}
@@ -739,7 +742,7 @@ class TheAppFactory {
 			foreach ($this->get('registered_post_queries') as $post_type => $registered_meta){
 				
 				$callback_exists = false;
-				foreach($registered_meta as $query_instance => $registered_query){
+				foreach($registered_meta as $queryInstance => $registered_query){
 					if (isset($registered_query['query_vars']['model_callback'])){
 						$post_type = $registered_query['query_vars']['post_type'];
 						$models[$post_type] = call_user_func($registered_query['query_vars']['model_callback'],$post_type);
@@ -887,6 +890,7 @@ class TheAppFactory {
 		$this->register('view','ItemWrapper');
 		$this->register('view','ItemList');
 		$this->register('view','UnsupportedBrowser');
+		$this->register('view','LazyPanel');
 		
 		$this->enqueue('controller','Main');
 		$this->enqueue('controller','ExpandedTabBar');
@@ -898,6 +902,7 @@ class TheAppFactory {
 		$this->enqueue('require','Ext.layout.HBox'); // This seems to be necessary in Sencha Touch 2.1.1 - not sure why.
 		$this->enqueue('view','Main');
 		$this->enqueue('view','UnsupportedBrowser');
+		$this->enqueue('view','LazyPanel');
 		$this->enqueue('require','the_app.helper.WP');
 		
 		do_action_ref_array('TheAppFactory_setupSencha',array(&$this));

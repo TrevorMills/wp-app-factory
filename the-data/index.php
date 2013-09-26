@@ -11,7 +11,7 @@
 		$output['stores'] = array();
 		$latest = array();
 		foreach ($all_registered_queries as $type => $registered_queries){
-			foreach ($registered_queries as $query_instance => $registered_query){
+			foreach ($registered_queries as $queryInstance => $registered_query){
 				
 				if (isset($registered_query['useLocalStorage']) and !$registered_query['useLocalStorage']){
 					continue;
@@ -66,7 +66,7 @@
 		// If a post is retreived via query that limits by category, then we need to skip
 		// the category spoofing for this query instance.  Similarly, if a later registered_query
 		// limits based on category, then we shouldn't add the spoof'd versions outside of that category
-		foreach ($registered_queries as $query_instance => $registered_query){
+		foreach ($registered_queries as $queryInstance => $registered_query){
 			if (isset($registered_query['query_vars']['data_callback']) and function_exists($registered_query['query_vars']['data_callback'])){
 				$xtype = $registered_query['query_vars']['xtype'];
 				if (!array_key_exists($xtype,$other_ids)){
@@ -74,10 +74,10 @@
 				}
 				$posts = call_user_func($registered_query['query_vars']['data_callback'],$registered_query);
 				foreach ($posts as $post){
-					if ($query_instance > 0 and array_key_exists($post->id,$other_ids[$xtype])){
+					if ($queryInstance > 0 and array_key_exists($post->id,$other_ids[$xtype])){
 						// Already output it, update it to reflect this query instance as well
 						foreach ($other_ids[$xtype][$post->id] as $pos){
-							$output[get_query_var(APP_DATA_VAR)][$pos]['query_num'].= ',_'.$query_instance.'_';
+							$output[get_query_var(APP_DATA_VAR)][$pos]['query_num'].= ',_'.$queryInstance.'_';
 						}
 					}
 					else{
@@ -86,7 +86,7 @@
 							$key = $the_app->sanitize_key($key);
 							$post_output[$key] = $value;
 						}
-						$post_output['query_num'] = '_'.$query_instance.'_';
+						$post_output['query_num'] = '_'.$queryInstance.'_';
 						$post_output = apply_filters('the_app_callback_post_output',$post_output,$post);
 						
 						if (is_array($post_output)){
@@ -104,10 +104,10 @@
 					// don't want to output the password
 					unset($post->password);
 				}
-				if ($query_instance > 0 and array_key_exists($post->ID,$post_ids)){
+				if ($queryInstance > 0 and array_key_exists($post->ID,$post_ids)){
 					// Already output it, update it to reflect this query instance as well
 					foreach ($post_ids[$post->ID] as $pos){
-						$output[get_query_var(APP_DATA_VAR)][$pos]['query_num'].= ',_'.$query_instance.'_';
+						$output[get_query_var(APP_DATA_VAR)][$pos]['query_num'].= ',_'.$queryInstance.'_';
 					}
 				}
 				else{
@@ -145,7 +145,7 @@
 						}
 					}
 					
-					$post_output['query_num'] = '_'.$query_instance.'_';
+					$post_output['query_num'] = '_'.$queryInstance.'_';
 					
 					$post_output = apply_filters('the_app_post_output',$post_output,$post);
 					if (is_array($post_output)){
@@ -168,7 +168,7 @@
 										$spoof[$f] = $post_output[$f];
 									}
 								}
-								$spoof['query_num'] = '_'.$query_instance.'_';
+								$spoof['query_num'] = '_'.$queryInstance.'_';
 								$post_ids[$post->ID][] = count($output[get_query_var(APP_DATA_VAR)]);
 								$output[get_query_var(APP_DATA_VAR)][] = $spoof;
 							}

@@ -4,6 +4,15 @@
 		$the_app->set('ios_install_popup',false);
 	}
 	list($icons,$startups) = $the_app->getAppImages(); 
+	
+	$items = $the_app->the_items();
+	foreach ($items as $key => $item){
+		$items[$key] = array(
+			'xtype' => 'lazypanel',
+			'originalItem' => $item
+		);
+		
+	}
 ?>
 <?php header('Content-type: text/javascript'); ?>
 // While tracking down unacceptable browsers,
@@ -142,7 +151,7 @@ else{
 	        Ext.Viewport.add({
 				xtype: 'mainpanel',
 				title: <?php echo json_encode($the_app->get('title')); ?>,
-				items: <?php echo TheAppFactory::anti_escape(json_encode($the_app->the_items())); ?>,
+				items: <?php echo TheAppFactory::anti_escape(json_encode( $items )); ?>,
 				hidden: true,
 				showAnimation: {type: 'fade'},
 				maxTabBarItems: <?php echo ($the_app->get('maxtabbaritems') ? $the_app->get('maxtabbaritems') : 'null');  ?>
