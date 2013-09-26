@@ -268,9 +268,8 @@ Ext.define('the_app.controller.Main', {
 	
 	onItemListInitialize: function (panel){
 		var l = panel.getComponent('list'); // The List
-		console.log(['Main',panel,panel.getQueryInstance()]); // @dev
+		//console.log(['Main',panel,panel.getQueryInstance()]); // @dev
 		l.setStore(panel.getMeta().store);
-		//l.getStore().setQueryInstance( panel.getQueryInstance() );
 		l.setItemTpl(panel.getMeta().list_template);
 		
 		panel.getNavigationBar().setTitle(panel.getTitle()); // It was way trickier than it should be to set the title of the list dynamically, turns out I have to do it after the user hits the back button as well (see onItemListBack below)
@@ -278,6 +277,7 @@ Ext.define('the_app.controller.Main', {
 	
 	onItemListActivate: function(panel){
 		// We may need to adjust the store based on the query instance
+		panel.getComponent('list').suspendEvents();
 		var doit = function(){
 			var l = panel.getComponent('list'); // The List
 			var s = l.getStore(); // The Store
@@ -285,15 +285,14 @@ Ext.define('the_app.controller.Main', {
 			if(!s.getCount()){
 				return;
 			}
-			console.log(['onItemListActivate',panel,l,s,s.isLoaded()]); // @dev
+//			console.log(['onItemListActivate',panel,l,s,s.isLoaded()]); // @dev
 			var q = s.getQueryInstance(); // The Query Instance
 			var months = WP.getMonths(); // WP is a helper object, instantiated in app/helper/WP.js
 
-
-			l.suspendEvents();
-			s.suspendEvents();
-
 			if (q != panel.getQueryInstance()){
+				// query instance has changed, setup the store.
+				l.suspendEvents();
+
 				// Let's see if we need to group the records
 				queryFilter = new Ext.util.Filter({
 					filterFn: function(item){
@@ -303,9 +302,7 @@ Ext.define('the_app.controller.Main', {
 				s.clearFilter(true);
 				s.filter(queryFilter);
 				s.setQueryInstance( panel.getQueryInstance() );
-				if (panel.getMeta().indexbar == 'true'){
-					l.setIndexBar(true);
-				}
+				
 				if (panel.getMeta().grouped == 'true'){
 					var field = panel.getMeta().group_by;
 					s.setGrouped(true);
@@ -357,22 +354,32 @@ Ext.define('the_app.controller.Main', {
 						sortProperty: sortProperty,
 						direction: panel.getMeta().group_order
 					});
-					if (typeof l.findGroupHeaderIndices == 'function'){ // introduced in ST2.1 - I need to call this here to avoid an Uncaught Error at Ext.dataview.List line 742.  
-						l.findGroupHeaderIndices();
-					}
-					else if(typeof l.refreshHeaderIndices == 'function'){ // The version for ST2.2.1
-						l.refreshHeaderIndices();
-					}
-					l.setGrouped(true); // triggers a refresh of the list
+					l.resumeEvents(false);
+					//l.setGrouped(true); // triggers a refresh of the list
 				}
 				else{
+					l.resumeEvents(false);
 					l.setGrouped(false);
 					s.setGrouped(false);
 				}
 			}
+		
+		
+			// If the store is grouped, then let's group the list as well.
+			if (s.getGrouped()){
+				if (typeof l.findGroupHeaderIndices == 'function'){ // introduced in ST2.1 - I need to call this here to avoid an Uncaught Error at Ext.dataview.List line 742.  
+					l.findGroupHeaderIndices();
+				}
+				else if(typeof l.refreshHeaderIndices == 'function'){ // The version for ST2.2.1
+					l.refreshHeaderIndices();
+				}
+				l.setGrouped(true); // triggers a refresh of the list
+				l.resumeEvents();
+			}
 			
-			l.resumeEvents();
-			s.resumeEvents();
+			if (panel.getMeta().indexbar == 'true'){
+				l.setIndexBar(true);
+			}			
 		}
 		
 		var store = panel.down('list').getStore(); // The Store
@@ -386,23 +393,6 @@ Ext.define('the_app.controller.Main', {
 				store.load();
 			}
 		}
-		
-		
-		return;
-		var q = s.getQueryInstance(); // The Query Instance
-		
-
-		
-		panel.onAfter('painted',function(){
-				s.resumeEvents(false);
-				l.resumeEvents(false);
-			},
-			this,
-			{
-				single: true
-			}
-		);
-		
 	},
 
 	onItemListBack: function(panel){
@@ -424,7 +414,6 @@ Ext.define('the_app.controller.Main', {
 		var store = Ext.getStore('HtmlPagesStore'),
 			doit = function(){
 				if (typeof panel.meta != 'undefined' && typeof panel.getMeta().template != 'undefined'){
-					console.log('asdf');
 					panel.setTpl(panel.meta.template);
 				}
 				
@@ -435,7 +424,7 @@ Ext.define('the_app.controller.Main', {
 							return rec.get('key') == panel.getItemId();
 						}).getAt(0);
 					
-					if (record){
+					if (record && !panel.isDestroyed){
 						panel.setData( record.getData() );
 					}
 				}
@@ -467,29 +456,26 @@ Ext.define('the_app.controller.Main', {
 //		console.log( ['onLazyPanelInitialize',panel.getOriginalItem(),panel.getOriginalItem().id] );
 		
 		var original = panel.getOriginalItem(); 
-        panel.setLazyItem( original );
 
 		// Set some items on the Lazy(Tab)Panel that are important
 		panel.setItemId( original.id );
 		panel.setTitle( original.title );
 		panel.setIconCls( original.iconCls );
+		panel.setDestroyOnDeactivate( original.destroyOnDeactivate );
 
         panel.removeAll(true);
         panel.on('activate', this.handleLazyPanelActivate, this, { single : true });
     },
 
     handleLazyPanelActivate: function( panel ) {
-//		console.log(['handleLazyPanelActivate',panel,panel.getLazyItem()]); // @dev
-		console.log(panel.getDestroyOnDeactivate());
-		if (panel.getDestroyOnDeactivate()){
-	        panel.add( panel.getLazyItem() );
-	        panel.on('deactivate', this.handleLazyPanelDeactivate, this, { single : true });
-		}
+//		console.log(['handleLazyPanelActivate',panel,panel.getLazyItem(),panel.getDestroyOnDeactivate()]); // @dev
+        panel.add( panel.getOriginalItem() );
+	    panel.on('deactivate', this.handleLazyPanelDeactivate, this, { single : true });
     },
     handleLazyPanelDeactivate: function( panel ) {
 //		console.log(['handleLazyPanelDeactivate',panel]); // @dev
 
-		if (!panel.down('list')){
+		if (panel.getDestroyOnDeactivate()){
 	        panel.removeAll(true);
 	        panel.on('activate', this.handleLazyPanelActivate, this, { single : true });
 		}

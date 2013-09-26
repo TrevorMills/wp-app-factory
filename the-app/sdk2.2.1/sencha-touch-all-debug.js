@@ -67090,7 +67090,7 @@ Ext.define('Ext.dataview.DataView', {
             deltaLn = recordsLn - itemsLn,
             scrollable = me.getScrollable(),
             i, item;
-
+		
         if (this.getScrollToTopOnRefresh() && scrollable) {
             scrollable.getScroller().scrollToTop();
         }

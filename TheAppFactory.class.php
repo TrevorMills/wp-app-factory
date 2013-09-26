@@ -601,6 +601,7 @@ class TheAppFactory {
 			'icon' => 'star',
 			'title' => 'Posts',
 			'destroyOnDeactivate' => true,
+			'infinite' => true
 		);
 		$meta_defaults = array(
 			'_is_default' => 'false',

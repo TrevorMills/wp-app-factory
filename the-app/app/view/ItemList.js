@@ -17,11 +17,14 @@ Ext.define('the_app.view.ItemList',{
 				title: '',
 				itemTpl: '{title}',
 				itemId: 'list', 
+				infinite: true,
+				variableHeights: true		
 			}
 		],
 		
 		queryInstance: null,
 		store: null,
-		meta: null		
+		meta: null,
+		infinite: true		
 	}
 });

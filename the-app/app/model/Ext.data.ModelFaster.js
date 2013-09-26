@@ -1,8 +1,9 @@
+var stupid_counter = 1;
 Ext.define('Ext.data.ModelFaster',{
 	extend: 'Ext.data.Model',
 	
 	config: {
-		doAfterCommit: true
+		doAfterCommit: false
 	},
 	
 	commit: function( silent ){
@@ -12,7 +13,9 @@ Ext.define('Ext.data.ModelFaster',{
         me.phantom = me.dirty = me.editing = false;
         me.modified = {};
 
-        if (this.getDoAfterCommit() !== false && silent !== true) {
+//console.log([stupid_counter++,me]);
+
+        if ( this.getDoAfterCommit() !== false && silent !== true ) {
             me.afterCommit(modified);
         }
 	}
