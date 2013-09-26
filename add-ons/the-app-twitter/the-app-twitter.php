@@ -14,9 +14,10 @@ function TheAppFactoryTwitter_init(& $the_app){
 
 function app_twitter_shortcode($atts = array(),$content=null,$code=''){
 
+	$the_app = & TheAppFactory::getInstance();
 	$item_defaults = array(
 		'xtype' => 'tweetlist',
-		'icon' => 'chat',
+		'icon' => 'chat'.($the_app->get('sdk') > '2.1' ? '-pictos' : ''),
 		'title' => __('Twitter','app-factory'),
 		'search' => '#WordPress',
 		'key' => '',
@@ -30,7 +31,6 @@ function app_twitter_shortcode($atts = array(),$content=null,$code=''){
 	$item_atts = shortcode_atts($item_defaults,$atts);
 	$meta_atts = shortcode_atts($meta_defaults,$atts);
 	
-	$the_app = & TheAppFactory::getInstance();
 
 	app_twitter_authentication($item_atts);
 	

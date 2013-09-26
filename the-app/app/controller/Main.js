@@ -275,6 +275,9 @@ Ext.define('the_app.controller.Main', {
 		var l = panel.getComponent('list'); // The List
 		var s = l.getStore(); // The Store
 		var q = s.getQueryInstance(); // The Query Instance
+		
+		l.suspendEvents();
+		s.suspendEvents();
 
 		if (q == undefined || q != panel.query_instance){
 			// Let's see if we need to group the records
@@ -342,6 +345,9 @@ Ext.define('the_app.controller.Main', {
 				if (typeof l.findGroupHeaderIndices == 'function'){ // introduced in ST2.1 - I need to call this here to avoid an Uncaught Error at Ext.dataview.List line 742.  
 					l.findGroupHeaderIndices();
 				}
+				else if(typeof l.refreshHeaderIndices == 'function'){ // The version for ST2.2.1
+					l.refreshHeaderIndices();
+				}
 				l.setGrouped(true); // triggers a refresh of the list
 			}
 			else{
@@ -349,6 +355,17 @@ Ext.define('the_app.controller.Main', {
 				s.setGrouped(false);
 			}
 		}
+		
+		panel.onAfter('painted',function(){
+				s.resumeEvents(false);
+				l.resumeEvents(false);
+			},
+			this,
+			{
+				single: true
+			}
+		);
+		
 	},
 
 	onItemListBack: function(panel){

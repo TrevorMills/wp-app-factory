@@ -14,7 +14,13 @@
 	<?php echo apply_filters('the_app_factory_spinner_style',$the_app->getSpinnerStyle()); ?>
 	</style>
 	
-<?php if ($the_app->is('packaging')) : //packaging_via_ajax')) : ?>
+<?php if ($the_app->is('doing_package_command') || $the_app->is('doing_build_command')) : ?>
+<script type="text/javascript">
+	// When building or packaging, clear the localStorage off the top.  We'll also do it at the end.
+	localStorage.clear();
+</script>
+<?php endif; ?>
+<?php if ($the_app->is('packaging')) : ?>
 <script type="text/javascript">
 	var PACKAGED_APP = {
 		target: '<?php echo $the_app->get('package_target'); ?>'

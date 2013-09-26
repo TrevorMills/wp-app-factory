@@ -45,6 +45,8 @@ See http://www.sencha.com/products/touch/license/
 define('APP_FACTORY_URL',trailingslashit(plugins_url(basename(dirname(__FILE__)))));
 define('APP_FACTORY_PATH',trailingslashit(dirname(__FILE__)));
 require_once( APP_FACTORY_PATH . 'TheAppFactory.class.php');
+require_once( APP_FACTORY_PATH . 'TheAppBuilder.class.php');
+require_once( APP_FACTORY_PATH . 'TheAppPackager.class.php');
 
 register_activation_hook(__FILE__, 'the_app_factory_install');
 function the_app_factory_install() {
@@ -200,7 +202,11 @@ function the_app_factory_init()
 	register_post_type(APP_POST_TYPE,$args);
 	
 	add_action( 'template_redirect', 'the_app_factory_redirect', 1);	
-	
+	add_shortcode('app_package_image',array('TheAppPackager','package_image'));
+	add_action('wp_ajax_package_app',array('TheAppPackager','package_app'));
+	add_action('wp_ajax_download_package_zip',array('TheAppPackager','package_download'));
+	add_action('save_post', array('TheAppFactory','save_postdata'));
+		
 	// Load some plugins
 	include_once('add-ons/the-app-twitter/the-app-twitter.php');
 	include_once('add-ons/the-app-maps/the-app-maps.php');
@@ -209,8 +215,9 @@ function the_app_factory_init()
 
 add_action('admin_init','the_app_factory_admin_init');
 function the_app_factory_admin_init(){
-	add_meta_box( 'the_app_build', __('Build','app-factory'), 'the_app_build', APP_POST_TYPE, 'normal', 'high' );
-	add_meta_box( 'the_app_package', __('Package','app-factory'), 'the_app_package', APP_POST_TYPE, 'normal', 'high' );
+	add_meta_box( 'the_app_visibility', __('Visibility','app-factory'), array('TheAppFactory','visibility_metabox'), APP_POST_TYPE, 'normal', 'high' );
+	add_meta_box( 'the_app_build', __('Build','app-factory'), array('TheAppBuilder','build_metabox'), APP_POST_TYPE, 'normal', 'high' );
+	add_meta_box( 'the_app_package', __('Package','app-factory'), array('TheAppPackager','package_metabox'), APP_POST_TYPE, 'normal', 'high' );
 }
 
 function the_app_get_app_meta( $id ){
@@ -225,113 +232,6 @@ function the_app_get_app_meta( $id ){
 		);
 	}
 	return $app_meta;
-}
-
-function the_app_build( $app ){	
-	// Use nonce for verification
-	$the_app = & TheAppFactory::getInstance();
-	setup_the_app_factory(); // will setup our different environments
-	
-	wp_nonce_field( plugin_basename( __FILE__ ), 'app_build_nonce' );
-	
-	echo '<p>'.sprintf(__('Build and test your app and when you are ready to release it to the public, hit this Build button:','app-factory')).'</p>';
-	?>
-	<a href="<?php bloginfo('url'); ?>/<?php echo APP_POST_TYPE; ?>/<?php echo $app->post_name; ?>::build/" class="button-primary" target="_blank"><?php echo __('Build','app-factory'); ?></a>
-	<a href="<?php bloginfo('url'); ?>/<?php echo APP_POST_TYPE; ?>/<?php echo $app->post_name; ?>::build_no_minify/" class="button-primary" target="_blank"><?php echo __('Build (no minify)','app-factory'); ?></a>
-	<?php
-	echo '<p>'.sprintf(__('The Build process optimizes your app such that it loads and runs faster.  It does this by launching your app, gathering the list of file dependencies and then concatenating all javascript files into a single, minimized file. ','app-factory')).'</p>';
-	
-	if (file_exists($the_app->get('production_root').'index.html') || file_exists( $the_app->get('package_native_www_ios').'index.html') || file_exists( $the_app->get('package_native_www_android').'index.html')){
-		$app_meta = the_app_get_app_meta( $app->ID );
-		ob_start(); ?>
-		<div>
-			<p><?php _e('There is more than one version this app built.  Please set your choices below:','app-factory'); ?></p>
-			<?php foreach( array_keys( $app_meta['visibility'] ) as $type ) : ?>
-			
-				<div>
-					<label><?php printf ( __('%s users see: ', 'app-factory' ), ucwords( $type ) ); ?></label>
-					<select name="app_meta[visibility][<?php echo $type; ?>]">
-						<option value="development" <?php selected( 'development', $app_meta['visibility'][$type] ); ?>><?php echo __('Development','app-factory'); ?></option>
-			
-						<?php if ( file_exists($the_app->get('production_root').'index.html') ): ?>
-							<option value="production" <?php selected( 'production', $app_meta['visibility'][$type] ); ?>><?php _e('Production (Web App)','app-factory'); ?></option>
-						<?php endif; ?>
-
-						<?php if ( file_exists($the_app->get('package_native_www_ios').'index.html') ): ?>
-							<option value="native_ios" <?php selected( 'native_ios', $app_meta['visibility'][$type] ); ?>><?php _e('Native iOS (iTunes candidate)','app-factory'); ?></option>
-						<?php endif; ?>
-
-						<?php if ( file_exists($the_app->get('package_native_www_android').'index.html') ): ?>
-							<option value="native_android" <?php selected( 'native_android', $app_meta['visibility'][$type] ); ?>><?php _e('Native Android (Marketplace candidate)','app-factory'); ?></option>
-						<?php endif; ?>
-
-					</select>
-				</div>
-			<?php endforeach; ?>
-		</div>
-		
-		<?php if ( file_exists($the_app->get('production_root').'index.html') ) : ?>
-			<p class="description"><?php printf(__('When switching from production to development, if you\'re testing in Chrome, you should visit %s and clear the Application Cache for %s','app-factory'),'<code>chrome://appcache-internals</code>','<code>'.get_permalink().'manifest</code>'); ?></p>
-		<?php endif;
-		
-		echo ob_get_clean(); 
-	}
-}
-
-function the_app_package( $app ){
-	$the_app = & TheAppFactory::getInstance();
-	$app_meta = the_app_get_app_meta( $app->ID );
-	
-	echo '<p>'.__('Packaging your app prepares it for submission into the App Store (iOS) or the Android Marketplace (Android).','app-factory').'</p>';
-	echo '<p>'.__('The packaged app is delivered as a .zip file that contains a project that you can open and run in XCode (iOS) or build using the Android SDK (Android).','app-factory').'</p>';
-	wp_nonce_field( plugin_basename( __FILE__ ), 'app_package_nonce' ); ?>
-	<p>
-		<strong><?php echo sprintf(__('You have to give your app a bundle identifier.  This is usually your domain name backwards, followed by the app name (i.e. com.example.%s).','app-factory'),$the_app->get('package_name')); ?></strong><br/>
-		<?php echo __('Bundle Identifier','app-factory'); ?>: <input type="text" name="app_meta[bundle_id]" value="<?php echo esc_attr($app_meta['bundle_id']); ?>" />.<?php echo $the_app->get('package_name'); ?></p>
-	
-	<?php if (!empty($app_meta['bundle_id'])) : ?>
-		<a href="<?php bloginfo('url'); ?>/<?php echo APP_POST_TYPE; ?>/<?php echo $app->post_name; ?>::package_ios/" class="button-primary" target="_blank"><?php echo __( 'Package iOS', 'app-factory' ); ?></a>
-		<a href="<?php bloginfo('url'); ?>/<?php echo APP_POST_TYPE; ?>/<?php echo $app->post_name; ?>::package_ios_no_minify/" class="button-primary" target="_blank"><?php echo __( 'Package iOS (no minify)', 'app-factory' ); ?></a>
-		<?php	
-		if (file_exists( $the_app->get('package_native_www_ios') ) ){
-			echo '<p>'.sprintf(__('You have a packaged %s app ready to go.  %sDownload as ZIP%s'),'iOS','<a href="'.admin_url('admin-ajax.php').'?post='.$app->ID.'&action=download_ios_zip" target="_blank">','</a>').'</p>';
-		}
-		?>
-		<a href="<?php bloginfo('url'); ?>/<?php echo APP_POST_TYPE; ?>/<?php echo $app->post_name; ?>::package_android/" class="button-primary" target="_blank"><?php echo __( 'Package Android', 'app-factory' ); ?></a>
-		<a href="<?php bloginfo('url'); ?>/<?php echo APP_POST_TYPE; ?>/<?php echo $app->post_name; ?>::package_android_no_minify/" class="button-primary" target="_blank"><?php echo __( 'Package Android (no minify)', 'app-factory' ); ?></a>
-		<?php
-		if (file_exists(  $the_app->get('package_native_www_android') )){
-			echo '<p>'.sprintf(__('You have a packaged %s app ready to go.  %sDownload as ZIP%s'),'Android','<a href="'.admin_url('admin-ajax.php').'?post='.$app->ID.'&action=download_android_zip" target="_blank">','</a>').'</p>';
-		}
-	endif;
-}
-
-/* When the post is saved, saves our custom data */
-add_action('save_post','the_app_save_postdata');
-function the_app_save_postdata( $post_id ) {
-	// verify if this is an auto save routine. 
-	// If it is our form has not been submitted, so we dont want to do anything
-	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) 
-	    return;
-
-	// verify this came from the our screen and with proper authorization,
-	// because save_post can be triggered at other times
-
-	if ( !wp_verify_nonce( $_POST['app_build_nonce'], plugin_basename( __FILE__ ) ) )
-	    return;
-
-	$post = get_post($post_id);
-	 //skip all cases where we shouldn't index
-	if ( $post->post_type != APP_POST_TYPE )
-		return;
-
-	$_POST['app_meta']['bundle_id'] = trim($_POST['app_meta']['bundle_id'],'.');
-	if (isset($_POST['app_meta'])){
-		update_post_meta($post_id,'app_meta',$_POST['app_meta']);
-	}
-	else{
-		delete_post_meta($post_id,'app_meta');
-	}
 }
 
 //add filter to ensure the text Record, or record, is displayed when user updates a record 
@@ -415,7 +315,6 @@ function the_app_factory_redirect(){
 		global $wp_query;
 		$wp_query->is_404 = false; 
 		$wp_query->is_single = true;
-		
 		the_app_factory_redirect(); // Call again with new query_vars
 		return;
 		break;
@@ -439,21 +338,50 @@ function the_app_factory_redirect(){
 	}
 	if ($build_the_app){
 		//remove_filter('template_redirect', 'redirect_canonical');
-		setup_the_app_factory();
-		$the_app = & TheAppFactory::getInstance();
+		$available_targets = TheAppPackager::get_available_targets();
+		$app_class = 'TheAppFactory';
+		if (current_user_can('administrator') && get_query_var(APP_COMMAND_VAR) != ''){
+			switch(get_query_var(APP_COMMAND_VAR)){
+			case 'build':
+			case 'build_no_minify':
+				$app_class = 'TheAppBuilder';
+				break;
+			default:
+				if (substr(get_query_var(APP_COMMAND_VAR),0,7) == 'package' and preg_match('/^package_('.implode('|',array_keys($available_targets)).')/',get_query_var(APP_COMMAND_VAR),$matches)){
+					$app_class = 'TheAppPackager';
+				}
+				break;
+			}
+		}
+		elseif( $_REQUEST['action'] == 'package_app' and isset($_REQUEST['target']) ){
+			$app_class = 'TheAppPackager';
+		}
+		elseif( isset($_REQUEST['packaging']) and $_REQUEST['packaging'] == 'true' and isset($_REQUEST['target'])){
+			$app_class = 'TheAppPackager';
+		}
+		elseif (substr(get_query_var(APP_COMMAND_VAR),0,7) == 'package' and get_query_var( APP_DATA_VAR ) != ''){
+			$app_class = 'TheAppPackager';
+		}
+		$the_app = & TheAppFactory::getInstance( $app_class );
+		switch(true){
+		case $the_app->get('environment') == 'production':
+			TheAppBuilder::setup_environment();
+			break;
+		case substr($the_app->get('environment'),0,6) == 'native':
+			TheAppPackager::setup_environment();
+			break;
+		}
+		
 		switch(true){
 		case get_query_var(APP_JSON_VAR) != '': 
 			switch( $the_app->get('environment') ){
 			case 'production':
 				$include = $the_app->get('production_root').get_query_var(APP_JSON_VAR).'.json';
 				break;
-			case 'native_ios':
-			case 'native_android':
-				// shouldn't be here as when loading in index, it should just redirect to the native app itself,
-				wp_die( 'oops' );
-				break;
 			case 'development':
 			default: 
+				// Note, the only time we would get here when we're packaging is if we're trying to 
+				// load the json via the permalink (i.e. http://mysite.com/apps/my-app/app.json?packaging=true&target=ios)
 				$include = 'the-app/'.get_query_var(APP_JSON_VAR).'.json.php'; 
 				break;
 			}
@@ -490,6 +418,10 @@ function the_app_factory_redirect(){
 				wp_redirect( $the_app->get('package_native_root_url_ios').'www/index.html?no_cordova' );
 				die();
 				break;
+			case 'native_pb':
+				wp_redirect( $the_app->get('package_native_root_url_pb').'www/index.html' );
+				die();
+				break;
 			case 'native_android':
 				wp_redirect( $the_app->get('package_native_root_url_android').'assets/www/index.html?no_cordova' );
 				die();
@@ -515,131 +447,6 @@ function the_app_factory_redirect(){
 	}
 }
 
-function setup_the_app_factory_environment(){
-	$the_app = & TheAppFactory::getInstance();
-
-	global $post;
-	$uploads = wp_upload_dir();
-
-	// Some vars for building
-	$the_app->set('build_root',trailingslashit($uploads['basedir'])); // multisite safe - uploads or files directory
-	$the_app->set('build_root_url',trailingslashit($uploads['baseurl']));
-	$the_app->set('production_root',$the_app->get('build_root') . trailingslashit( "wp-app-factory/build/production/$post->post_name" ));
-	$the_app->set('production_root_url',$the_app->get('build_root_url') . trailingslashit( "wp-app-factory/build/production/$post->post_name" ));
-
-	// Some vars for packaging
-	$the_app->set('package_root',trailingslashit($uploads['basedir'])); // multisite safe - uploads or files directory
-	$the_app->set('package_root_url',trailingslashit($uploads['baseurl']));
-	$the_app->set('package_name', preg_replace('/[^a-zA-Z0-9]/','',$post->post_title));
-	if(preg_match('/package_([^_]+)/', get_query_var(APP_COMMAND_VAR),$matches)){
-		$the_app->set('package_target',$matches[1]);		
-	}
-	elseif( $_REQUEST['action'] == 'package_app' and isset($_REQUEST['target']) ){
-		$the_app->set('package_target',$_REQUEST['target']);
-		$the_app->is('packaging',true);
-		//$the_app->is('packaging_via_ajax',true);
-	}
-	elseif( isset($_REQUEST['packaging']) and $_REQUEST['packaging'] == 'true' and isset($_REQUEST['target'])){
-		$the_app->set('package_target',$_REQUEST['target']);
-		$the_app->is('packaging',true);
-		//$the_app->is('packaging_via_ajax',true);
-	}
-	
-	$relative = array(
-		'ios' => trailingslashit( "wp-app-factory/build/native/ios/$post->post_name" ),
-		'android' => trailingslashit( "wp-app-factory/build/native/android/$post->post_name" )
-	);
-	$the_app->set('package_native_root_ios',$the_app->get('package_root') . $relative['ios'] );
-	$the_app->set('package_native_root_android',$the_app->get('package_root') . $relative['android'] );
-	$the_app->set('package_native_root_url_ios', $the_app->get('package_root_url') . $relative['ios'] );
-	$the_app->set('package_native_root_url_android', $the_app->get('package_root_url') . $relative['android'] );
-	$the_app->set('package_native_www_ios', $the_app->get('package_native_root_ios') . 'www/' );
-	$the_app->set('package_native_www_android', $the_app->get('package_native_root_android') . 'assets/www/' );
-	if ( $the_app->get('package_target') ){
-		$the_app->set( 'package_native_root', $the_app->get( 'package_native_root_' . $the_app->get( 'package_target' ) ) );
-		$the_app->set( 'package_native_root_url', $the_app->get( 'package_native_root_url_' . $the_app->get( 'package_target' ) ) );
-		$the_app->set( 'package_native_www', $the_app->get( 'package_native_www_' . $the_app->get( 'package_target' ) ) );
-	}
-
-	// Additional vars for administrators who are doing the actual building/packaging
-	if (current_user_can('administrator') && get_query_var(APP_COMMAND_VAR) != ''){
-		switch( get_query_var( APP_COMMAND_VAR ) ){
-		case 'build':
-		case 'build_no_minify':
-			$the_app->is('building',true);
-			$the_app->is('doing_build_command',true);
-			
-			// If building, we want to make sure that the Desktop is an allowed browser
-			$the_app->apply('meta',array(
-				'unacceptable_browser' => array(
-					'desktop' => false
-				)
-			));
-			$the_app->enqueue('controller','Build');
-			add_filter('TheAppFactory_helpers','the_app_factory_build_helper',10,2);
-			break;
-		case 'package_ios':
-		case 'package_android':
-		case 'package_ios_no_minify':
-		case 'package_android_no_minify':
-			//$the_app->is('packaging',true); // Don't set this here - it screws things up elsewhere
-			$the_app->is('doing_package_command',true);
-
-			// If packaging, we want to make sure that the Desktop is an allowed browser
-			$the_app->apply('meta',array(
-				'unacceptable_browser' => array(
-					'desktop' => false
-				)
-			));
-			$the_app->enqueue('controller','Package');
-			add_filter('TheAppFactory_helpers','the_app_factory_package_target_helper',10,2);
-			// setup_package_environment();
-			break;
-		}
-		
-		$the_app->is('minifying', strpos( get_query_var(APP_COMMAND_VAR), 'no_minify' ) ? false : true );
-	}
-
-	if ( isset($_REQUEST['minify'])){
-		$the_app->is('minifying',($_REQUEST['minify'] == 'true'));
-	}
-	
-	$app_meta = get_post_meta(get_the_ID(),'app_meta',true);
-	$key = (current_user_can('administrator') ? 'admin' : 'regular');
-	if ( current_user_can('administrator') and ($the_app->is('doing_build_command') or $the_app->is('doing_package_command'))){
-		// We are building or packaging the app.  Set the environment to development so as to load the dev files
-		$the_app->set('environment', 'development');
-	}
-	elseif (isset($_GET['building']) and $_GET['building'] == 'true'){
-		// True for anything called via build_cp();
-		$the_app->set('environment', 'development');
-	}
-	elseif ($app_meta and isset($app_meta['visibility']) and isset($app_meta['visibility'][$key])){
-		$the_app->set('environment', $app_meta['visibility'][$key]); // i.e. 'development', 'production', 'native_ios', 'native_android'
-	}
-	else{
-		$the_app->set('environment', 'development');
-	}
-	$the_app->is('native',($the_app->get('environment') == 'native_ios' || $the_app->get('environment') == 'native_android'));	
-	
-	if (substr(get_query_var(APP_COMMAND_VAR),0,7) == 'package' and get_query_var( APP_DATA_VAR ) != ''){
-		//$the_app->is('requesting_data_for_native',true);
-		$the_app->is('packaging',true);
-	}
-}
-
-function the_app_factory_build_helper( $helpers, $args ){
-	$the_app = & $args[0];
-	$helpers['WP']['isMinifying'] = $the_app->is('minifying');
-	return $helpers;
-}
-
-function the_app_factory_package_target_helper( $helpers, $args ){
-	$the_app = & $args[0];
-	$helpers['WP']['packageTarget'] = $the_app->get('package_target');
-	$helpers['WP']['isMinifying'] = $the_app->is('minifying');
-	return $helpers;
-}
 
 add_action('the_app_factory_template_redirect','the_app_factory_include_and_exit');
 function the_app_factory_include_and_exit($include){
@@ -650,18 +457,6 @@ function the_app_factory_include_and_exit($include){
 
 function setup_the_app_factory(){
 	$the_app = & TheAppFactory::getInstance();
-
-	// First, we need to detect the environment.  There are three options:
-	// - Development
-	// - Production
-	// - Native (with iOS and Android flavours)
-	setup_the_app_factory_environment();
-	
-	// This is the function where we set up some globals
-	global $post;
-	$the_app->setup($post);
-	
-	do_action('setup_the_app_factory');
 }
 
 function the_app_gettext($text){
@@ -776,8 +571,5 @@ function the_app_whitelist_options($whitelist_options){
 	return $whitelist_options;
 }
 
-
-require_once('the-app-builder.php');
-require_once('the-app-packager.php');
 
 ?>

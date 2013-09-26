@@ -27,6 +27,9 @@
 	else{
 		$extend = 'Ext.data.Store';
 	}
+	if (false and $the_app->is('doing_package_command')){
+		$store['autoLoad'] = $the_app->do_not_escape('false');
+	}
 	header('Content-type: text/javascript');
 ?>
 Ext.define('the_app.store.<?php echo $key; ?>',

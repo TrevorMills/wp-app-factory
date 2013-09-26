@@ -14,3 +14,19 @@
 	border-bottom: 1px solid #ddd;
 	background:inherit;
 }
+.x-list-item-label .tweet {
+	display: block;
+	-webkit-box-flex: 1;
+	box-flex: 1;
+	padding-right:2em;
+}
+.x-tab .x-button-icon.chat-pictos:before, .x-button .x-button-icon.chat-pictos:before {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	text-align: center;
+	font-family: "Pictos";
+	content: "q";
+}

@@ -7,9 +7,11 @@ Ext.define("the_app.view.Main", {
     config: {
 		id: 'mainpanel',
         tabBarPosition: 'bottom',
+/*	Causes problems with 0-height tabbar in ST2.2.1.  Silly feature anyway.
 	    tabBar: {
 			scrollable: 'horizontal', // Just in case there are too many elements.
 	    },
+*/	
 		layout: {
 	        type: 'card',
 	        animation: {

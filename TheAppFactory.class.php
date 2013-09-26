@@ -6,6 +6,11 @@ class TheAppFactory {
 	static $instance = false;
 	
 	/**
+	 * Variable to hold a reference to the instances we've setup
+	 */
+	var $instances_setup = array();	
+	
+	/**
 	 * Variable to hold a reference to the post object
 	 */
 	var $post;	
@@ -47,9 +52,13 @@ class TheAppFactory {
 	 *
 	 * @return TheAppFactory
 	 */
-	public static function getInstance() {
+	public static function getInstance( $class_name = 'TheAppFactory' ) {
 		if ( !self::$instance ) {
-			self::$instance = new self;
+			self::instantiate( $class_name ); 
+		}
+		if (!in_array($class_name,self::$instance->instances_setup)){
+			call_user_func( array( $class_name, 'setup_environment') );
+			self::$instance->instances_setup[] = $class_name;
 		}
 		return self::$instance;
 	}
@@ -59,9 +68,11 @@ class TheAppFactory {
 	 *
 	 * @return void
 	 */
-	public function instantiate() {
+	public function instantiate( $class_name = 'TheAppFactory' ) {
 		if ( !self::$instance ) {
-			self::$instance = new self;
+			self::$instance = new $class_name;
+			self::$instance->setup();
+			self::$instance->setup_post();
 		}
 		return void;
 	}
@@ -79,9 +90,62 @@ class TheAppFactory {
 		add_filter('TheAppFactory_stores',array(&$this,'addRegisteredStores'),10,2);	
 		
 		add_action('TheAppFactory_setupStores',array(&$this, 'setupStoreStatusStore'),999); // Make sure the Store Status is setup last so as to allow the other stores to instantiate first
-
+		
 		do_action_ref_array('TheAppFactory_init',array(& $this));
 	}
+	
+	// Override in subclasses
+	public function setup(){
+		self::set_environment();
+	}
+	
+	// Override in subclasses
+	public function setup_environment(){
+
+	}
+	
+	public function set_environment(){
+		$the_app = self::getInstance();
+		$app_meta = get_post_meta(get_the_ID(),'app_meta',true);
+		$key = (current_user_can('administrator') ? 'admin' : 'regular');
+		if ($app_meta and isset($app_meta['visibility']) and isset($app_meta['visibility'][$key])){
+			$the_app->set('environment', $app_meta['visibility'][$key]); // i.e. 'development', 'production', 'native_ios', 'native_android'
+		}
+		else{
+			$the_app->set('environment', 'development');
+		}
+	}
+	
+	public function save_postdata( $post_id ){
+		/* When the post is saved, saves our custom data */
+		// verify if this is an auto save routine. 
+		// If it is our form has not been submitted, so we dont want to do anything
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) 
+		    return;
+
+		// verify this came from the our screen and with proper authorization,
+		// because save_post can be triggered at other times
+
+		if ( !wp_verify_nonce( $_POST['app_meta_nonce'], plugin_basename( __FILE__ ) ) )
+		    return;
+
+		$post = get_post($post_id);
+		 //skip all cases where we shouldn't index
+		if ( $post->post_type != APP_POST_TYPE )
+			return;
+
+		if (!empty($_POST['app_meta']['bundle_id'])){
+			$_POST['app_meta']['bundle_id'] = trim($_POST['app_meta']['bundle_id'],'.');
+		}
+		if (isset($_POST['app_meta'])){
+			update_post_meta($post_id,'app_meta',$_POST['app_meta']);
+		}
+		else{
+			delete_post_meta($post_id,'app_meta');
+		}
+	}
+
+	
 	
 	private function reset(){
 		$this->parms = array();
@@ -147,7 +211,10 @@ class TheAppFactory {
 		$this->parms[$what] = $value;
 	}
 	
-	public function setup($post){
+	public function setup_post( $post = null ){
+		if (!isset($post)){
+			global $post;
+		}
 		// reset the app
 		//$this->reset();
 		
@@ -212,7 +279,6 @@ class TheAppFactory {
 		$this->setupHelpers();
 		$this->setupProfiles();
 
-		//$this->setupItems();
 	}
 	
 	public function is($what,$value = null){
@@ -772,6 +838,7 @@ class TheAppFactory {
 		}
 		
 		$this->set('stores',apply_filters('TheAppFactory_stores',$stores,array(&$this)));
+		
 		do_action_ref_array('TheAppFactory_setupStores',array(&$this));
 	}
 	
@@ -1001,7 +1068,7 @@ class TheAppFactory {
 		if ($this->is('packaging')){ // 'packaging_via_ajax')){
 			// We are packaging the app, so we'll copy this to the images directory
 			$dest = $the_app->get( 'package_native_www' ).'resources/images/'.basename($image);
-			build_mkdir(dirname($dest));
+			TheAppBuilder::build_mkdir(dirname($dest));
 			copy($image,$dest);
 			$style = 'background:url(resources/images/'.basename($image).') center center no-repeat;background-size:contain;';
 			return $style;
@@ -1192,5 +1259,80 @@ class TheAppFactory {
 		return array($images['icon'],$images['startup']);
 	}
 	
+	public function sanitize_json( $json = null ){
+		if (!$json){
+			$json = new stdClass;
+		}
+		else{
+			$json = json_decode( $json );
+		}
+
+		if (!is_array($json->js)){
+			$json->js = array();
+		}
+		if (!is_array($json->css)){
+			$json->css = array();
+		}
+		return $json;
+	}
+
+	public static function visibility_metabox( $app ){
+		$app_meta = the_app_get_app_meta( $app->ID );
+
+		wp_nonce_field( plugin_basename( __FILE__ ), 'app_meta_nonce' );
+		
+		$versions = self::get_available_versions();
+
+		if (count($versions) > 1) : 
+			$app_meta = the_app_get_app_meta( $app->ID ); 
+			?>
+			<p><?php _e('There is more than one version this app built.  Please set your choices below:','app-factory'); ?></p>
+			<?php foreach ( array_keys($app_meta['visibility']) as $type ) : ?>
+				<div>
+					<label><?php printf ( __('%s users see: ', 'app-factory' ), ucwords( $type ) ); ?></label>
+					<select name="app_meta[visibility][<?php echo $type; ?>]">
+					<?php foreach ($versions as $version => $label) : ?>
+						<option value="<?php echo $version; ?>" <?php selected( $version, $app_meta['visibility'][$type] ); ?>><?php echo $label; ?></option>
+					<?php endforeach; ?>
+					</select>
+				</div>
+			<?php endforeach; 
+		else : ?>
+			<p><?php _e('You only have the development version available.  Build or package your app.','app-factory'); ?></p>
+		<?php endif; 
+	}	
+	
+	public function get_available_versions(){
+		$the_app = & TheAppFactory::getInstance(); 
+		TheAppBuilder::setup_environment();
+		TheAppPackager::setup_environment();
+		
+		$available_versions = array(
+			'development' => __('Development','app-factory')
+		);
+		if (file_exists($the_app->get('production_root').'index.html')){
+			$available_versions['production'] = __('Production (Web App)');
+		}
+		
+		$targets = TheAppPackager::get_available_targets();
+		
+		foreach ($targets as $target => $label){
+			if ( file_exists($the_app->get("package_native_www_$target").'index.html') ){
+				switch($target){
+				case 'ios':
+					$extra = __('iTunes Candidate','app-factory');
+					break;
+				case 'android':
+					$extra = __('Marketplace Candidate','app-factory');
+					break;
+				case 'pb':
+					$extra = __('Upload to Phonegap Build');
+					break;
+				}
+				$available_versions["native_$target"] = sprintf('Native %s (%s)',$label,$extra);
+			}
+		}
+		return $available_versions;		
+	}
 }
 ?>

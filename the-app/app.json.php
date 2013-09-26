@@ -61,7 +61,7 @@
 	     */
 	    "css" => array(
 	    	array(
-	            "path" => "sdk{$the_app->get('sdk')}/resources/css/{$the_app->get('theme')}.css",
+	            "path" => ($the_app->get('theme') == 'wp-app-factory' ? 'resources/css/wp-app-factory.css' : "sdk{$the_app->get('sdk')}/resources/css" . ($the_app->is('minifying') ? '' : '-debug') . "/{$the_app->get('theme')}.css"),
 	            "update" => "delta"
 	    	)
 	    ),
@@ -139,6 +139,13 @@
 	if ($the_app->get('ios_install_popup') == 'true' and !$the_app->is('packaging')){
 		$json['css'][] = array(
             "path" => "resources/css/installapp.css",
+            "update" => "delta"
+		);
+	}
+	
+	if ( $the_app->get('theme') != 'wp-app-factory' ){
+		$json['css'][] = array(
+            "path" => "resources/css/wp-app-factory-custom.css",
             "update" => "delta"
 		);
 	}

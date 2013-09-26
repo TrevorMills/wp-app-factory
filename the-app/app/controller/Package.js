@@ -2,7 +2,10 @@ Ext.define('the_app.controller.Package', {
     extend: 'Ext.app.Controller',
 
 	launch: function(){
-		Ext.onReady(this.onReady);
+		var me = this;
+		Ext.onReady(function(){
+			me.onReady();
+		});
 	},
 	
 	onReady: function(){
@@ -66,6 +69,7 @@ Ext.define('the_app.controller.Package', {
 			if (which >= commands.length){
 				// all done
 				the_app.app.hidePopup('build');
+				this.wrapup();
 				return;
 			}
 			the_app.app.showPopup(
@@ -199,6 +203,9 @@ Ext.define('the_app.controller.Package', {
 			/*
 			//*/
 		]);
+	},
+	
+	wrapup: function(){
 	}
     
 });
