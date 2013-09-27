@@ -10,7 +10,7 @@
 		$sencha.= '-debug';
 		break;
 	case $the_app->get('environment') == 'development':
-		$sencha.= '-all';
+		$sencha.= '-all'.($the_app->get('sdk') == '2.1' ? '-debug' : '');
 		break;
 	}
 	

@@ -277,7 +277,6 @@ Ext.define('the_app.controller.Main', {
 	
 	onItemListActivate: function(panel){
 		// We may need to adjust the store based on the query instance
-		panel.getComponent('list').suspendEvents();
 		var doit = function(){
 			var l = panel.getComponent('list'); // The List
 			var s = l.getStore(); // The Store

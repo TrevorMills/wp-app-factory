@@ -6,6 +6,7 @@
 	list($icons,$startups) = $the_app->getAppImages(); 
 	
 	$items = $the_app->the_items();
+	
 	foreach ($items as $key => $item){
 		$items[$key] = array(
 			'xtype' => 'lazypanel',
