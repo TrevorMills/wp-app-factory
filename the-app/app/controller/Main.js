@@ -413,7 +413,7 @@ Ext.define('the_app.controller.Main', {
 	onHtmlPageInitialize: function(panel){
 		var store = Ext.getStore('HtmlPagesStore'),
 			doit = function(){
-				if (typeof panel.meta != 'undefined' && typeof panel.getMeta().template != 'undefined'){
+				if (typeof panel.getMeta != 'undefined' && typeof panel.getMeta().template != 'undefined'){
 					panel.setTpl(panel.meta.template);
 				}
 				

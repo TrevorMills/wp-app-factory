@@ -1,6 +1,19 @@
 <?php
 	$post = $the_app->get('post');
 	
+	$sencha = 'sencha-touch';
+	switch(true){
+	case $the_app->is('doing_package_command'):
+	case $the_app->is('doing_build_command'):
+	case $the_app->is('packaging'):
+	case $the_app->is('building'):
+		$sencha.= '-debug';
+		break;
+	case $the_app->get('environment') == 'development':
+		$sencha.= '-all';
+		break;
+	}
+	
 	$json = array(
 		
 	    /**
@@ -37,7 +50,7 @@
 	     */
 	    "js" => array(
 	    	array(
-	    		"path" => "sdk{$the_app->get('sdk')}/sencha-touch-". ( $the_app->get('environment') == 'development' ? 'all' : '-debug' ) . ".js" // TMILLS - note, changing this to just sencha-touch.js causes problems when it tries to Ext.Logger.warn('') about the innerHeight change.  It appears Logger doesn't get defined.  Come back to this.
+	    		"path" => "sdk{$the_app->get('sdk')}/{$sencha}.js" //. ( $the_app->get('environment') == 'development' and !$the_app->is('doing_package_command') ? 'all' : 'debug' ) . ".js" // TMILLS - note, changing this to just sencha-touch.js causes problems when it tries to Ext.Logger.warn('') about the innerHeight change.  It appears Logger doesn't get defined.  Come back to this.
 	    	),
 			array(
 	            "path" => "app.js",
