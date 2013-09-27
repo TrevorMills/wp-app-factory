@@ -27,8 +27,11 @@
 	else{
 		$extend = 'Ext.data.Store';
 	}
-	if (true or $the_app->is('doing_package_command')){ // @dev
+	if (!in_array($store['storeId'],apply_filters('the_app_factory_autoload_stores',array('StoreStatusStore')) ) ){ // @dev
 		$store['autoLoad'] = $the_app->do_not_escape('false');
+	}
+	else{
+		$store['autoLoad'] = $the_app->do_not_escape('true');
 	}
 	header('Content-type: text/javascript');
 ?>
@@ -131,6 +134,12 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 									}
 								},500);
 							}
+							
+							Ext.defer(function(){
+								// Now, trigger a server load
+								this._proxy = this.getServerProxy();
+								this.load();				
+							},60 * 60 * 24 * 1000,this); // check again in a day - this is mostly only pertinant to packaged apps
 						}
 					<?php endif; ?>
 
