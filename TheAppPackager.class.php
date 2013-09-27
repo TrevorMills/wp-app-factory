@@ -353,7 +353,7 @@ class TheAppPackager extends TheAppBuilder {
 			60 => 'icon-60.png',
 			120 => 'icon-60@2x.png',
 			76 => 'icon-76.png',
-			114 => array('icon@2x.png','icon-76@2x.png')
+			152 => 'icon-76@2x.png',
 		);
 
 		self::create_images( $url, 'icons', $sizes );
@@ -659,7 +659,7 @@ class TheAppPackager extends TheAppBuilder {
 	        return false;
 	    }
 
-	    $source = str_replace('\\', '/', realpath($source));
+	    $source = realpath($source);
 
 	    if (is_dir($source) === true)
 	    {
@@ -667,21 +667,19 @@ class TheAppPackager extends TheAppBuilder {
 
 	        foreach ($files as $file)
 	        {
-	            $file = str_replace('\\', '/', $file);
-
 	            // Ignore "." and ".." folders
-	            if( in_array(substr($file, strrpos($file, '/')+1), array('.', '..')) )
+	            if( in_array(substr($file, strrpos($file, DIRECTORY_SEPARATOR)+1), array('.', '..')) )
 	                continue;
 
 	            $file = realpath($file);
 
 	            if (is_dir($file) === true)
 	            {
-	                $zip->addEmptyDir(str_replace($source . '/', '', $file . '/'));
+	                $zip->addEmptyDir(str_replace($source . DIRECTORY_SEPARATOR, '', $file . DIRECTORY_SEPARATOR));
 	            }
 	            else if (is_file($file) === true)
 	            {
-	                $zip->addFromString(str_replace($source . '/', '', $file), file_get_contents($file));
+	                $zip->addFromString(str_replace($source . DIRECTORY_SEPARATOR, '', $file), file_get_contents($file));
 	            }
 	        }
 	    }
@@ -689,7 +687,6 @@ class TheAppPackager extends TheAppBuilder {
 	    {
 	        $zip->addFromString(basename($source), file_get_contents($source));
 	    }
-
 	    return $zip->close();
 	}
 

@@ -66,7 +66,7 @@ Ext.define('the_app.controller.Main', {
 		// If this is a native APP, open any target="_blank" links in the native browser
 		if (typeof PACKAGED_APP != 'undefined'){
 			Ext.getBody().onBefore(
-				'click',
+				'tap',
 				function(e){
 					window.open(e.target.href, "_system");
 					e.preventDefault();
@@ -74,7 +74,8 @@ Ext.define('the_app.controller.Main', {
 				},
 				this,
 				{
-					delegate: 'a[target="_blank"]'
+					delegate: 'a[target="_blank"]',
+					element: 'element'
 				}
 			);
 		}

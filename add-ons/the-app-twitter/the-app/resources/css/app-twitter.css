@@ -1,8 +1,8 @@
 /* Styles for the paging on the pullrefresh and listpaging lists */
 .x-list-paging{height:50px}.x-list-paging .x-loading-spinner{display:none;margin:auto}.x-list-paging .x-list-paging-msg{text-align:center;color:#0063b8;padding-top:10px;-webkit-border-radius:6px;border-radius:6px}.x-list-paging.x-loading .x-loading-spinner{display:block}.x-list-paging.x-loading .x-list-paging-msg{display:none}.x-list-pullrefresh{display:-webkit-box;display:box;-webkit-box-orient:horizontal;box-orient:horizontal;-webkit-box-align:center;box-align:center;-webkit-box-pack:center;box-pack:center;position:absolute;top:-5em;left:0;width:100%;height:4.5em}.x-list-pullrefresh .x-loading-spinner{display:none}.x-list-pullrefresh-arrow{width:2.5em;height:4.5em;-webkit-mask:center center url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAA8CAYAAAAUufjgAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAUpJREFUeNrsml+nAkEYxvt3GXGIrvoGEYeuIs4H6AP0AbqKriL6QhHRudmvcohYDqer7ofY3s0byW7t1Dszr9Pz8FhrZ3Z+xmNm37HlJElKkCe1yYmQ20UHrWifFQACEIAABCAAAQhAAAIQgAAEIAABqFg1vg7JrQdtPwTHHZEPD9rsyd+XmwH5WJI7e3nVKcvXLfFCEeAia0qr5EgBXMQsmWqSfwPC/THDXfUD5fHIYxfSPADg3HYpiDznzlrpuhd7gItfWWPTTBiHcMYmd3maOQScSW1NGwdwG8k9WzqPsfDeflZPKI+G3+VEUwHAqetPtLWW3OWpQd49Abfjvl70aZlHw328amIBOAlVMiwLwK1C1jRpprZ34LY+c5enbk4eDT9ToXEG4FhbCXudx6XGGrtO/mHXtR4EdNjvo7L2/2ZwuvXvAU8CDADMHeWurZ2E9AAAAABJRU5ErkJggg==') no-repeat;-webkit-mask-size:2em 3em;-webkit-transform:rotate(0deg);background-color:#000}.x-list-pullrefresh-release .x-list-pullrefresh-arrow{-webkit-transform:rotate(-180deg)}.x-list-pullrefresh-wrap{width:20em;font-size:0.7em}.x-list-pullrefresh-message{font-weight:bold;font-size:1.3em;margin-bottom:0.1em;text-align:center}.x-list-pullrefresh-updated{text-align:center}.x-list-pullrefresh-loading .x-loading-spinner{display:block}.x-list-pullrefresh-loading .x-list-pullrefresh-arrow{display:none}.x-loading-spinner{font-size:250%;height:1em;width:1em;position:relative;-webkit-transform-origin:0.5em 0.5em}.x-loading-spinner > span,.x-loading-spinner > span:before,.x-loading-spinner > span:after{display:block;position:absolute;width:0.1em;height:0.25em;top:0;-webkit-transform-origin:0.05em 0.5em;-webkit-border-radius:0.05em;border-radius:0.05em;content:" "}.x-loading-spinner > span.x-loading-top{background-color:rgba(170, 170, 170, 0.99)}.x-loading-spinner > span.x-loading-top::after{background-color:rgba(170, 170, 170, 0.9)}.x-loading-spinner > span.x-loading-left::before{background-color:rgba(170, 170, 170, 0.8)}.x-loading-spinner > span.x-loading-left{background-color:rgba(170, 170, 170, 0.7)}.x-loading-spinner > span.x-loading-left::after{background-color:rgba(170, 170, 170, 0.6)}.x-loading-spinner > span.x-loading-bottom::before{background-color:rgba(170, 170, 170, 0.5)}.x-loading-spinner > span.x-loading-bottom{background-color:rgba(170, 170, 170, 0.4)}.x-loading-spinner > span.x-loading-bottom::after{background-color:rgba(170, 170, 170, 0.35)}.x-loading-spinner > span.x-loading-right::before{background-color:rgba(170, 170, 170, 0.3)}.x-loading-spinner > span.x-loading-right{background-color:rgba(170, 170, 170, 0.25)}.x-loading-spinner > span.x-loading-right::after{background-color:rgba(170, 170, 170, 0.2)}.x-loading-spinner > span.x-loading-top::before{background-color:rgba(170, 170, 170, 0.15)}.x-loading-spinner > span{left:50%;margin-left:-0.05em}.x-loading-spinner > span.x-loading-top{-webkit-transform:rotate(0deg);-moz-transform:rotate(0deg)}.x-loading-spinner > span.x-loading-right{-webkit-transform:rotate(90deg);-moz-transform:rotate(90deg)}.x-loading-spinner > span.x-loading-bottom{-webkit-transform:rotate(180deg);-moz-transform:rotate(180deg)}.x-loading-spinner > span.x-loading-left{-webkit-transform:rotate(270deg);-moz-transform:rotate(270deg)}.x-loading-spinner > span::before{-webkit-transform:rotate(30deg);-moz-transform:rotate(30deg)}.x-loading-spinner > span::after{-webkit-transform:rotate(-30deg);-moz-transform:rotate(-30deg)}.x-loading-spinner{-webkit-animation-name:x-loading-spinner-rotate;-webkit-animation-duration:.5s;-webkit-animation-iteration-count:infinite;-webkit-animation-timing-function:linear}@-webkit-keyframes x-loading-spinner-rotate{0%{-webkit-transform:rotate(0deg)}8.32%{-webkit-transform:rotate(0deg)}8.33%{-webkit-transform:rotate(30deg)}16.65%{-webkit-transform:rotate(30deg)}16.66%{-webkit-transform:rotate(60deg)}24.99%{-webkit-transform:rotate(60deg)}25%{-webkit-transform:rotate(90deg)}33.32%{-webkit-transform:rotate(90deg)}33.33%{-webkit-transform:rotate(120deg)}41.65%{-webkit-transform:rotate(120deg)}41.66%{-webkit-transform:rotate(150deg)}49.99%{-webkit-transform:rotate(150deg)}50%{-webkit-transform:rotate(180deg)}58.32%{-webkit-transform:rotate(180deg)}58.33%{-webkit-transform:rotate(210deg)}66.65%{-webkit-transform:rotate(210deg)}66.66%{-webkit-transform:rotate(240deg)}74.99%{-webkit-transform:rotate(240deg)}75%{-webkit-transform:rotate(270deg)}83.32%{-webkit-transform:rotate(270deg)}83.33%{-webkit-transform:rotate(300deg)}91.65%{-webkit-transform:rotate(300deg)}91.66%{-webkit-transform:rotate(330deg)}100%{-webkit-transform:rotate(330deg)}
-}.tweet{font-size:0.95em !important;-webkit-box-flex:1;min-height:3.4em}.created_ago{float:right;font-size:0.8em !important;font-style:italic;color:#999}.tweet .from_user_link{color:black !important; text-decoration:none;}
+}.tweet{font-size:0.95em !important;-webkit-box-flex:1;min-height:3.4em}.tweet .from_user_link{color:black !important; text-decoration:none;}
 .tweet .from_user_link {color: black !important;text-decoration: none;font-weight:bold}
-.created_ago {float: right;font-size: 0.8em !important;font-style: italic;color: #999;position:relative;right:-2em}
+.created_ago {font-size: 0.8em !important;font-style: italic;color: #999;}
 .matching-message{
 	white-space: nowrap;
 	padding: 10px;
@@ -29,4 +29,38 @@
 	text-align: center;
 	font-family: "Pictos";
 	content: "q";
+}
+.tweet-disclosure{
+	text-align:right;
+}
+.tweet-disclosure a{
+	display:inline-block;
+	margin-top:3px;
+	width:32px;
+	height:32px;
+	position:relative;
+	background:#006bb6;
+	-webkit-border-radius: 32px;
+	-moz-border-radius: 32px;
+	-ms-border-radius: 32px;
+	-o-border-radius: 32px;
+	border-radius: 32px;
+	text-decoration:none;
+}
+.tweet-disclosure a:before {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	content: ']';
+	font-family: 'Pictos';
+	color: #fff;
+	font-size: 24px;
+	text-align: center;
+	line-height: 35px;
+	text-shadow: 0 0 0;
+}
+.tweet-disclosure.no-pictos a:before {
+	content: '>';
 }
