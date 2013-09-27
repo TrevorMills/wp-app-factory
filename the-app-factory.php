@@ -3,7 +3,7 @@
 Plugin Name: WP App Factory
 Plugin URI: http://topquark.com/wp-app-factory/extend/plugins/wp-app-factory
 Description: Creates a cross-device mobile app out of any post type using Sencha Touch as the framework
-Version: 2.0.3beta3
+Version: 2.0.3beta4
 Author: Top Quark
 Author URI: http://topquark.com
 
