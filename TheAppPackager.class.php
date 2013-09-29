@@ -271,7 +271,7 @@ class TheAppPackager extends TheAppBuilder {
 				'update' => 'full'
 			) );
 			array_unshift( $json->js, (object)array(
-				'path' => APP_FACTORY_URL . 'extras/cordova/js/cordova_plugins.json',
+				'path' => APP_FACTORY_URL . 'extras/cordova/js/cordova_plugins.js',
 				'remote' => true,
 				'minify' => $the_app->is('minifying'),
 				'update' => 'full'

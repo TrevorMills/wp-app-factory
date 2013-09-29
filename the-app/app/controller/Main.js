@@ -79,6 +79,10 @@ Ext.define('the_app.controller.Main', {
 				}
 			);
 		}
+		
+		if (Ext.os.name == 'iOS' && Ext.os.version.major >= 7){
+			Ext.Viewport.addCls('ios7');
+		}
 	},
 	
 	goToTab: function(id){
@@ -114,7 +118,7 @@ Ext.define('the_app.controller.Main', {
 	
 	goToTabAndReset: function(id){
 		if (this.getCardJustSwitched() === false){
-			var active = this.getMainPanel().getActiveItem();
+			var active = this.getMainPanel().getActiveItem().getActiveItem();
 			if (typeof active.reset == 'function'){
 				this.setCardJustSwitched(true); // Set this so that when firing the 'back' event, I don't end up back here (if the back button does a redirectTo)
 				active.reset();
@@ -280,6 +284,13 @@ Ext.define('the_app.controller.Main', {
 		// We may need to adjust the store based on the query instance
 		var doit = function(){
 			var l = panel.getComponent('list'); // The List
+			if (!l){
+				// On lazy panel instantiation, the list might not be active yet.
+				panel.on('painted',doit,this,{
+					single: true
+				});
+				return;
+			}
 			var s = l.getStore(); // The Store
 			
 			if(!s.getCount()){

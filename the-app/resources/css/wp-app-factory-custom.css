@@ -160,3 +160,7 @@ img.alignright{
 	background:transparent;
 }
 #app-loading{width:100%;height:100%;position:absolute;top:0;left:0}
+.ios7 .x-toolbar-dark .x-title{
+	position:relative;
+	top:8px;
+}
