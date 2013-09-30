@@ -136,9 +136,12 @@ img.alignright{
 /* This fix, see http://imwill.com/flickering-sencha-touch-animations-android/#.UCvVThqXT4g
    It's to stop a flickering on the out animation of the More panel.
    It appears that any non-zero value will do the trick */
+/* Actually, it turns out that in ST 2.2.1, this little hack caused fonts to appear
+   horribly aliased.  Removing it.
 .x-panel {
     -webkit-perspective: 1000;
 }
+*/
 /* Makes the button badge look nice again */
 .x-hasbadge .x-badge{
 	-webkit-border-radius:1em;

@@ -128,6 +128,7 @@ Ext.define('the_app.controller.Main', {
 		else{
 			this.goToTab(id);			
 		}
+		this.setCardJustSwitched(null);
 	},
 	
 	goToTabThenItem: function(id,index){
@@ -196,7 +197,9 @@ Ext.define('the_app.controller.Main', {
 	},
 	
 	onMainPanelTabBarTabTap: function(tab){
-		this.setCardJustSwitched(false);
+		if (this.getCardJustSwitched() !== true){
+			this.setCardJustSwitched(false);
+		}
 		this.redirectTo('tab/'+this.getTabId(tab));
 	},
 
