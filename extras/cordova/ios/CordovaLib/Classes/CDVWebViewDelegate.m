@@ -87,7 +87,8 @@ typedef enum {
     STATE_WAITING_FOR_LOAD_START,
     STATE_WAITING_FOR_LOAD_FINISH,
     STATE_IOS5_POLLING_FOR_LOAD_START,
-    STATE_IOS5_POLLING_FOR_LOAD_FINISH
+    STATE_IOS5_POLLING_FOR_LOAD_FINISH,
+    STATE_CANCELLED
 } State;
 
 @implementation CDVWebViewDelegate
@@ -233,11 +234,11 @@ typedef enum {
 
                 default:
                     {
-                        NSString* description = [NSString stringWithFormat:@"CDVWebViewDelegate: Navigation started when state=%d", _state];
-                        NSLog(@"%@", description);
                         _loadCount = 0;
                         _state = STATE_WAITING_FOR_LOAD_START;
                         if (![self request:request isFragmentIdentifierToRequest:webView.request]) {
+                            NSString* description = [NSString stringWithFormat:@"CDVWebViewDelegate: Navigation started when state=%d", _state];
+                            NSLog(@"%@", description);
                             if ([_delegate respondsToSelector:@selector(webView:didFailLoadWithError:)]) {
                                 NSDictionary* errorDictionary = @{NSLocalizedDescriptionKey : description};
                                 NSError* error = [[NSError alloc] initWithDomain:@"CDVWebViewDelegate" code:1 userInfo:errorDictionary];
@@ -275,6 +276,12 @@ typedef enum {
             _loadStartPollCount = 0;
             [self setLoadToken:webView];
             [self pollForPageLoadStart:webView];
+            break;
+
+        case STATE_CANCELLED:
+            fireCallback = YES;
+            _state = STATE_WAITING_FOR_LOAD_FINISH;
+            _loadCount += 1;
             break;
 
         case STATE_WAITING_FOR_LOAD_START:
@@ -356,11 +363,17 @@ typedef enum {
             break;
 
         case STATE_WAITING_FOR_LOAD_FINISH:
-            if (_loadCount == 1) {
-                _state = STATE_IDLE;
+            if ([error code] != NSURLErrorCancelled) {
+                if (_loadCount == 1) {
+                    _state = STATE_IDLE;
+                    fireCallback = YES;
+                }
+                _loadCount = -1;
+            } else {
                 fireCallback = YES;
+                _state = STATE_CANCELLED;
+                _loadCount -= 1;
             }
-            _loadCount = -1;
             break;
 
         case STATE_IOS5_POLLING_FOR_LOAD_START:
