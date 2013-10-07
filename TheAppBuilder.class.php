@@ -293,11 +293,13 @@ class TheAppBuilder extends TheAppFactory {
 	 */
 	public function build_cp_deep($src,$dest,$ignores=null,$quiet = false){
 		if (!isset($ignores)){
-			$ignores = array('^.DS_STORE$','^.svn','^.git');
+			$ignores = array('^.DS_Store$','^.svn','^.git');
 		}
+		$ignores[] = '^\.$';
+		$ignores[] = '^\.\.$';
 		if (is_dir($src)){
 			self::build_mkdir($dest);
-			$contents = glob(trailingslashit($src).'*');
+			$contents = glob(trailingslashit($src).'{,.}*', GLOB_BRACE);
 			foreach ($contents as $file){
 				$basename = basename($file);
 				$continue = true;
@@ -316,10 +318,31 @@ class TheAppBuilder extends TheAppFactory {
 							echo "[COPY] ".str_replace(ABSPATH,'',$file)." to ".str_replace(ABSPATH,'',$target)."\n";
 						}
 						copy($file,$target);
+						
+						if (fileperms($file) != fileperms($target)){
+							// Makes sure scripts are executable
+							chmod($target,fileperms($file));
+						}
 					}
 				}
 			}
 		}
+	}
+	
+	public function recurse_copy($src,$dst) { 
+	    $dir = opendir($src); 
+	    @mkdir($dst); 
+	    while(false !== ( $file = readdir($dir)) ) { 
+	        if (( $file != '.' ) && ( $file != '..' )) { 
+	            if ( is_dir($src . '/' . $file) ) { 
+	                self::recurse_copy($src . '/' . $file,$dst . '/' . $file); 
+	            } 
+	            else { 
+	                copy($src . '/' . $file,$dst . '/' . $file); 
+	            } 
+	        } 
+	    } 
+	    closedir($dir); 
 	}
 
 	/**

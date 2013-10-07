@@ -68,8 +68,8 @@ Ext.define('the_app.controller.Main', {
 			Ext.getBody().onBefore(
 				'tap',
 				function(e){
-					window.open(e.target.href, "_system");
 					e.preventDefault();
+					window.open(e.target.href, "_system");
 					return false;
 				},
 				this,

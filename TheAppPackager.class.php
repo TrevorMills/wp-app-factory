@@ -40,17 +40,19 @@ class TheAppPackager extends TheAppBuilder {
 			$the_app->set("package_native_root_$target",$the_app->get('package_root') . $relative[$target] );
 			$the_app->set("package_native_root_url_$target", $the_app->get('package_root_url') . $relative[$target] );
 			if ($target == 'android'){
-				$the_app->set("package_native_www_$target", $the_app->get("package_native_root_$target") . 'assets/www/' );
+				$the_app->set("package_native_www_relative_$target", 'assets/www/' );
 			}
 			else{
-				$the_app->set("package_native_www_$target", $the_app->get("package_native_root_$target") . 'www/' );
+				$the_app->set("package_native_www_relative_$target", 'www/' );
 			}
+			$the_app->set("package_native_www_$target", $the_app->get("package_native_root_$target") . $the_app->get("package_native_www_relative_$target") );
 		}
 
 		if ( $the_app->get('package_target') ){
 			$the_app->set( 'package_native_root', $the_app->get( 'package_native_root_' . $the_app->get( 'package_target' ) ) );
 			$the_app->set( 'package_native_root_url', $the_app->get( 'package_native_root_url_' . $the_app->get( 'package_target' ) ) );
 			$the_app->set( 'package_native_www', $the_app->get( 'package_native_www_' . $the_app->get( 'package_target' ) ) );
+			$the_app->set( 'package_native_www_relative', $the_app->get( 'package_native_www_relative_' . $the_app->get( 'package_target' ) ) );
 		}
 
 		if ( isset($_REQUEST['minify'])){
@@ -161,7 +163,6 @@ class TheAppPackager extends TheAppBuilder {
 		else{
 			parent::build_cp_deep( APP_FACTORY_PATH.'extras/cordova/'.$the_app->get('package_target'), $the_app->get( 'package_native_root' ), null, true );
 		}
-
 		// There are a handful of places that we need to insert the actual name of our App
 		// Here is where we do that.
 
@@ -191,6 +192,7 @@ class TheAppPackager extends TheAppBuilder {
 				"$name/Classes/AppDelegate.h",
 				"$name/Classes/AppDelegate.m",
 				"$name/Classes/MainViewController.h",
+				"$name/Classes/MainViewController.m",
 				"$name/config.xml",
 				"$name/main.m",
 				"$name/$name-Prefix.pch",
@@ -205,26 +207,34 @@ class TheAppPackager extends TheAppBuilder {
 
 			// Update the Bundle Identifier in the .plist file
 			$contents = file_get_contents( "{$native_root}{$name}/$name-Info.plist" );
-			$contents = str_replace( '__APP_BUNDLE_IDENTIFIER__', $app_identifier, $contents);
+			$contents = str_replace( 'com.example.MyApp', $app_identifier, $contents);
 			file_put_contents( "{$native_root}{$name}/$name-Info.plist", $contents );
+			
+			$contents = file_get_contents( "{$native_root}www/config.xml" );
+			$contents = str_replace( 'com.example.MyApp', $app_identifier, $contents);
+			$contents = str_replace( 'MyApp', $name, $contents);
+			file_put_contents( "{$native_root}www/config.xml", $contents );
+			
 			break;
 		case 'android':
-			rename( "{$native_root}src/MyApp.java", "{$native_root}src/$name.java" );
+			rename( "{$native_root}src/com/example/MyApp/MyApp.java", "{$native_root}src/$name.java" );
+			self::rrmdir( "{$native_root}src/com" );
 
 			// Now, we have to go through some files and replace occurrences of MyApp with $name
 			$files = array(
 				'AndroidManifest.xml',
 				'build.xml',
-				'res/layout/main.xml',
+				//'res/layout/main.xml',
 				'res/xml/config.xml',
 				'res/values/strings.xml',
-				"src/$name.java"
+				"src/$name.java",
+				'assets/www/config.xml'
 			);
 
 			foreach ($files as $file){
 				$contents = file_get_contents( $native_root . $file );
+				$contents = str_replace( 'com.example.MyApp', $app_identifier, $contents );
 				$contents = str_replace( 'MyApp', $name, $contents );
-				$contents = str_replace( '__APP_BUNDLE_IDENTIFIER__', $app_identifier, $contents );
 				file_put_contents( $native_root . $file, $contents );
 			}
 
@@ -235,7 +245,7 @@ class TheAppPackager extends TheAppBuilder {
 			rename( $native_root.'src/'.$name.'.java',$target_dest.'/'.$name.'.java');
 			break;
 		}
-
+		
 		echo "[SETUP] A shell CORDOVA project has been setup";
 	}
 
@@ -263,29 +273,27 @@ class TheAppPackager extends TheAppBuilder {
 		// For this step we need to read app.json
 		$json = self::get_app_json('development');	
 
+		$jsonout = parent::deploy( $json, $the_app->get('package_native_www') );
+		
 		if ($the_app->get('package_target') != 'pb'){ // Phonegap Build puts Cordova in itself (I think)
-			array_unshift( $json->js, (object)array(
-				'path' => APP_FACTORY_URL . 'extras/cordova/js/cordova-'.$the_app->get('package_target').'.js',
+			array_unshift( $jsonout->js, (object)array(
+				'path' => 'cordova.js',
 				'remote' => true,
-				'minify' => $the_app->is('minifying'),
 				'update' => 'full'
 			) );
-			array_unshift( $json->js, (object)array(
-				'path' => APP_FACTORY_URL . 'extras/cordova/js/cordova_plugins.js',
+			array_unshift( $jsonout->js, (object)array(
+				'path' => 'cordova_plugins.js',
 				'remote' => true,
-				'minify' => $the_app->is('minifying'),
 				'update' => 'full'
 			) );
 		}
-		
-		$jsonout = parent::deploy( $json, $the_app->get('package_native_www') );
 		
 		$jsonout = apply_filters('the_app_factory_package_app_json',$jsonout);
 
 		$the_app->set_app_json($jsonout);
 
 	}
-
+	
 	public function package_resources(){
 		// Maybe deploy initial data
 		self::deploy_data();
