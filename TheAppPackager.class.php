@@ -264,7 +264,7 @@ class TheAppPackager extends TheAppBuilder {
 	  } 
 	}
 
-	public function deploy(){
+	public function deploy( $json = null, $target_root = null ){
 
 		$the_app = & TheAppFactory::getInstance();
 

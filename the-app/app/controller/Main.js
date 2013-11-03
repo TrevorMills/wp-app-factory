@@ -235,7 +235,7 @@ Ext.define('the_app.controller.Main', {
 		var l = wrapper.getComponent('list'); // The List
 		l.setItemTpl(wrapper.getMeta().list_template);
 		l.setUi(wrapper.getMeta().ui);
-		
+
 		var store = Ext.getStore('WrapperStore'),
 			doit = function(){
 				var record = store.queryBy(function(rec){
@@ -253,7 +253,10 @@ Ext.define('the_app.controller.Main', {
 			doit();
 		}
 		else{
-			store.on('load',doit)
+			store.on('load',doit);
+			if (!store.getAutoLoad()){
+				store.load();
+			}
 		}
 		
 	},

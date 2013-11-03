@@ -21,6 +21,7 @@ Ext.define('the_app.view.ItemWrapper',{
 					fields: ['item','meta']
 				}
 			}
-		]		
+		],
+		meta: null		
 	}
 });

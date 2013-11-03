@@ -203,6 +203,7 @@ function the_app_factory_init()
 	
 	add_action( 'template_redirect', 'the_app_factory_redirect', 1);	
 	add_shortcode('app_package_image',array('TheAppPackager','package_image'));
+	add_action('wp_ajax_build_app', array('TheAppBuilder', 'build_app' ) );	
 	add_action('wp_ajax_package_app',array('TheAppPackager','package_app'));
 	add_action('wp_ajax_download_package_zip',array('TheAppPackager','package_download'));
 	add_action('save_post', array('TheAppFactory','save_postdata'));

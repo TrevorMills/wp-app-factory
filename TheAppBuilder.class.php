@@ -7,8 +7,6 @@ class TheAppBuilder extends TheAppFactory {
 	 * @return void
 	 */
 	public function setup() {
-		add_action( 'wp_ajax_build_app', array( &$this, 'build_app' ) );
-		
 		self::setup_environment();
 		return void;
 	}
@@ -26,7 +24,7 @@ class TheAppBuilder extends TheAppFactory {
 		$the_app->set('production_root_url',$the_app->get('build_root_url') . trailingslashit( "wp-app-factory/build/production/$post->post_name" ));
 
 		// Additional vars for administrators who are doing the actual building
-		if (current_user_can('administrator') && get_query_var(APP_COMMAND_VAR) == 'build'){
+		if (current_user_can('administrator') && (get_query_var(APP_COMMAND_VAR) == 'build' || get_query_var(APP_COMMAND_VAR) == 'build_no_minify')){
 			$the_app->is('building',true);
 			$the_app->is('doing_build_command',true);
 
@@ -39,6 +37,9 @@ class TheAppBuilder extends TheAppFactory {
 			$the_app->enqueue('controller','Build');
 			$the_app->is('minifying',strpos(get_query_var(APP_COMMAND_VAR),'no_minify') === false);
 			add_filter('TheAppFactory_helpers',array(&$this,'build_helper'),10,2);
+		}
+		elseif( isset($_REQUEST['building']) && 'true' === $_REQUEST['building'] ){
+			$the_app->is('building',true);
 		}
 
 		if ( isset($_REQUEST['minify'])){
@@ -116,7 +117,8 @@ class TheAppBuilder extends TheAppFactory {
 			$json = self::get_app_json('development');
 		}
 		if (!isset($target_root)){
-			$target_root = $relative_target_root = $the_app->get('production_root');
+			$target_root = $the_app->get('production_root');
+			$relative_target_root = $the_app->get('production_root_url');
 		}
 		else{
 			$relative_target_root = '';
@@ -382,11 +384,12 @@ class TheAppBuilder extends TheAppFactory {
 	 * @return void
 	 */
 	public function concat_dependencies( $target_root = null ){
+		set_time_limit(0);
+
 		$the_app = & TheAppFactory::getInstance();
 		if ( !isset($target_root) ){
 			$target_root = $the_app->get('production_root');
 		}
-		set_time_limit(0);
 		$dependencies = json_decode(stripslashes($_POST['dependencies']));
 		$permalink = get_permalink();
 
@@ -438,7 +441,10 @@ class TheAppBuilder extends TheAppFactory {
 		$jsonout = new stdClass;
 		$jsonout->id = $json->id;
 
-		$microloader = JSMin::minify(file_get_contents(APP_FACTORY_PATH."the-app/sdk{$the_app->get('sdk')}/microloader/production.js"));
+		$microloader = file_get_contents(APP_FACTORY_PATH."the-app/sdk{$the_app->get('sdk')}/microloader/production.js");
+		if ( $the_app->is( 'minifying' ) ){
+			$microloader = JSMin::minify( $microloader );
+		}
 
 		$target = $the_app->get('production_root').'index.html';
 
@@ -499,6 +505,9 @@ class TheAppBuilder extends TheAppFactory {
 		$these = array('js','css');
 		foreach ($these as $that){
 			foreach ($json->$that as $key => $thing){
+				if ( strpos( $thing->path, $the_app->get('production_root_url') ) !== false ){
+					$thing->remote = false;
+				}
 				$path = str_replace($the_app->get('production_root_url'),$the_app->get('production_root'),$thing->path);
 				$thing->update = 'full';
 				if (!file_exists($path)){
