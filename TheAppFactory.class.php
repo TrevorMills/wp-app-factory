@@ -422,6 +422,7 @@ class TheAppFactory {
 				$atts['orderby'] = 'date_gmt';
 			}
 			$this->addPostListItem($atts);
+			break;
 		}
 	}
 	
@@ -619,7 +620,6 @@ class TheAppFactory {
 		);
 		$item_defaults['xtype'] = 'itemlist';
 		$item_defaults['store'] = $meta_defaults['store'] = $query_atts['post_type'].'Store';
-		
 		
 		$item_atts = shortcode_atts($item_defaults,$atts);
 		$meta_atts = shortcode_atts($meta_defaults,$atts);

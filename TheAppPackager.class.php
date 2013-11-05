@@ -151,7 +151,7 @@ class TheAppPackager extends TheAppBuilder {
 		// Start by deleting the existing directory
 		$the_app = & TheAppFactory::getInstance();
 		if (is_dir($the_app->get( 'package_native_root' ))){
-			self::rrmdir($the_app->get( 'package_native_root' ));
+			parent::rrmdir($the_app->get( 'package_native_root' ));
 		}
 
 		// Copy over the shell Cordova project into the NATIVE directory.  
@@ -218,7 +218,7 @@ class TheAppPackager extends TheAppBuilder {
 			break;
 		case 'android':
 			rename( "{$native_root}src/com/example/MyApp/MyApp.java", "{$native_root}src/$name.java" );
-			self::rrmdir( "{$native_root}src/com" );
+			parent::rrmdir( "{$native_root}src/com" );
 
 			// Now, we have to go through some files and replace occurrences of MyApp with $name
 			$files = array(
@@ -247,21 +247,6 @@ class TheAppPackager extends TheAppBuilder {
 		}
 		
 		echo "[SETUP] A shell CORDOVA project has been setup";
-	}
-
-	// Thanks http://php.net/manual/en/function.rmdir.php
-	// Recursively remove a directory
-	public function rrmdir($dir) { 
-	  if (is_dir($dir)) { 
-	    $objects = scandir($dir); 
-	    foreach ($objects as $object) { 
-	      if ($object != "." && $object != "..") { 
-	        if (filetype($dir."/".$object) == "dir") self::rrmdir($dir."/".$object); else unlink($dir."/".$object); 
-	      } 
-	    } 
-	    reset($objects); 
-	    rmdir($dir); 
-	  } 
 	}
 
 	public function deploy( $json = null, $target_root = null ){

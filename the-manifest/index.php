@@ -9,15 +9,26 @@ CACHE MANIFEST
 
 # The Main App files
 		
-# The App Images
-<?php $attachment_types = apply_filters('TheAppFactory_attachments_types',array('startup_phone','startup_tablet','startup_landscape_tablet','icon','stylesheet','splash'),array(& $the_app));
-	foreach ($attachment_types as $type) : 
-		if ($the_app->get($type)) : 
-			echo $the_app->get($type)."\n"; 
-		endif; 
-	endforeach;
+# The App Images (any files attached to the App Post, except files that are included within the app framework itself)
+<?php
+	$p = $the_app->get('post');
+	$attachments = get_children( array( 'post_parent' => $p->ID, 'post_type' => 'attachment', 'orderby' => 'menu_order ASC, ID', 'order' => 'DESC') );
+	
+	$attachment_types = apply_filters('TheAppFactory_attachments_types',array('startup_phone','startup_tablet','startup_landscape_tablet','icon','stylesheet','splash'),array(& $the_app) );
+	
+	foreach ( $attachments as $attachment ){
+		$include_it = true;
+		foreach ( $attachment_types as $type ){
+			if (strpos($attachment->post_title,$type) === 0){
+				// it's a file that is included elsewhere in the framework
+				$include_it = false;
+			}
+		}
+		if ($include_it){
+			echo "$attachment->guid\n";
+		}
+	}
 ?>
-
 
 # The Post Images
 <?php

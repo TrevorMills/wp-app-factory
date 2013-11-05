@@ -123,6 +123,10 @@ class TheAppBuilder extends TheAppFactory {
 		else{
 			$relative_target_root = '';
 		}
+		
+		if ( is_dir($the_app->get( 'production_root' ) ) ){
+			self::rrmdir($the_app->get( 'production_root' ));
+		}
 
 		$minify = $the_app->is('minifying');	
 
@@ -267,6 +271,21 @@ class TheAppBuilder extends TheAppFactory {
 			fwrite($fp,$content);
 		}
 		fclose($fp);
+	}
+
+	// Thanks http://php.net/manual/en/function.rmdir.php
+	// Recursively remove a directory
+	public function rrmdir($dir) { 
+	  if (is_dir($dir)) { 
+	    $objects = scandir($dir); 
+	    foreach ($objects as $object) { 
+	      if ($object != "." && $object != "..") { 
+	        if (filetype($dir."/".$object) == "dir") self::rrmdir($dir."/".$object); else unlink($dir."/".$object); 
+	      } 
+	    } 
+	    reset($objects); 
+	    rmdir($dir); 
+	  } 
 	}
 
 	/**

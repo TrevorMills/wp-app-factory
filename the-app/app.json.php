@@ -163,6 +163,14 @@
 		);
 	}
 	
+	if ( $the_app->get('stylesheet') ){
+		$json['css'][] = array(
+            "path" => $the_app->get('stylesheet'),
+			"remote" => true,
+            "update" => "delta"
+		);
+	}
+	
 	$json = apply_filters('TheAppFactory_app_json',$json);
 	
 	header('Content-type: application/json');

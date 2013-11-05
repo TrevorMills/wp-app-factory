@@ -371,6 +371,9 @@ function the_app_factory_redirect(){
 		case substr($the_app->get('environment'),0,6) == 'native':
 			TheAppPackager::setup_environment();
 			break;
+		case $_GET['building'] === 'true':
+			$the_app->is( 'building', true );
+			break;
 		}
 		
 		switch(true){

@@ -60,6 +60,7 @@ Ext.define('the_app.view.TweetList',{
 	            emptyText   : '<p class="no-searches">'+WP.__('No tweets found matching that search')+'</p>',
 
 	            disableSelection: true,
+				scrollToTopOnRefresh: false,
 
 	            plugins: [{
 	                type: 'listpaging',
