@@ -469,6 +469,14 @@ Ext.define('Ext.ux.OfflineSyncStore', {
 			// clear the existing data first
 			this._proxy.clear();
 
+			// Strangeness in Safari, when synching here, it was only
+			// synching the filtered records.  This behaviour didn't appear in Cheome.
+			// so, we're going to save off any filters, and then restore them later on.
+			var filters = store.getData().getFilters();			
+			if ( filters ){
+				store.clearFilter();
+			}
+			
 			// To ensure the Local Proxy identifies all the records as dirty (i.e. requiring to be saved) we mark them all as dirty
 			store.each(function(record) {
 				record.setDirty(true);
@@ -484,6 +492,12 @@ Ext.define('Ext.ux.OfflineSyncStore', {
 			store.each(function(record) {
 				record.commit();
 			});
+			
+			// Here is where we restore any filters that were active
+			if ( filters ){
+				store.filter( filters.items );
+				store.sort();
+			}
 
 			// enable the tracking so any subsequent syncs are tracked
 			this.enableTrackLocalSync();
