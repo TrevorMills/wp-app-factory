@@ -4,7 +4,7 @@ Tags: sencha, app, custom post types, shortcodes, mobile, web app
 Requires at least: 3.0
 Tested up to: 3.6
 Donate link: http://topquark.com
-Stable tag: 2.0.3beta6
+Stable tag: 2.0.4
 
 WP App Factory adds an App custom post type that allows you to build a cross-device mobile web app out of your content.
 

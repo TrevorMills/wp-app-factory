@@ -329,6 +329,7 @@ Ext.define('the_app.controller.Main', {
 						sortProperty = 'category';
 						break;
 					case 'month':
+					case 'date':
 						sortProperty = 'date_gmt';
 						break;
 					default:

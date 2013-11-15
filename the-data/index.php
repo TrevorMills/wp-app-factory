@@ -117,7 +117,7 @@
 						switch($key){
 						case 'date':
 							$ts = strtotime($value);
-							$post_output[$key] = date("M d Y",$ts);
+							$post_output[$key] = date(get_settings( 'date_format' ),$ts);
 							break;
 						case 'content':
 							$post_output[$key] = apply_filters('the_content',$value); //do_shortcode($value);
