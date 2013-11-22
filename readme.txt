@@ -265,6 +265,9 @@ Tweet tweet, twiddle, twiddle,
 
 == Changelog ==
 
+= 2.0.4 = 
+* Minor bug fixes
+
 = 2.0.3beta6 = 
 * Opening _blank links in device browser works again on native apps.
 
