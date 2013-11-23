@@ -20,7 +20,7 @@ class TheAppBannerAds{
 		add_filter( 'the_app_post_output', array( &$this, 'banner_in_post' ), 10, 2); // When a banner ad is included in a WordPress post
 		add_action( 'TheAppFactory_parsePost', array( &$this, 'parse_post' ) ); // When banner ads are included in the app post itself
 		
-		$the_app->register('controller','BannerAdsController', __DIR__ .'/the-app/src/controllers/BannerAdsController.js');
+		$the_app->register('controller','BannerAdsController', dirname(__FILE__) .'/the-app/src/controllers/BannerAdsController.js');
 		$this->reset_ads();
 	} 
 	

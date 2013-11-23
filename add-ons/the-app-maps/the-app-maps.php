@@ -23,21 +23,28 @@ function app_maps_shortcode($atts = array(),$content=null,$code=''){
 			'use_current_location' => 'false'
 		);
 		$meta_defaults = array(
-			'_is_default' => 'false'
+			'_is_default' => 'false',
+			'kml' => ''
 		);
 		$item_atts = shortcode_atts($item_defaults,$atts);
 		$meta_atts = shortcode_atts($meta_defaults,$atts);
 		
 		// This will add in whatever points are there
 		$the_app->set('GoogleMapPoints',array()); // reset
+		if ( !empty( $meta_atts['kml'] ) ){
+			// There's a kml file defined, let's get points from that.
+			app_maps_parse_kml( $meta_atts['kml'] );
+		}
+		unset( $meta['kml'] );
+		
 		do_shortcode($content);
 		$item_atts['points'] = $the_app->get('GoogleMapPoints');
 		
 		if ($item_atts['use_current_location'] == 'true'){
-			$item_atts['use_current_location'] = $the_app->do_not_escape('true');
+			$item_atts['use_current_location'] = true; // $the_app->do_not_escape('true');
 		}
 		else{
-			$item_atts['use_current_location'] = $the_app->do_not_escape('false');
+			$item_atts['use_current_location'] = false; //$the_app->do_not_escape('false');
 		}
 	
 		$the_app->addItem($item_atts,$meta_atts);
@@ -69,6 +76,41 @@ function app_maps_shortcode($atts = array(),$content=null,$code=''){
 		break;
 	}
 	
+}
+
+function app_maps_parse_kml( $url ){
+	$result = wp_remote_get( $url );
+	if ( $result and $result['response']['code'] == 200 ){
+		$kml = @simplexml_load_string( $result['body'], 'SimpleXMLElement', LIBXML_NOCDATA );
+		$namespaces = $kml->getDocNamespaces();
+		$kml->registerXPathNamespace( 'ns', current( $namespaces ) );
+		$placemarks = $kml->xpath( '//ns:Placemark');
+		if ( $placemarks ){
+			$the_app = & TheAppFactory::getInstance();
+			$points = $the_app->get('GoogleMapPoints');
+			foreach ( $placemarks as $placemark ){
+				$placemark->registerXPathNamespace( 'ns', current( $namespaces ) );
+				list( $longitude, $latitude, $altitude ) = explode(',',(string)$placemark->Point->coordinates);
+				
+				$points[] = array(
+					'title' => (string)$placemark->name,
+					'lat' => $latitude,
+					'long' => $longitude,
+					'text' => (string)$placemark->description 
+				);
+			}
+			$the_app->set( 'GoogleMapPoints', $points );
+		}
+	}
+}
+
+add_filter('upload_mimes', 'the_app_maps_upload_mimes');
+function the_app_maps_upload_mimes ( $existing_mimes=array() ) {
+    // add the file extension to the array
+    $existing_mimes['kml'] = 'application/vnd.google-earth.kml+xml';
+    // call the modified list of extensions 
+    return $existing_mimes;
+ 
 }
 
 function app_maps_setup_actions(){

@@ -27,6 +27,9 @@ Ext.define('the_app.view.Location',{
             listeners: {
                 maprender : {
 					fn : function(comp,map){
+						if ( Ext.isEmpty( map ) ){
+							map = comp.getMap();
+						}
 						this.map = map;
 						/*  See note under show: function below
 						google.maps.event.addListenerOnce(map,'zoom_changed',function(){
@@ -75,7 +78,7 @@ Ext.define('the_app.view.Location',{
 				}
 				me.map_initialized = true;
 			}
-		},1000);
+		},2000);
 	},
 
 	addMarker:  function(point,config) {
