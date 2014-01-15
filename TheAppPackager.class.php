@@ -266,11 +266,14 @@ class TheAppPackager extends TheAppBuilder {
 				'remote' => true,
 				'update' => 'full'
 			) );
+			/*
+			// I don't think you actually need to explicitly include cordova_plugins - it gets injected automatically by cordova.js
 			array_unshift( $jsonout->js, (object)array(
 				'path' => 'cordova_plugins.js',
 				'remote' => true,
 				'update' => 'full'
 			) );
+			*/
 		}
 		
 		$jsonout = apply_filters('the_app_factory_package_app_json',$jsonout);
