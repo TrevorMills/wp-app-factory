@@ -272,7 +272,21 @@ class TheAppPackager extends TheAppBuilder {
 
 		$jsonout = parent::deploy( $json, $the_app->get('package_native_www') );
 		
-		if ($the_app->get('package_target') != 'pb'){ // Phonegap Build puts Cordova in itself (I think)
+		if ( $the_app->get( 'package_target' )  === 'pb' ){
+			// PhoneGap Build works a little differently.  
+			array_unshift( $jsonout->js, (object)array(
+				'path' => 'InAppBrowser.js',
+				'remote' => true,
+				'update' => 'full'
+			) );
+			array_unshift( $jsonout->js, (object)array(
+				'path' => 'phonegap.js',
+				'remote' => true,
+				'update' => 'full'
+			) );
+		}
+		else{
+			// Other packaging just include the cordova.js file.
 			array_unshift( $jsonout->js, (object)array(
 				'path' => 'cordova.js',
 				'remote' => true,

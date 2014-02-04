@@ -89,9 +89,11 @@ Ext.define('the_app.controller.Main', {
 				}
 			);
 		}
-		
-		if (Ext.os.name == 'iOS' && Ext.os.version.major >= 7){
-			Ext.Viewport.addCls('ios7');
+		else{
+			// Only for non-packaged apps
+			if (Ext.os.name == 'iOS' && Ext.os.version.major >= 7){
+				Ext.Viewport.addCls('ios7');
+			}
 		}
 	},
 	
@@ -264,9 +266,7 @@ Ext.define('the_app.controller.Main', {
 		}
 		else{
 			store.on('load',doit);
-			if (!store.getAutoLoad()){
-				store.load();
-			}
+			store.maybeLoad();
 		}
 		
 	},
@@ -417,9 +417,7 @@ Ext.define('the_app.controller.Main', {
 		}
 		else{
 			store.on('load',doit);
-			if (!store.getAutoLoad()){
-				store.load();
-			}
+			store.maybeLoad();
 		}
 	},
 
@@ -472,9 +470,7 @@ Ext.define('the_app.controller.Main', {
 		}
 		else{
 			store.on('load',doit);
-			if (!store.getAutoLoad()){
-				store.load();
-			}
+			store.maybeLoad();
 		}
 		
 		

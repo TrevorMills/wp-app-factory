@@ -52,6 +52,13 @@ class TheAppBannerAds{
 			}
 			break;
 		case 'banner_ad':
+			if ( $the_app->is('packaging') ){ 
+				$relative_dest = 'resources/images/ads/'.basename( $atts['src'] );
+				$dest = $the_app->get( 'package_native_www' ) . $relative_dest;
+				TheAppBuilder::build_mkdir(dirname($dest));
+				TheAppBuilder::build_cp( $atts['src'], $dest, false, true ); // no minify, silent
+				$atts['src'] = $relative_dest;
+			}
 			$this->ads[] = array(
 				'src' => $atts['src'],
 				'href' => $atts['href']
@@ -73,8 +80,22 @@ class TheAppBannerAds{
 			// Setup the Banner Ad Helper.  
 			add_filter('TheAppFactory_helpers', array( &$this, 'helper' ), 10, 2);
 			$the_app->set( 'banner_ads', $this->ads );
+			$registered_post_queries = $the_app->get('registered_post_queries');
+			$registered_post_queries['banner_ads'] = array(
+				array(
+					'query_vars' => array(
+						'data_callback' => array( &$this, 'ads_callback' ),
+					)
+				)
+			);
+			$the_app->set('registered_post_queries',$registered_post_queries);
 			$this->reset_ads();
 		}
+	}
+	
+	public function ads_callback( $query ){
+		$the_app = & TheAppFactory::getInstance();
+		return $the_app->get( 'banner_ads' );
 	}
 	
 	public function helper( $helpers, $args ){
@@ -83,7 +104,8 @@ class TheAppBannerAds{
 		$helper = array(
 			'bannerAds' => $the_app->get('banner_ads'),
 			'specificBannerAds' => false,
-			'fieldKeys' => array( 'content', 'description' ) // Fields that _could_ contain the markup for banner ads
+			'fieldKeys' => array( 'content', 'description' ), // Fields that _could_ contain the markup for banner ads
+			'homeUrl' => get_permalink() . 'data/banner_ads'
 		);
 		foreach ( (array)$this->atts as $key => $value ){
 			$key = preg_replace_callback( '/_([a-z])/', create_function( '$a', 'return strtoupper($a[1]);'), $key );
@@ -93,6 +115,47 @@ class TheAppBannerAds{
 			$helper[$key] = $value;
 		}
 		
+		$helper['phoneHome'] = $the_app->do_not_escape( "
+			function(){
+				Ext.data.JsonP.request({
+					url: this.getHomeUrl(),
+					callbackKey: 'callback',
+					scope: this,
+					success: function( result, request ){
+						var ads = this.getBannerAds(), keepers = [];
+						
+						Ext.each( result.banner_ads, function( ad ){
+							var base = ad.src.match( /[^\/]*$/ )[0],
+								link = ad.href,
+								found = false
+							;
+								
+							Ext.each( ads, function( tester, index ){
+								if ( !found && tester.src.match( /[^\/]*$/ )[0] == base ){
+									tester.href = ad.href; // just in case the href has changed
+									found = true;
+									keepers.push( index );
+								}
+							});
+							if ( !found ){
+								// New ad
+								keepers.push( ads.length );
+								delete ad.query_num;
+								ads.push( ad );
+							}
+						});
+						
+						// Now, get rid of any ads that aren't keepers
+						var new_ads = [];
+						Ext.each( keepers, function( index ){
+							new_ads.push( ads[ index ] );
+						});
+						
+						this.setBannerAds( new_ads );
+					},
+				});
+			}
+		");		
 		
 		$helpers['BANNER_ADS'] = apply_filters('the_app_banner_ads_helper',$helper);
 

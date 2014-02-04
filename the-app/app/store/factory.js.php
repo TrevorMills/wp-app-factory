@@ -38,6 +38,11 @@
 Ext.define('the_app.store.<?php echo $key; ?>',
 	{
 		extend: '<?php echo $extend; ?>',
+		maybeLoad: function(){
+			if ( !( this.getAutoLoad() || this.isLoading() || this.isLoaded() ) ){
+				this.load();
+			}
+		},
 		config: {
 			<?php foreach ($store as $what => $details) : ?>
 			<?php echo $what; ?>: <?php echo TheAppFactory::anti_escape(json_encode($details)); ?>,

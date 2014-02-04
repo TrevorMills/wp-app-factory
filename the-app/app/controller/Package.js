@@ -197,7 +197,16 @@ Ext.define('the_app.controller.Package', {
 				message: 'Zipping up the archive',
 				callback: function( data ){
 					var response = JSON.parse(data.responseText);
-					window.open( response.message, '_blank');
+					
+					the_app.app.confirm({
+						id: 'download-zip', 
+						title: WP.__("Ready"),
+						html: WP.__("The package is ready to be downloaded as a ZIP file.  Download now?"),
+						hideOnMaskTap: false,
+						handler: function(){
+							window.open( response.message, '_blank');
+						}
+					})
 				}
 			},
 			/*

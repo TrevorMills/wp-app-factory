@@ -24,6 +24,10 @@ Ext.define('the_app.controller.BannerAdsController', {
 		
     },
 
+	init: function(){
+		BANNER_ADS._phoneHome(); // See if there are any new ads to serve up
+	},
+
 	onItemListPop: function( panel, item ){
 		Ext.defer( function( panel ){
 			this.onItemListPush( panel, panel.getActiveItem() );

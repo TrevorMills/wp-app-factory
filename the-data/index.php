@@ -67,7 +67,7 @@
 		// the category spoofing for this query instance.  Similarly, if a later registered_query
 		// limits based on category, then we shouldn't add the spoof'd versions outside of that category
 		foreach ($registered_queries as $queryInstance => $registered_query){
-			if (isset($registered_query['query_vars']['data_callback']) and function_exists($registered_query['query_vars']['data_callback'])){
+			if (isset($registered_query['query_vars']['data_callback']) and is_callable($registered_query['query_vars']['data_callback'])){
 				$xtype = $registered_query['query_vars']['xtype'];
 				if (!array_key_exists($xtype,$other_ids)){
 					$other_ids[$xtype] = array();
