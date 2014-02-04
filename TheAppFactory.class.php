@@ -311,6 +311,21 @@ class TheAppFactory {
 			unset($this->parms[$what][$value]);
 		}
 	}
+	
+	public function shortcode_atts( $defaults, $atts ){
+		// This is exactly the same as the WP function shortcode_atts
+		// except that it reCamelCases $atts keys (so if you enter
+		// thisAttributeName in your shortcode, it actually survives as CamelCased, as opposed to 
+		// being lowercased)
+		foreach ( array_keys($defaults) as $key ){
+			$lower_key = strtolower( $key );
+			if ( isset( $atts[ $lower_key ] ) ){
+				$atts[ $key ] = $atts[ $lower_key ];
+				unset( $atts[ $lower_key ] ); 
+			}
+		}
+		return shortcode_atts( $defaults, $atts );
+	}
 
 	// Exactly the same as the PHP array_merge_recursize, unless it's not an associative
 	// array (i.e. numeric indexes), in which case, it just fully replaces the previous
