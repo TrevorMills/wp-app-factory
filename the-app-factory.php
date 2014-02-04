@@ -3,7 +3,7 @@
 Plugin Name: WP App Factory
 Plugin URI: http://topquark.com/wp-app-factory/extend/plugins/wp-app-factory
 Description: Creates a cross-device mobile app out of any post type using Sencha Touch as the framework
-Version: 2.0.4
+Version: 2.0.5
 Author: Top Quark
 Author URI: http://topquark.com
 
@@ -276,7 +276,7 @@ function the_app_factory_rewrite_rules($rules){
 	$the_app_factory_rules[APP_POST_TYPE.'/([^/]+)/app/(.+)/?$'] = 'index.php?'.APP_POST_VAR.'=$matches[1]&'.APP_APP_VAR.'=$matches[2]'; // the posts page
 
 	// I want the CONF_APP rules to appear at the beginning - thereby taking precedence over other rules
-	$rules = $the_app_factory_rules + $rules;
+	$rules = array_merge($the_app_factory_rules,$rules);
 	//var_dump($rules);
 	return $rules;
 }

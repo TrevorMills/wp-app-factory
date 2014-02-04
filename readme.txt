@@ -4,7 +4,7 @@ Tags: sencha, app, custom post types, shortcodes, mobile, web app
 Requires at least: 3.0
 Tested up to: 3.6
 Donate link: http://topquark.com
-Stable tag: 2.0.4
+Stable tag: 2.0.5
 
 WP App Factory adds an App custom post type that allows you to build a cross-device mobile web app out of your content.
 
@@ -264,6 +264,9 @@ Tweet tweet, twiddle, twiddle,
 `
 
 == Changelog ==
+
+= 2.0.5 = 
+* Fix: Native InAppBrowser now triggers properly in both iOS and Android.  I had to add in a confirmation that the user is leaving the app.  Without the confirmation, Sencha Touch seems to lose track of who is supposed to be handling the event - the app, or InAppBrowser.  Now, I use the confirm to trigger window.open( href, '_system' ).  More hours than I'd care to mention...
 
 = 2.0.4 = 
 * Minor bug fixes

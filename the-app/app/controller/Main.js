@@ -65,11 +65,21 @@ Ext.define('the_app.controller.Main', {
 	onMainPanelInitialize: function(panel){	
 		// If this is a native APP, open any target="_blank" links in the native browser
 		if (typeof PACKAGED_APP != 'undefined'){
-			Ext.getBody().onBefore(
+			Ext.Viewport.onBefore(
 				'tap',
 				function(e){
 					e.preventDefault();
-					window.open(e.target.href, "_system");
+					the_app.app.confirm(
+						{
+							id: 'update', 
+							title: WP.__("Leaving App"),
+							html: WP.__("You have requested to view a web page outside of this app.  Continue to your default browser?"),
+							hideOnMaskTap: false,
+							handler: function(){
+								window.open( e.target.href, "_system");
+							}
+						}
+					);
 					return false;
 				},
 				this,

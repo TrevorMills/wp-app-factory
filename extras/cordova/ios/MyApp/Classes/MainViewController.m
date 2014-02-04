@@ -61,6 +61,26 @@
     // Release any cached data, images, etc that aren't in use.
 }
 
+// Open anything that is in the http or https protocol in the external browser
+// This function is in lieu of InAppBrowser, which apparently is buggy.  Sometimes
+// InAppBrowser would allow the link to be loaded within the browser.
+/*
+- (BOOL) webView:(UIWebView*)theWebView shouldStartLoadWithRequest:(NSURLRequest*)request navigationType:(UIWebViewNavigationType)navigationType
+{
+    NSURL *url = [request URL];
+
+    if ( ([url scheme] != NULL) && ([[url scheme] rangeOfString:@"http"].location != NSNotFound))
+    {
+        if ([[UIApplication sharedApplication] canOpenURL:url]) {
+            [[UIApplication sharedApplication] openURL:url];
+            return NO;
+        }
+    }
+
+  return [super webView:theWebView shouldStartLoadWithRequest:request navigationType:navigationType];
+}
+*/
+
 #pragma mark View lifecycle
 
 - (void)viewWillAppear:(BOOL)animated

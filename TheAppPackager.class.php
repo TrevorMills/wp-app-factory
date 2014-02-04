@@ -157,7 +157,7 @@ class TheAppPackager extends TheAppBuilder {
 		// Copy over the shell Cordova project into the NATIVE directory.  
 		// This contains the Cordova lib and a shell app (for iOS or Android, depending)
 		$the_app = & TheAppFactory::getInstance();
-		if ($the_app->get('package_target') == 'pb' ){ // Phonegap Build doesn't need Cordova, just a www directory
+		if ( false && $the_app->get('package_target') == 'pb' ){ // Phonegap Build doesn't need Cordova, just a www directory
 			parent::build_mkdir( $the_app->get( 'package_native_root' ).'www' );
 		}
 		else{
@@ -244,6 +244,18 @@ class TheAppPackager extends TheAppBuilder {
 
 			rename( $native_root.'src/'.$name.'.java',$target_dest.'/'.$name.'.java');
 			break;
+		case 'pb':
+			$files = array(
+				'www/config.xml'
+			);
+			
+			foreach ($files as $file){
+				$contents = file_get_contents( $native_root . $file );
+				$contents = str_replace( 'com.example.MyApp', $app_identifier, $contents );
+				$contents = str_replace( 'MyApp', $name, $contents );
+				file_put_contents( $native_root . $file, $contents );
+			}
+
 		}
 		
 		echo "[SETUP] A shell CORDOVA project has been setup";
@@ -266,11 +278,14 @@ class TheAppPackager extends TheAppBuilder {
 				'remote' => true,
 				'update' => 'full'
 			) );
+			/*
+			// I don't think you actually need to explicitly include cordova_plugins - it gets injected automatically by cordova.js
 			array_unshift( $jsonout->js, (object)array(
 				'path' => 'cordova_plugins.js',
 				'remote' => true,
 				'update' => 'full'
 			) );
+			*/
 		}
 		
 		$jsonout = apply_filters('the_app_factory_package_app_json',$jsonout);
