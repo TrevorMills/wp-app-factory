@@ -456,6 +456,7 @@ function the_app_factory_redirect(){
 add_action('the_app_factory_template_redirect','the_app_factory_include_and_exit');
 function the_app_factory_include_and_exit($include){
 	$the_app = & TheAppFactory::getInstance();
+	header("HTTP/1.1 200 OK");
 	include($include);
 	exit();
 }

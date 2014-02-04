@@ -193,7 +193,7 @@ class TheAppPackager extends TheAppBuilder {
 				"$name/Classes/AppDelegate.m",
 				"$name/Classes/MainViewController.h",
 				"$name/Classes/MainViewController.m",
-				"$name/config.xml",
+				//"$name/config.xml",
 				"$name/main.m",
 				"$name/$name-Prefix.pch",
 				"$name.xcodeproj/project.pbxproj",
@@ -208,12 +208,17 @@ class TheAppPackager extends TheAppBuilder {
 			// Update the Bundle Identifier in the .plist file
 			$contents = file_get_contents( "{$native_root}{$name}/$name-Info.plist" );
 			$contents = str_replace( 'com.example.MyApp', $app_identifier, $contents);
+			$contents = str_replace( '{VERSION}', $app_meta['version'], $contents);
 			file_put_contents( "{$native_root}{$name}/$name-Info.plist", $contents );
 			
+			/*
 			$contents = file_get_contents( "{$native_root}www/config.xml" );
 			$contents = str_replace( 'com.example.MyApp', $app_identifier, $contents);
 			$contents = str_replace( 'MyApp', $name, $contents);
 			file_put_contents( "{$native_root}www/config.xml", $contents );
+			*/
+			self::config_xml( "$name/config.xml" );
+			self::config_xml( "www/config.xml" );
 			
 			break;
 		case 'android':
@@ -225,10 +230,10 @@ class TheAppPackager extends TheAppBuilder {
 				'AndroidManifest.xml',
 				'build.xml',
 				//'res/layout/main.xml',
-				'res/xml/config.xml',
+				//'res/xml/config.xml',
 				'res/values/strings.xml',
 				"src/$name.java",
-				'assets/www/config.xml'
+				//'assets/www/config.xml'
 			);
 
 			foreach ($files as $file){
@@ -243,19 +248,14 @@ class TheAppPackager extends TheAppBuilder {
 			wp_mkdir_p($target_dest);
 
 			rename( $native_root.'src/'.$name.'.java',$target_dest.'/'.$name.'.java');
+			
+			self::config_xml( 'res/xml/config.xml' );
+			self::config_xml( 'assets/www/config.xml' );
+			
 			break;
 		case 'pb':
-			$files = array(
-				'www/config.xml'
-			);
-			
-			foreach ($files as $file){
-				$contents = file_get_contents( $native_root . $file );
-				$contents = str_replace( 'com.example.MyApp', $app_identifier, $contents );
-				$contents = str_replace( 'MyApp', $name, $contents );
-				file_put_contents( $native_root . $file, $contents );
-			}
-
+			self::config_xml( 'www/config.xml' );
+			break;
 		}
 		
 		echo "[SETUP] A shell CORDOVA project has been setup";
@@ -771,12 +771,24 @@ class TheAppPackager extends TheAppBuilder {
 			<strong><?php printf(__('You have to give your app a bundle identifier.  This is usually your domain name backwards, followed by the app name (i.e. com.example.%s).','app-factory'),$the_app->get('package_name')); ?></strong><br/>
 			<?php echo __('Bundle Identifier','app-factory'); ?>: <input type="text" name="app_meta[bundle_id]" value="<?php echo esc_attr($app_meta['bundle_id']); ?>" />.<?php echo $the_app->get('package_name'); ?>
 		</p>
-		
+
 		<p>
-			<?php printf( __( 'If you wish to serve data from a live server (making it available for beta testers), enter the app url on the live server:','app-factory' ) ); ?><br/>
-			<?php echo __('Live Data URL','app-factory'); ?>: <input type="text" name="app_meta[data_url]" value="<?php echo esc_attr($app_meta['data_url']); ?>" />
+			<strong><?php echo __( 'The version you are about to package.  This will need to coincide with the version in the app store','app-factory'); ?></strong><br/>
+			<?php echo __('Version','app-factory'); ?>: <input type="text" name="app_meta[version]" value="<?php echo esc_attr($app_meta['version']); ?>" />
 		</p>
 
+		<p style="vertical-align:top">
+			<strong><?php echo __( 'The Description doesn\'t necessarily appear anywhere other than the config.xml file.','app-factory'); ?></strong><br/>
+			<?php echo __('Description','app-factory'); ?>: <textarea cols=100 rows=8 name="app_meta[description]"><?php echo $app_meta['description']; ?></textarea>
+		</p>
+
+		<p>
+			<strong><?php echo __( 'Author info goes into the config.xml file','app-factory'); ?></strong><br/>
+			<?php echo __('Author Name','app-factory'); ?>: <input type="text" name="app_meta[author_name]" value="<?php echo esc_attr($app_meta['author_name']); ?>" /><br/>
+			<?php echo __('Author Email','app-factory'); ?>: <input type="text" name="app_meta[author_email]" value="<?php echo esc_attr($app_meta['author_email']); ?>" /><br/>
+			<?php echo __('Author Url','app-factory'); ?>: <input type="text" name="app_meta[author_url]" value="<?php echo esc_attr($app_meta['author_url']); ?>" /><br/>
+		</p>
+		
 		<?php if (!empty($app_meta['bundle_id'])) : 
 			$targets = self::get_available_targets();
 			foreach ($targets as $target => $label) : ?>
@@ -794,6 +806,39 @@ class TheAppPackager extends TheAppBuilder {
 		return parent::get_by_curl( $url, $ch, 'packaging=true&target='.self::$instance->get('package_target'));
 	}
 	
+	public function config_xml( $path, $path_is_full = false ){
+		$the_app = & TheAppFactory::getInstance();
+
+		$name = $the_app->get('package_name');
+		if ( empty( $name ) ){
+			$name = preg_replace('/[^a-zA-Z0-9]/','',$the_app->get('post')->post_title );
+		}
+		$app_meta = the_app_get_app_meta( $the_app->get('post')->ID );
+		$app_identifier = $app_meta['bundle_id'].'.'.$name;	
+		
+		if ( !$path_is_full ){
+			$path = $the_app->get('package_native_root') . $path;
+		}
+		
+		$xml = simplexml_load_file( $path );
+		$xml->registerXPathNamespace( 'c', implode('',$xml->getNamespaces()) );
+		$xml->attributes()->id = $app_identifier;
+		$xml->name = $the_app->get('post')->post_title;
+		$xml->attributes()->version = $app_meta['version'];
+		$xml->description = $app_meta['description'];
+		$xml->author = $app_meta['author_name'];
+		$author = $xml->xpath( '//c:author' );
+		if ( $author ){
+			foreach ( $author as $element ){
+				$element->attributes()->email = $app_meta['author_email'];
+				$element->attributes()->href = $app_meta['author_url'];
+			}
+		}
+		
+		do_action_ref_array( 'the_app_config_xml', array( & $xml, $path ) );
+		
+		file_put_contents( $path, $xml->asXML() );		
+	}
 	
 }
 ?>
