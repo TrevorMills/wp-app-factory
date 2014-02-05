@@ -76,7 +76,9 @@ Ext.define('the_app.controller.Main', {
 							html: WP.__("You have requested to view a web page outside of this app.  Continue to your default browser?"),
 							hideOnMaskTap: false,
 							handler: function(){
-								window.open( e.target.href, "_system");
+								// sometimes it's a lower down element that is the target (i.e. an <img> tag).  If that's the case, then we need to
+								// go up the DOM until we find the A.  
+								window.open( e.target.href || Ext.fly( e.target ).parent( 'a', true ).href, "_system");
 							}
 						}
 					);
