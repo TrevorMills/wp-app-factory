@@ -410,7 +410,7 @@ class TheAppFactory {
 			break;
 		case 'app_item':
 			switch(true){
-			case (isset($atts['callback']) and function_exists($atts['callback'])):
+			case (isset($atts['callback']) and is_callable($atts['callback'])):
 				$callback = $atts['callback'];
 				call_user_func_array($atts['callback'],array($original_atts)); // pass the original, so there's no filtering.
 				break;

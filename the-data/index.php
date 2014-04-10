@@ -16,7 +16,7 @@
 				if (isset($registered_query['useLocalStorage']) and !$registered_query['useLocalStorage']){
 					continue;
 				}
-				if (isset($registered_query['query_vars']['timestamp_callback']) and function_exists($registered_query['query_vars']['timestamp_callback'])){
+				if (isset($registered_query['query_vars']['timestamp_callback']) and is_callable($registered_query['query_vars']['timestamp_callback'])){
 					// There is a timestamp_callback.  Call it to retreive the latest timestamp for the registered query
 					$latest[$type] = call_user_func($registered_query['query_vars']['timestamp_callback'],$registered_query);
 				}
