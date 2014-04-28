@@ -112,6 +112,19 @@ function app_twitter_tweets(){
 	if (empty($atts['next_results'])){
 		unset($atts['next_results']);
 	}
+	$the_app = & TheAppFactory::getInstance();
+	
+	// Get search from app NOW
+	foreach( $the_app->get( 'items' ) as $item ){
+		if ( $item['item']['xtype'] == 'tweetlist' ){
+			$atts['q'] = $item['item']['search'];
+			break;
+		}
+	}
+	
+	$atts['q'] = urldecode($atts['q']);	// Just in case
+	
+	$atts['q'] = apply_filters( 'app_twitter_search', $atts['q'], $the_app );
 
 	// Twitter Rate Limits to 180 requests per 15 minutes.  
 	// To help server performance, I'm going to limit our

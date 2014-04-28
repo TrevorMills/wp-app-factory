@@ -66,7 +66,7 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 						// then we'll save off the timestamps for each of the stores and trigger a server
 						// load.  Note, I'm not using the loadServer() function because I want to control
 						// syncing the StoreStatusStore myself, and loadServer automatically syncs
-						if (this.getProxy().config.type == 'localstorage'){
+						if ( !this.getLocalExists() ){
 							if (successful && records.length){
 								this.setLocalExists(true);
 								Ext.each(records,function(record){
@@ -81,7 +81,7 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 								this.load();
 							}
 						}
-						else if(this.getLocalExists()){
+						else{
 							// This is from the server load triggered above
 							var stores_to_update = [];
 							Ext.each(records,function(record){
