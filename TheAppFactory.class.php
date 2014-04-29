@@ -464,7 +464,7 @@ class TheAppFactory {
 				'maxtabbaritems' => '',		// If you want to enable a slide-up menu panel to appear when there are more than N tabs, enter N for maxtabbaritems
 				'splash_pause' => 2,		// If you have a splashscreen, you can force it to display for N seconds by setting splash_pause=N
 				'ios_install_popup' => 'false', // True to enable the Install App popup on iOS devices,
-				'sdk' => '2.1',					// the Sencha Touch SDK to use - valid values are 2.1 (default) or 2.2.1
+				'sdk' => '2.3.1',				// the Sencha Touch SDK to use - only valid value currently is 2.3.1
 				'theme' => 'sencha-touch'		// valid values are base, bb10, sencha-touch (default).  The blank SDK also have wp-app-factory
 			);
 			break;

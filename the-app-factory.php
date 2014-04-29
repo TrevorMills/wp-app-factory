@@ -82,9 +82,8 @@ function the_app_factory_install() {
 			'RewriteEngine On',
 			'RewriteBase '.$site_root,
 			// Note, the blog part at the beginning is to handle the root site on Multisite installations.  This should be 
-			'RewriteRule ^('.$root_site_prefix.')?([^\/]*)/?apps/[^\/]+/sdk2.1/(.*)$ '.$site_root.'$2/wp-content/plugins/wp-app-factory/the-app/sdk2.1/$3 [L]',
 			'RewriteRule ^('.$root_site_prefix.')?([^\/]*)/?apps/[^\/]+/resources/(.*)$ '.$site_root.'$2/wp-content/plugins/wp-app-factory/the-app/resources/$3 [L]',
-			'RewriteRule ^('.$root_site_prefix.')?([^\/]*)/?apps/[^\/]+/sdk2.2.1/(.*)$ '.$site_root.'$2/wp-content/plugins/wp-app-factory/the-app/sdk2.2.1/$3 [L]',
+			'RewriteRule ^('.$root_site_prefix.')?([^\/]*)/?apps/[^\/]+/sdk2.3.1/(.*)$ '.$site_root.'$2/wp-content/plugins/wp-app-factory/the-app/sdk2.3.1/$3 [L]',
 			'</IfModule>'
 		);
 	}
@@ -93,8 +92,7 @@ function the_app_factory_install() {
 			'<IfModule mod_rewrite.c>',
 			'RewriteEngine On',
 			'RewriteBase '.$home_root,
-			'RewriteRule ^apps/[^\/]+/sdk2.1/(.*)$ '.$site_root.'wp-content/plugins/wp-app-factory/the-app/sdk2.1/$1 [L]',
-			'RewriteRule ^apps/[^\/]+/sdk2.2.1/(.*)$ '.$site_root.'wp-content/plugins/wp-app-factory/the-app/sdk2.2.1/$1 [L]',
+			'RewriteRule ^apps/[^\/]+/sdk2.3.1/(.*)$ '.$site_root.'wp-content/plugins/wp-app-factory/the-app/sdk2.3.1/$1 [L]',
 			'RewriteRule ^apps/[^\/]+/resources/(.*)$ '.$site_root.'wp-content/plugins/wp-app-factory/the-app/resources/$1 [L]',
 			'</IfModule>'
 		);
