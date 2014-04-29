@@ -384,6 +384,9 @@ class TheAppFactory {
 					$this->set($key,$att);
 				}
 			}
+			// Make sure we're always working with the latest Sencha Touch SDK
+			$defaults = $this->get_default_atts( $code );
+			$this->set( 'sdk', $defaults['sdk'] );
 			break;
 		case 'loading_spinner':
 			foreach ($atts as $key => $att){
