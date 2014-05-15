@@ -13,6 +13,7 @@ Ext.define('the_app.view.TweetList',{
 	config: {
 		title: 'Twitter Page',
 		search: '',
+		useAppSearch: true,
 		items: [
 			{
 				xtype: 'list',
@@ -78,10 +79,10 @@ Ext.define('the_app.view.TweetList',{
 		                pageSize       : 25,
 		                remoteFilter   : true,
 		                clearOnPageLoad: false,
-						filters: [new Ext.util.Filter({
-						    property: 'q',
-						    value   : this.getSearch()
-						})],
+						filters: [
+							new Ext.util.Filter({property: 'q',value   : this.getSearch()}),
+							new Ext.util.Filter({property: 'use_app_search',value   : this.getUseAppSearch()})
+						],
 						autoLoad: false
 					}
 				);
