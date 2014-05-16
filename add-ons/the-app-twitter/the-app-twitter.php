@@ -105,7 +105,8 @@ function app_twitter_tweets(){
 		'q' => '',
 		'count' => '',
 		'include_entities' => 'false',
-		'next_results' => ''
+		'next_results' => '',
+		'use_app_search' => 'true'
 	);
 	
 	$atts = shortcode_atts($defaults,$_GET);
@@ -115,10 +116,12 @@ function app_twitter_tweets(){
 	$the_app = & TheAppFactory::getInstance();
 	
 	// Get search from app NOW
-	foreach( $the_app->get( 'items' ) as $item ){
-		if ( $item['item']['xtype'] == 'tweetlist' ){
-			$atts['q'] = $item['item']['search'];
-			break;
+	if ( $att['use_app_search'] == 'true' ){
+		foreach( $the_app->get( 'items' ) as $item ){
+			if ( $item['item']['xtype'] == 'tweetlist' ){
+				$atts['q'] = $item['item']['search'];
+				break;
+			}
 		}
 	}
 	
