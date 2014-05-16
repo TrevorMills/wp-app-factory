@@ -11,16 +11,15 @@ Ext.define('the_app.view.ItemList',{
 	config: {
 		title: 'Item List',
 		iconCls: 'star',
-		items: [
-			{
-				xtype: 'list',
-				title: '',
-				itemTpl: '{title}',
-				itemId: 'list', 
-				infinite: true,
-				variableHeights: true,
-			}
-		],
+		items: [],
+		initialItem: {
+			xtype: 'list',
+			title: '',
+			itemTpl: '{title}',
+			itemId: 'list', 
+			infinite: true,
+			variableHeights: true,
+		},
 		
 		queryInstance: null,
 		store: null,

@@ -290,6 +290,13 @@ Ext.define('the_app.controller.Main', {
 	},
 	
 	onItemListInitialize: function (panel){
+		// Since we can't set Infinite after the fact, I need to set it NOW
+		var list_config = Ext.apply( {}, panel.getInitialItem() );
+		if ( Ext.isDefined( panel.initialConfig.infinite ) ){
+			list_config.infinite = panel.initialConfig.infinite;
+		}
+		panel.push( list_config );
+
 		var l = panel.getComponent('list'); // The List
 		//console.log(['Main',panel,panel.getQueryInstance()]); // @dev
 		l.setStore(panel.getMeta().store);
