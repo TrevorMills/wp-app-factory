@@ -54,10 +54,8 @@ Ext.define('the_app.proxy.TwitterProxy',{
 			Ext.each( filters, function( filter, index ){
 				var param = {};
 				param[ filter.getProperty() ] = filter.getValue();
-				console.log( param );
 	            Ext.apply(params, param );
 			});
-			console.log( params );
 
             request.setParams(params);
             request.setUrl(this.getUrl());
