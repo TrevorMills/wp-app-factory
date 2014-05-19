@@ -54,6 +54,9 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 			localExists: false,
 			listeners: {
 				load: function(store, records, successful, operation, eOpts){
+					if ( Ext.Viewport.getMasked() ){
+						Ext.Viewport.unmask();
+					}
 					<?php if ($key == 'StoreStatusStore') : ?>
 						// The StoreStatusStore is a way to tell if any of the stores
 						// have been updated on the server.  It contains records for each of the stores
@@ -150,6 +153,10 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 
 					if (this.getProxy().config.type == 'localstorage' && !(successful && records.length)){
 						// Tried to load from localstorage, but there's nothing there.  Try and load from the server
+						Ext.Viewport.setMasked( {
+							xtype: 'loadmask',
+							message: WP.__( 'Loading' )
+						});
 						if (typeof PACKAGED_APP != 'undefined'){
 							// We are packaging for native, we're going to update the URL for the proxy to
 							// load from the initial data in the resources/data directory 
