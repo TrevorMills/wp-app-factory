@@ -1289,11 +1289,11 @@ class TheAppFactory {
 	}
 	
 	public function sanitize_json( $json = null ){
+		if ($json){
+			$json = json_decode( $json );
+		}
 		if (!$json){
 			$json = new stdClass;
-		}
-		else{
-			$json = json_decode( $json );
 		}
 
 		if (!is_array($json->js)){

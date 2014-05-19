@@ -717,9 +717,19 @@ class TheAppPackager extends TheAppBuilder {
 		$image_url = $content;
 		if ( $the_app->is('packaging') ){ 
 			$relative_dest = 'resources/images/'.basename($image_url);
+			if ( strpos( $relative_dest, '?' ) !== false ){
+				$relative_dest = 'resources/images/' . md5( basename( $image_url ) ); 
+			}
 			$dest = $the_app->get( 'package_native_www' ) . $relative_dest;
-			parent::build_mkdir(dirname($dest));
-			parent::build_cp( $image_url, $dest, false, true ); // no minify, silent
+			static $packaged;
+			if ( !isset( $packaged ) ){
+				$packaged = array();
+			}
+			if ( !in_array( $image_url, $packaged ) ){
+				$packaged[] = $image_url;
+				parent::build_mkdir(dirname($dest));
+				parent::build_cp( $image_url, $dest, false, true ); // no minify, silent
+			}
 			return $relative_dest;
 		}
 		return $image_url;
