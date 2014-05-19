@@ -86,6 +86,15 @@ Ext.define('the_app.view.TweetList',{
 						autoLoad: false
 					}
 				);
+				this.setMasked( {
+					xtype: 'loadmask',
+					message: WP.__('Loading')
+				} );
+				store.on( 'load', function(){
+					this.setMasked( false );
+				}, this, {
+					single: true,
+				});
 				store.load();
 				this.down('list').setStore(store);
 				this.down('list').add({
