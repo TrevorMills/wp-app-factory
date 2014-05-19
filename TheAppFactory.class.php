@@ -645,6 +645,11 @@ class TheAppFactory {
 		$index = $this->registerPostQuery($meta_atts);
 		$item_atts['queryInstance'] = $index;
 		
+		if ( $this->get( 'sdk' ) >= '2.3.1' && ( !$meta_atts['grouped'] || $meta_atts['grouped'] == 'false' ) ){
+			// There's a bug in Sencha Touch 2.3.1 where if a list is not grouped, but is infinite, it throws an error
+			$item_atts['infinite'] = false;
+		}
+		
 		$this->addItem($item_atts,$meta_atts);
 	}
 	
