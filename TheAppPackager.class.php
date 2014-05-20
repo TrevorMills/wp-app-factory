@@ -102,9 +102,8 @@ class TheAppPackager extends TheAppBuilder {
 	}
 	
 	public function package_app(){
-
 		global $post;
-		$post = get_post($_POST['id']);
+		$post = get_post($_REQUEST['id']);
 
 		ob_start();
 
@@ -115,7 +114,7 @@ class TheAppPackager extends TheAppBuilder {
 		//include_once('extras/class.JavaScriptPacker.php');  // Packer Code
 
 		$the_app = & TheAppFactory::getInstance();
-		switch($_POST['command']){
+		switch($_REQUEST['command']){
 		case 'cordova':
 			self::package_cordova();
 			break;
@@ -163,6 +162,7 @@ class TheAppPackager extends TheAppBuilder {
 		else{
 			parent::build_cp_deep( APP_FACTORY_PATH.'extras/cordova/'.$the_app->get('package_target'), $the_app->get( 'package_native_root' ), null, true );
 		}
+		
 		// There are a handful of places that we need to insert the actual name of our App
 		// Here is where we do that.
 
@@ -258,6 +258,8 @@ class TheAppPackager extends TheAppBuilder {
 			break;
 		}
 		
+		do_action_ref_array( 'the_app_package_cordova', array( &$the_app ) );
+
 		echo "[SETUP] A shell CORDOVA project has been setup";
 	}
 
@@ -847,7 +849,16 @@ class TheAppPackager extends TheAppBuilder {
 		
 		do_action_ref_array( 'the_app_config_xml', array( & $xml, $path ) );
 		
-		file_put_contents( $path, $xml->asXML() );		
+		file_put_contents( $path, $the_app->prettify_xml($xml->asXML() ) );		
+	}
+	
+	public function prettify_xml( $xml ){
+		// Prettify it.
+		$dom = new DOMDocument("1.0");
+		$dom->preserveWhiteSpace = false;
+		$dom->formatOutput = true;
+		$dom->loadXML( $xml );
+		return $dom->saveXML();
 	}
 	
 }
