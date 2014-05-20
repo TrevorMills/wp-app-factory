@@ -210,6 +210,7 @@ function the_app_factory_init()
 	include_once('add-ons/the-app-twitter/the-app-twitter.php');
 	include_once('add-ons/the-app-maps/the-app-maps.php');
 	include_once('add-ons/the-app-banner-ads/the-app-banner-ads.php');
+	include_once('add-ons/the-app-push-woosh/the-app-push-woosh.php');
 	do_action('TheAppFactory_load_plugins');
 }
 
