@@ -27,6 +27,7 @@ class TheAppPushWoosh{
 		add_action( 'TheAppFactory_setupHelpers', array( &$this, 'helper' ) );
 		add_action( 'the_app_package_cordova', array( &$this, 'package_cordova' ) );
 		add_action( 'the_app_config_xml', array( &$this, 'config_xml' ), 10, 2 );
+		add_filter( 'the_app_factory_package_app_json', array( &$this, 'app_json' ) );
 	}
 	
 	public function helper( &$the_app ){
@@ -43,13 +44,17 @@ class TheAppPushWoosh{
 		case 'android':
 			$this->adjustAndroidManifest();
 			$this->copyAndroidSourceFiles();
+			$this->adjustCordovaPlugins();
 			break;
 		case 'ios':
 			$this->copyIOSSourceFiles();
+			$this->adjustCordovaPlugins();
+			break;
+		case 'pb':
+			// Nothing to do for Phonegap Build
 			break;
 		}
 
-		$this->adjustCordovaPlugins();
 	}
 	
 	public function adjustAndroidManifest(){
@@ -178,12 +183,25 @@ class TheAppPushWoosh{
 		    </feature>
 		*/	
 		$the_app = & TheAppFactory::getInstance();
-		$feature = $xml->addChild( 'feature' );
-		$feature->addAttribute( 'name', 'PushNotification' );
-		$param = $feature->addChild( 'param' );
-		$param->addAttribute( 'name', $the_app->get( 'package_target' ) . '-package' );
-		$param->addAttribute( 'onload', 'true' );
-		$param->addAttribute( 'value', ( $the_app->get( 'package_target' ) == 'android' ? 'com.pushwoosh.plugin.pushnotifications.PushNotifications' : 'PushNotification' ) );
+		if ( $the_app->get( 'package_target' ) == 'pb' ){
+			$plugin = $xml->addChild( 'gap:plugin', null, 'http://phonegap.com/ns/1.0' );
+			$plugin->addAttribute( 'name', 'com.pushwoosh.plugins.pushwoosh' );
+		}
+		else{
+			$feature = $xml->addChild( 'feature' );
+			$feature->addAttribute( 'name', 'PushNotification' );
+			$param = $feature->addChild( 'param' );
+			$param->addAttribute( 'name', $the_app->get( 'package_target' ) . '-package' );
+			$param->addAttribute( 'onload', 'true' );
+			switch( $the_app->get( 'package_target' ) ){
+			case 'ios':
+				$param->addAttribute( 'value', 'PushNotification' );
+				break;
+			case 'android':
+				$param->addAttribute( 'value', 'com.pushwoosh.plugin.pushnotifications.PushNotifications' );
+				break;
+			}
+		}
 	}
 	
 	public function adjustCordovaPlugins(){
@@ -204,6 +222,20 @@ class TheAppPushWoosh{
 	,"com.pushwoosh.plugins.pushwoosh": "3.1.0"
 ', $in);
 		file_put_contents( $source, $in );
+	}
+	
+	public function app_json( $json ){
+		$the_app = & TheAppFactory::getInstance();
+		if ( $the_app->get( 'package_target' ) == 'pb' ){
+			$app_js = array_pop( $json->js );
+			array_push( $json->js, (object)array(
+				'path' => 'PushNotification.js',
+				'remote' => true,
+				'update' => 'full'
+			));
+			array_push( $json->js, $app_js );
+		}
+		return $json;
 	}
 }
 
