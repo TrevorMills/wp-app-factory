@@ -39,11 +39,16 @@ class TheAppPackager extends TheAppBuilder {
 			$relative[$target] = trailingslashit( "wp-app-factory/build/native/$target/$post->post_name" );
 			$the_app->set("package_native_root_$target",$the_app->get('package_root') . $relative[$target] );
 			$the_app->set("package_native_root_url_$target", $the_app->get('package_root_url') . $relative[$target] );
-			if ($target == 'android'){
+			switch( $target ){
+			case 'android':
 				$the_app->set("package_native_www_relative_$target", 'assets/www/' );
-			}
-			else{
+				break;
+			case 'ios':
 				$the_app->set("package_native_www_relative_$target", 'www/' );
+				break;
+			case 'pb':
+				$the_app->set("package_native_www_relative_$target", '/' );
+				break;
 			}
 			$the_app->set("package_native_www_$target", $the_app->get("package_native_root_$target") . $the_app->get("package_native_www_relative_$target") );
 		}
@@ -254,7 +259,7 @@ class TheAppPackager extends TheAppBuilder {
 			
 			break;
 		case 'pb':
-			self::config_xml( 'www/config.xml' );
+			self::config_xml( 'config.xml' );
 			break;
 		}
 		
@@ -357,18 +362,33 @@ class TheAppPackager extends TheAppBuilder {
 			if ($the_app->get('icon')){
 				self::deploy_android_icons($the_app->get('icon'));
 			}
+			if ($the_app->get('startup_phone')){
+				self::deploy_android_splash( $the_app->get('startup_phone'));
+			}
 			break;
 		case 'pb':
 			if ($the_app->get('icon')){
 				// Store both, let the user decide if they're going to upload them.
-				self::deploy_ios_icons($the_app->get('icon'));
-				self::deploy_android_icons($the_app->get('icon'));
+				self::deploy_ios_icons( $the_app->get('icon'), 'icons/ios' );
+				self::deploy_android_icons( $the_app->get('icon'), 'icons/android' );
+				self::create_images( $the_app->get('icon'), '', array( 96 => 'icon.png' ) );
+			}
+			if ($the_app->get('startup_phone')){
+				self::deploy_ios_startup_phone($the_app->get('startup_phone'), 'splash/ios' );
+				self::deploy_android_splash( $the_app->get('startup_phone'), 'splash/android' );
+				self::create_images( $the_app->get('startup_phone'), '', array( '720x960' => 'splash.png' ) );
+			}
+			if ($the_app->get('startup_tablet')){
+				self::deploy_ios_startup_tablet($the_app->get('startup_tablet'), 'splash/ios' );
+			}
+			if ($the_app->get('startup_landscape_tablet')){
+				self::deploy_ios_startup_landscape_tablet($the_app->get('startup_landscape_tablet'), 'splash/ios' );
 			}
 			break;
 		}
 	}
 
-	public function deploy_ios_icons( $url ){
+	public function deploy_ios_icons( $url, $path = 'icons' ){
 		$sizes = array(
 			72 => 'icon-72.png',
 			144 => 'icon-72@2x.png',
@@ -380,10 +400,10 @@ class TheAppPackager extends TheAppBuilder {
 			152 => 'icon-76@2x.png',
 		);
 
-		self::create_images( $url, 'icons', $sizes );
+		self::create_images( $url, $path, $sizes );
 	}
 
-	public function deploy_android_icons( $url ){
+	public function deploy_android_icons( $url, $path = 'icons' ){
 		$sizes = array(
 			96 => array('drawable/icon.png','drawable-xhdpi/icon.png'),
 			72 => 'drawable-hdpi/icon.png',
@@ -392,10 +412,49 @@ class TheAppPackager extends TheAppBuilder {
 
 		);
 
-		self::create_images( $url, 'icons', $sizes );
+		self::create_images( $url, $path, $sizes );
 	}
 
-	public function create_images( $url, $type, $sizes ){
+	public function deploy_android_splash( $url, $path = 'splash' ){
+		$sizes = array(
+			'240x320' => 'drawable-ldpi/splash.png',
+			'320x480' => 'drawable-mdpi/splash.png',
+			'480x800' => 'drawable-hdpi/splash.png',
+			'640x960' => 'drawable-xhdpi/splash.png',
+		);
+
+		self::create_images( $url, $path, $sizes );
+	}
+
+	public function deploy_ios_startup_phone( $url, $path = 'splash' ){
+		$sizes = array(
+			'320x480' => 'Default~iphone.png',
+			'640x960' => 'Default@2x~iphone.png',
+			'640x1136' => 'Default-568h@2x~iphone.png'
+		);
+
+		self::create_images( $url, $path, $sizes );
+	}
+
+	public function deploy_ios_startup_tablet( $url, $path = 'splash' ){
+		$sizes = array(
+			'736x1004' => 'Default-Portrait~ipad.png',
+			'1536x2008' => 'Default-Portrait@2x~ipad.png',
+		);
+
+		self::create_images( $url, $path, $sizes );
+	}
+
+	public function deploy_ios_startup_landscape_tablet( $url, $path = 'splash' ){
+		$sizes = array(
+			'1024x748' => 'Default-Landscape~ipad.png',
+			'2048x1496' => 'Default-Landscape@2x~ipad.png',
+		);
+
+		self::create_images( $url, $path, $sizes );
+	}
+
+	public function create_images( $url, $path, $sizes ){
 		// Returns an object with:
 		//	->image = image resource
 		//  ->size = the result from getimagesize()
@@ -405,14 +464,13 @@ class TheAppPackager extends TheAppBuilder {
 
 		if ($image){
 			foreach ($sizes as $pixels => $filename){
-				switch ($type){
-				case 'icons':
-					$width = $pixels;
-					$height = $pixels;
-					break;
-				case 'splash':
+				if ( strpos( $pixels, 'x' ) ){
 					list($width,$height) = explode('x',$pixels);
-					break;
+					$type = 'splash';
+				}
+				else{
+					$type = 'icon';
+					$width = $height = $pixels;
 				}
 				if ($width != $image->width or $height != $image->height){
 					$dest = imagecreatetruecolor( $width, $height );
@@ -430,14 +488,14 @@ class TheAppPackager extends TheAppBuilder {
 				
 				switch( $the_app->get('package_target') ){
 				case 'ios':
-					$relative_path = $the_app->get('package_name') . "/Resources/$type/";
+					$relative_path = $the_app->get('package_name') . "/Resources/$path/";
 					break;
 				case 'android':
 					$relative_path = "res/";
 					break;
 				case 'pb':
 				default:
-					$relative_path = "$type/";
+					$relative_path = "$path/";
 					break;
 				}
 				
@@ -454,40 +512,48 @@ class TheAppPackager extends TheAppBuilder {
 					imagepng( $dest, $the_app->get('package_native_root') . "$relative_path/$filename" );
 					echo "[CREATED] $filename\n";
 				}
-
-
+				
 				imagedestroy( $dest );
+				
+				switch( $the_app->get('package_target') ){
+				case 'pb':
+					if ( !isset( $config ) ){
+						$config_path = $the_app->get('package_native_root') . 'config.xml';
+						$config = simplexml_load_file( $config_path );
+					}
+					foreach ( (array)$filename as $name ){
+						if ( $type == 'icon' ){
+							$child = $config->addChild( 'icon' );
+						}
+						else{
+							$child = $config->addChild( 'gap:splash', null, 'http://phonegap.com/ns/1.0' );
+						}
+						if ( empty( $path ) ){
+							$child->addAttribute( 'src', $name );
+						}
+						else{
+							$child->addAttribute( 'src', "{$relative_path}{$name}" );
+							if ( strpos( $name, 'drawable' ) !== false ){
+								// Android
+								$child->addAttribute( 'gap:platform', 'android', 'http://phonegap.com/ns/1.0' );
+								preg_match( '/drawable-([a-z]+)/', $name, $matches );
+								$child->addAttribute( 'gap:density', $matches[1], 'http://phonegap.com/ns/1.0' );
+							}
+							else{
+								// iOS
+								$child->addAttribute( 'gap:platform', 'ios', 'http://phonegap.com/ns/1.0' );
+								$child->addAttribute( 'width', $width );
+								$child->addAttribute( 'height', $height );							
+							}
+						}
+					}
+				}
+			}
+			
+			if ( isset( $config ) ){
+				file_put_contents( $config_path, $the_app->prettify_xml( $config->asXML() ) );		
 			}
 		}
-	}
-
-	public function deploy_ios_startup_phone( $url ){
-		$sizes = array(
-			'320x480' => 'Default~iphone.png',
-			'640x960' => 'Default@2x~iphone.png',
-			'640x1136' => 'Default-568h@2x~iphone.png'
-		);
-
-		self::create_images( $url, 'splash', $sizes );
-
-	}
-
-	public function deploy_ios_startup_tablet( $url ){
-		$sizes = array(
-			'736x1004' => 'Default-Portrait~ipad.png',
-			'1536x2008' => 'Default-Portrait@2x~ipad.png',
-		);
-
-		self::create_images( $url, 'splash', $sizes );
-	}
-
-	public function deploy_ios_startup_landscape_tablet( $url ){
-		$sizes = array(
-			'1024x748' => 'Default-Landscape~ipad.png',
-			'2048x1496' => 'Default-Landscape@2x~ipad.png',
-		);
-
-		self::create_images( $url, 'splash', $sizes );
 	}
 
 	public function curl_image( $url ){
@@ -848,6 +914,14 @@ class TheAppPackager extends TheAppBuilder {
 				$element->attributes()->email = $app_meta['author_email'];
 				$element->attributes()->href = $app_meta['author_url'];
 			}
+		}
+		
+		if ( $the_app->get( 'package_target' ) == 'pb' ){
+			// For Phonegap Build, just build Android & iOS
+			$platform = $xml->addChild( 'gap:platform', null, 'http://phonegap.com/ns/1.0' );
+			$platform->addAttribute( 'name', 'android' );
+			$platform = $xml->addChild( 'gap:platform', null, 'http://phonegap.com/ns/1.0' );
+			$platform->addAttribute( 'name', 'ios' );
 		}
 		
 		do_action_ref_array( 'the_app_config_xml', array( & $xml, $path ) );
