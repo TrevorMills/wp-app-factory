@@ -696,20 +696,23 @@ class TheAppPackager extends TheAppBuilder {
 	                continue;
 
 	            $file = realpath($file);
-
+				
+				$localname = str_replace( DIRECTORY_SEPARATOR, '/', str_replace( $source . DIRECTORY_SEPARATOR, '', $file ) );
+				
 	            if (is_dir($file) === true)
 	            {
-	                $zip->addEmptyDir(str_replace($source . DIRECTORY_SEPARATOR, '', $file . DIRECTORY_SEPARATOR));
+					//var_dump( "DIR: " . str_replace($source . DIRECTORY_SEPARATOR, '', $file . DIRECTORY_SEPARATOR) );
+	                $zip->addEmptyDir( $localname . '/' );
 	            }
 	            else if (is_file($file) === true)
 	            {
-	                $zip->addFromString(str_replace($source . DIRECTORY_SEPARATOR, '', $file), file_get_contents($file));
+	                $zip->addFile( $file, $localname );
 	            }
 	        }
 	    }
 	    else if (is_file($source) === true)
 	    {
-	        $zip->addFromString(basename($source), file_get_contents($source));
+	        $zip->addFile( $source, basename($source) );
 	    }
 	    return $zip->close();
 	}
