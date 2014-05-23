@@ -155,7 +155,7 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 						// Tried to load from localstorage, but there's nothing there.  Try and load from the server
 						Ext.Viewport.setMasked( {
 							xtype: 'loadmask',
-							message: WP.__( 'Loading' )
+							message: WP.__( 'Initializing Data' )
 						});
 						if (typeof PACKAGED_APP != 'undefined'){
 							// We are packaging for native, we're going to update the URL for the proxy to
@@ -179,6 +179,20 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 					
 				}
 			}
+			<?php else : ?>
+			listeners: {
+				beforeload: function(store, operation, eOpts){
+					Ext.Viewport.setMasked( {
+						xtype: 'loadmask',
+						message: WP.__( 'Initializing Data' )
+					});
+				},
+				load: function(store, records, successful, operation, eOpts){
+					if ( Ext.Viewport.getMasked() ){
+						Ext.Viewport.unmask();
+					}
+				}
+			}	
 			<?php endif; ?>
 		}
 		
