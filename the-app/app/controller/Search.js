@@ -21,6 +21,22 @@ Ext.define('the_app.controller.Search', {
 		}
 	},
 	
+	getSearchableFields: function( panel ){
+		var searchableFields;
+		if ( Ext.isDefined( panel.getMeta().searchableFields ) ){
+			if ( Ext.isArray( panel.getMeta().searchableFields ) ){
+				searchableFields = panel.getMeta().searchableFields;
+			}
+			else{
+				searchableFields = panel.getMeta().searchableFields.split(',');
+			}
+		}
+		else{
+			searchableFields = ['title'];
+		}
+		return searchableFields;
+	},
+	
 	addSearchField: function ( panel ){
 		// Doing this greatly improves performance. 
 		//store.data.setAutoSort(false);
@@ -37,6 +53,7 @@ Ext.define('the_app.controller.Search', {
 				xtype:'searchfield',
 				placeHolder: WP.__('Search...'),
 				id: panel.getItemId()+'-search',
+				searchableFields: this.getSearchableFields( panel ),
 				listeners: {
 					scope: this,
 					clearicontap: this.onSearchClearIconTap,
@@ -75,10 +92,13 @@ Ext.define('the_app.controller.Search', {
         //get the store and the value of the field
         var value = field.getValue(),
 			panel = field.up('itemlist'),
-            store = panel.getActiveItem().getStore()
-			
+            store = Ext.isFunction( panel.getActiveItem().getStore ) ? panel.getActiveItem().getStore() : null
 		;
 		
+		if ( !store ){
+			return;
+		}
+
         //first clear any current filters on thes tore
         //store.clearFilter();
 
@@ -118,26 +138,28 @@ Ext.define('the_app.controller.Search', {
                 //loop through each of the regular expressions
                 for (i = 0; i < regexps.length; i++) {
                     var search = regexps[i],
-						didMatch;
+						didMatch = false;
 					
-					didMatch = record.get('title');
-					if ( didMatch ){
-						didMatch = didMatch.match(search);
-					}
+					Ext.each( field.config.searchableFields, function( searchable ){
+						var recordValue = record.get( searchable );
+						if ( recordValue && recordValue.match( search ) ){
+							didMatch = true;
+						}
+					});
 
                     //if it matched the title, push it into the matches array
                     matched.push(didMatch);
                 }
 
                 //if nothing was found, return false (dont so in the store)
-                if (matched.length > 1 && matched.indexOf(null) != -1) {
+                if (matched.length > 1 && matched.indexOf(false) != -1) {
                     return false;
                 } else {
                     //else true true (show in the store)
                     return matched[0];
                 }
             });
-			
+						
 			store.fireAction( 'searchFilter', [ panel, stillTyping ] , function(){
 				store.sort();
 			});
