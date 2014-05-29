@@ -506,6 +506,8 @@ class TheAppFactory {
 				'orderby' => 'title',		// what to sort the posts on
 				'order' => 'ASC',			// the direction
 				'numberposts' => -1,		// the maximum number of posts to show
+				'searchable' => 'false',	// whether or not this list is searchable
+				'searchableFields' => 'title',	// comma separated list of searchable fields
 				// the Sencha tpl for the list item
 				'list_template' => 	'<div class="avatar"<tpl if="thumbnail"> style="background-image: url({thumbnail})"</tpl>></div><span class="name">{title}</span>',
 				// the Sencha tpl for the detail page
@@ -633,6 +635,8 @@ class TheAppFactory {
 			'orderby' => 'title',
 			'order' => 'ASC',
 			'indexbar' => 'true',
+			'searchable' => 'false',
+			'searchableFields' => 'title',
 			'list_template' => '<div class="avatar"<tpl if="thumbnail"> style="background-image: url({thumbnail})"</tpl>></div><span class="name">{title}</span>',
 			'detail_template' => '<tpl if="thumbnail"><img class="thumbnail" src="{thumbnail}"></tpl></div><h3>{title}</h3> {content}'
 		);
@@ -648,6 +652,10 @@ class TheAppFactory {
 		if ( $this->get( 'sdk' ) >= '2.3.1' && ( !$meta_atts['grouped'] || $meta_atts['grouped'] == 'false' ) ){
 			// There's a bug in Sencha Touch 2.3.1 where if a list is not grouped, but is infinite, it throws an error
 			$item_atts['infinite'] = false;
+		}
+		
+		if ( isset( $meta_atts['searchable'] ) && $meta_atts['searchable'] !== 'false' ){
+			$this->enqueue('controller','Search');
 		}
 		
 		$this->addItem($item_atts,$meta_atts);
@@ -908,6 +916,7 @@ class TheAppFactory {
 
 	private function setupSencha(){
 		$this->register('controller','Main');
+		$this->register('controller','Search');
 		$this->register('controller','ExpandedTabBar');
 		$this->register('view','HtmlPage');
 		$this->register('view','Main');
