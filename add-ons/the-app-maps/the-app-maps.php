@@ -14,16 +14,17 @@ function TheAppFactoryMaps_init(& $the_app){
 function app_maps_shortcode($atts = array(),$content=null,$code=''){
 	$the_app = & TheAppFactory::getInstance();
 
+	$atts = $the_app->sanitize_atts( $atts, $code );
 	switch($code){
 	case 'app_map':
 		$item_defaults = array(
 			'xtype' => 'location',
 			'icon' => 'locate',
 			'title' => __('Map','app-factory'),
-			'use_current_location' => 'false'
+			'use_current_location' => false
 		);
 		$meta_defaults = array(
-			'_is_default' => 'false',
+			'_is_default' => false,
 			'kml' => ''
 		);
 		$item_atts = shortcode_atts($item_defaults,$atts);
@@ -40,13 +41,6 @@ function app_maps_shortcode($atts = array(),$content=null,$code=''){
 		do_shortcode($content);
 		$item_atts['points'] = $the_app->get('GoogleMapPoints');
 		
-		if ($item_atts['use_current_location'] == 'true'){
-			$item_atts['use_current_location'] = true; // $the_app->do_not_escape('true');
-		}
-		else{
-			$item_atts['use_current_location'] = false; //$the_app->do_not_escape('false');
-		}
-	
 		$the_app->addItem($item_atts,$meta_atts);
 
 		app_maps_setup_actions();

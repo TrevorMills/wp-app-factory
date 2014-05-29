@@ -50,7 +50,7 @@ Ext.define('Ext.data.MyModel', {
     }
 });
 
-<?php if ($the_app->get('ios_install_popup') == 'true') : $the_app->enqueue('require','Ext.ux.InstallApp'); ?>
+<?php if ($the_app->get('ios_install_popup')) : $the_app->enqueue('require','Ext.ux.InstallApp'); ?>
 // Tell the loader where to find the Ext.ux.InstallApp.js
 Ext.Loader.setPath('Ext.ux.InstallApp','app/helper/Ext.ux.InstallApp.js');
 <?php endif; ?>
@@ -146,7 +146,7 @@ else{
 				message: '',
 				cls: 'splash'
 			});
-			<?php if ($the_app->get('has_splash') == 'true' and $the_app->get('splash_pause')) : ?>
+			<?php if ($the_app->get('has_splash') and $the_app->get('splash_pause')) : ?>
 			setTimeout(function(){
 			<?php endif; ?>
 			Ext.Viewport.unmask();
@@ -161,11 +161,11 @@ else{
 			if (Ext.get('app-loading')){
 				Ext.get('app-loading').destroy();
 			}
-			<?php if ($the_app->get('ios_install_popup') == 'true') : ?>
+			<?php if ($the_app->get('ios_install_popup')) : ?>
 			Ext.ux.InstallApp.init();
 			<?php endif; ?>
 		 
-			<?php if ($the_app->get('has_splash') == 'true' and $the_app->get('splash_pause')) : ?>
+			<?php if ($the_app->get('has_splash') and $the_app->get('splash_pause')) : ?>
 			},<?php echo $the_app->get('splash_pause')*1000; ?>);
 			<?php endif; ?>
 			

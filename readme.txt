@@ -60,16 +60,16 @@ function borealis_catalogue_app($atts){
 	$the_app = & TheAppFactory::getInstance();
 	
 	$item_defaults = array(
-		'_is_default' => 'false',
+		'_is_default' => false,
 		'xtype' => 'catalogue',
 		'title' => 'Catalogue',
 		'icon' => 'info',
 		'store' => 'catalogue',
 		'list_template' => '<div class="avatar"<tpl if="thumbnail"> style="background-image: url({thumbnail})"</tpl>></div><span class="name">{title}<br/><span class="tertiary">{category}</span></span>',
 		'detail_template' => '<tpl if="thumbnail"><a href="{purchase_link}" target="_blank"><img class="thumbnail" src="{thumbnail}"></a></tpl></div><h3>{title}</h3><h4><a href="{purchase_link}" target="_blank">Buy this album</a></h4> {content}',
-		'grouped' => 'true',
+		'grouped' => true,
 		'group_by' => 'first_letter',
-		'indexbar' => 'true',
+		'indexbar' => true,
 	);
 	$query_defaults = array(
 		'xtype' => 'catalogue',

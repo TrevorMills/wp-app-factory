@@ -15,6 +15,8 @@ function TheAppFactoryTwitter_init(& $the_app){
 function app_twitter_shortcode($atts = array(),$content=null,$code=''){
 
 	$the_app = & TheAppFactory::getInstance();
+	$atts = $the_app->sanitize_atts( $atts, $code );
+	
 	$item_defaults = array(
 		'xtype' => 'tweetlist',
 		'icon' => 'chat'.($the_app->get('sdk') > '2.1' ? '-pictos' : ''),
@@ -24,7 +26,7 @@ function app_twitter_shortcode($atts = array(),$content=null,$code=''){
 		'secret' => ''
 	);
 	$meta_defaults = array(
-		'_is_default' => 'false',
+		'_is_default' => false,
 		'list_template' => ''
 	);
 	
@@ -104,19 +106,19 @@ function app_twitter_tweets(){
 	$defaults = array(
 		'q' => '',
 		'count' => '',
-		'include_entities' => 'false',
+		'include_entities' => false,
 		'next_results' => '',
-		'use_app_search' => 'true'
+		'use_app_search' => true
 	);
 	
-	$atts = shortcode_atts($defaults,$_GET);
+	$the_app = & TheAppFactory::getInstance();
+	$atts = shortcode_atts($defaults,$the_app->sanitize_atts( $_GET ));
 	if (empty($atts['next_results'])){
 		unset($atts['next_results']);
 	}
-	$the_app = & TheAppFactory::getInstance();
 	
 	// Get search from app NOW
-	if ( $att['use_app_search'] == 'true' ){
+	if ( $att['use_app_search'] ){
 		foreach( $the_app->get( 'items' ) as $item ){
 			if ( $item['item']['xtype'] == 'tweetlist' ){
 				$atts['q'] = $item['item']['search'];

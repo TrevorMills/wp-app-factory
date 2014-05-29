@@ -28,10 +28,10 @@
 		$extend = 'Ext.data.Store';
 	}
 	if ( !$the_app->is('building') and !in_array($store['storeId'],apply_filters('the_app_factory_autoload_stores',array('StoreStatusStore')) ) ){ // @dev
-		$store['autoLoad'] = $the_app->do_not_escape('false');
+		$store['autoLoad'] = false; //$the_app->do_not_escape('false');
 	}
 	else{
-		$store['autoLoad'] = $the_app->do_not_escape('true');
+		$store['autoLoad'] = true; //$the_app->do_not_escape('true');
 	}
 	header('Content-type: text/javascript');
 ?>

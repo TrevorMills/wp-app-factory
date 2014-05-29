@@ -149,7 +149,7 @@
 	    "id" => md5(get_the_ID())
 	);
 	
-	if ($the_app->get('ios_install_popup') == 'true' and !$the_app->is('packaging')){
+	if ($the_app->get('ios_install_popup') and !$the_app->is('packaging')){
 		$json['css'][] = array(
             "path" => "resources/css/installapp.css",
             "update" => "delta"

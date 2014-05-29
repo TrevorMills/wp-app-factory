@@ -339,7 +339,7 @@ Ext.define('the_app.controller.Main', {
 				s.filter(queryFilter);
 				s.setQueryInstance( panel.getQueryInstance() );
 				
-				if (panel.getMeta().grouped == 'true'){
+				if (panel.getMeta().grouped){
 					var field = panel.getMeta().group_by;
 					s.setGrouped(true);
 					var sortProperty;
@@ -414,7 +414,7 @@ Ext.define('the_app.controller.Main', {
 				l.resumeEvents();
 			}
 			
-			if (panel.getMeta().indexbar == 'true'){
+			if (panel.getMeta().indexbar){
 				l.setIndexBar(true);
 			}			
 		}

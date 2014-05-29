@@ -36,7 +36,7 @@
 		// it failed in the microloader (so NOTHING happened).  I need to ship this thing.  So, I'm going to 
 		// add this timeout in here. On a successful load, the app.js script will remove this timeout.
 		$meta = $the_app->get('meta');
-		$message = (!empty($meta['unacceptable_browser']['content']) ? $meta['unacceptable_browser']['content'] : __('Your browser is not supported.  Please use a Webkit Browser (i.e. Chrome, Safari, iPhone, Android).','app-factory'));
+		$message = $meta['unacceptable_browser']['content'];
 		$checks = array(
 			"typeof JSON == 'undefined'",	// True for IE8
 			"!('defineProperty' in Object || '__defineGetter__' in Object)"  // True for IE7
