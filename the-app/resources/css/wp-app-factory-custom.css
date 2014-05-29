@@ -167,3 +167,6 @@ img.alignright{
 	position:relative;
 	top:8px;
 }
+body .x-list.x-list-indexed .x-list-item.x-list-item-tpl.x-list-header-wrap .x-innerhtml{
+	padding-top:20px;
+}
