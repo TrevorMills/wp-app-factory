@@ -4,8 +4,6 @@ Plugin Name: The App Push Plugin
 */
 
 class TheAppPushPlugin{
-	const ENDPOINT_VAR = 'push_endpoint';
-	
 	public function __construct(){
 		add_action( 'TheAppFactory_init', array( &$this, 'init' ) );
 	}
@@ -22,7 +20,7 @@ class TheAppPushPlugin{
 		$defaults = array(
 			'google_project_number' => '', 		// Android only
 			'google_api_key' => '',				// Android only
-			'app_api_key' => self::getAppApiKey()
+			'app_api_key' => PushPluginApi::getApiKey()
 		);
 		$the_app->set( 'pushplugin_atts', shortcode_atts( $defaults, $atts ) );		
 		$the_app->enqueue( 'controller', 'PushPluginController' );
@@ -31,22 +29,6 @@ class TheAppPushPlugin{
 		add_action( 'the_app_package_cordova', array( &$this, 'package_cordova' ) );
 		add_action( 'the_app_config_xml', array( &$this, 'config_xml' ), 10, 2 );
 		add_filter( 'the_app_factory_package_app_json', array( &$this, 'app_json' ) );
-		
-		$this->maybeAddMetaBox();
-	}
-	
-	public static function getAppApiKey( $id = null ){
-		if ( !isset( $id ) ){
-			$id = get_the_ID();
-		}
-		return md5( $id . 'push-plugin-service' );
-	}
-	
-	public static function getAppApiSecret( $id = null ){
-		if ( !isset( $id ) ){
-			$id = get_the_ID();
-		}
-		return md5( $id . SECURE_AUTH_KEY . 'push-plugin-secret' );
 	}
 	
 	public function helper( &$the_app ){
@@ -179,7 +161,7 @@ class TheAppPushPlugin{
 			$param->addAttribute( 'name', $the_app->get( 'package_target' ) . '-package' );
 			switch( $the_app->get( 'package_target' ) ){
 			case 'ios':
-				$param->addAttribute( 'value', 'PushNotification' );
+				$param->addAttribute( 'value', 'PushPlugin' );
 				break;
 			case 'android':
 				$param->addAttribute( 'value', 'com.plugin.gcm.PushPlugin' );
@@ -222,199 +204,10 @@ class TheAppPushPlugin{
 		return $json;
 	}
 	
-	public static function maybe_invoke_api( & $the_app ){
-		if ( get_query_var( self::ENDPOINT_VAR ) != '' ){
-			self::api();
-			exit;
-		}
-	}
-	
-	public static function api(){
-		$the_app = & TheAppFactory::getInstance();
-		
-		extract( $_POST ); // $api_key, $os, $token
-		
-		if ( $api_key != self::getAppApiKey() ){
-			status_header( 400 );
-			exit;
-		}
-		
-		switch( get_query_var( self::ENDPOINT_VAR ) ){
-		case 'register':
-			if ( !empty( $os ) && !empty( $token ) ){
-				delete_post_meta( get_the_ID(), "{$os}_devices", $token ); // delete if exists
-				if ( !empty( $previous_token ) ){
-					delete_post_meta( get_the_ID(), "{$os}_devices", $previous_token ); // delete if exists
-				}
-				add_post_meta( get_the_ID(), "{$os}_devices", $token );
-			}
-			break;
-		case 'unregister':
-			if ( !empty( $os ) && !empty( $token ) ){
-				delete_post_meta( get_the_ID(), "{$os}_devices", $token ); // delete if exists
-			}
-			break;
-		case 'send':
-			if ( empty( $secret ) || $secret != self::getAppApiSecret( get_the_ID() ) ){
-				status_header( 400 );
-			}
-			else{
-				self::sendMessage( $message, $os );
-			}
-		}
-		exit();
-	}
-	
-	public static function sendMessage( $message, $os = null ){
-		if ( !isset( $os ) ){
-			$os = array_keys( self::getAvailableTargets() );
-		}
-		elseif ( is_string( $os ) ){
-			$os = explode( ',', $os );
-		}
-		
-		foreach ( $os as $target ){
-			switch( $target ){
-			case 'android':
-				self::sendMessageAndroid( $message );
-				break;
-			}
-		}
-	}
-	
-	public static function sendMessageAndroid( $message ){
-		$registration_ids = get_post_meta( get_the_ID(), 'android_devices' );
-		if ( !count( $registration_ids ) ){
-			return;
-		}
-		
-		$chunks = array_chunk( $registration_ids, 1000 ); // Android only allows up to 1000 devices per API call
-		
-		$url = 'https://android.googleapis.com/gcm/send';
-		
-		$the_app = & TheAppFactory::getInstance();
-		$pushplugin_atts = $the_app->get( 'pushplugin_atts' );
-		foreach ( $chunks as $chunk ){
-			$fields = array(
-				'registration_ids' => $chunk,
-				'data' => array( 
-					'title' => get_the_title(),
-					'message' => $message
-				)
-			);
-			
-	        $headers = array(
-	            'Authorization: key=' . $pushplugin_atts['google_api_key'] ,
-	            'Content-Type: application/json'
-	        );
-	        // Open connection
-	        $ch = curl_init();
- 
-	        // Set the url, number of POST vars, POST data
-	        curl_setopt($ch, CURLOPT_URL, $url);
- 
-	        curl_setopt($ch, CURLOPT_POST, true);
-	        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-	        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
- 
-	        // Disabling SSL Certificate support temporarily
-	        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
- 
-	        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields) );
- 
-	        // Execute post
-	        $result = curl_exec($ch);
-	        if ($result === FALSE) {
-	            die('Curl failed: ' . curl_error($ch));
-	        }
- 
-	        // Close connection
-	        curl_close($ch);
-			echo $result;
-		}
-	}
-	
-	public static function getAvailableTargets(){
-		$targets = TheAppPackager::get_available_targets();
-		unset( $targets['pb'] );
-		return $targets;
-	}
-	
-	public static function rewrite_rules($rules){
-		$the_app_factory_rules[APP_POST_TYPE.'/([^/]+)/push/([^/]+)/?$'] = 'index.php?'.APP_POST_VAR.'=$matches[1]&'.self::ENDPOINT_VAR.'=$matches[2]'; // the push api endpoint
 
-		$rules = array_merge($the_app_factory_rules,$rules);
-		return $rules;
-	}
-	
-	public static function query_vars($query_vars){
-		$query_vars[] = self::ENDPOINT_VAR;
-		return $query_vars;
-	}
-	
-	public static function maybeAddMetaBox(){
-		global $pagenow;
-		if ( is_admin() && 'post.php' === $pagenow ){
-			// They're editting the post and there is a app_push_plugin shortcode present, display the metabox
-			add_meta_box( 'app_push_plugin', __( 'Push Notifications', 'app-factory' ), array( 'TheAppPushPlugin', 'metaBox' ), APP_POST_TYPE, 'normal', 'high');
-		}
-	}
-	
-	public function metaBox( $app ){
-		$the_app = & TheAppFactory::getInstance();
-		
-		$registered_devices = array();
-		foreach ( self::getAvailableTargets() as $os => $label ){
-			$registered_devices[ $label ] = get_post_meta( $app->ID, "{$os}_devices" );
-		}
-	
-		?>
-		
-		<p class="description"><?php echo __( 'Push notifications are an easy and effective way to communicate with your app users.', 'app-factory' ); ?></p>
-		<div class="description">
-			<strong><?php echo __( 'Api Key', 'app-factory' ); ?>: </strong><?php echo self::getAppApiKey( $app->ID ); ?><br/>
-			<strong><?php echo __( 'Api Secret', 'app-factory' ); ?>: </strong><?php echo self::getAppApiSecret( $app->ID ); ?>
-		</div>
-		<div class="description">
-			<strong><?php echo __( 'Registered Devices', 'app-factory' ); ?></strong>
-			<?php foreach ( $registered_devices as $label => $devices ) : ?>
-				<?php echo "$label: " . count( $devices ); ?>
-			<?php endforeach; ?> 
-		</div>
-		<div id="push-notification-sender">
-			<textarea id="push-message" placeholder="<?php _e( 'Your message', 'app-factory' ); ?>" rows="5" cols="40"></textarea><br/>
-			<?php foreach ( self::getAvailableTargets() as $os => $label ) : ?>
-				<label><input type="checkbox" class="os" name="push_to_os[]" value="<?php echo $os; ?>" <?php checked( true, true ); ?>> <?php printf( __( 'Send to %s devices', 'app-factory' ), $label ); ?></label><br/>
-			<?php endforeach; ?>
-			<input id="push-send" type="button" class="button-primary" value="<?php _e( 'Send', 'app-factory' ); ?>" >
-		</div>
-<script type="text/javascript">
-	jQuery( function($){
-		$( '#push-send' ).on( 'click', function(){
-			var targets = [];
-			$( '#push-notification-sender input.os:checked' ).each( function(){
-				targets.push( $(this).val() );
-			});
-			$.post( "<?php echo get_permalink( $app->ID ); ?>push/send/", {
-				api_key: "<?php echo self::getAppApiKey( $app->ID ); ?>",
-				secret: "<?php echo self::getAppApiSecret( $app->ID ); ?>",
-				os: targets.join(','),
-				message: $( '#push-message' ).val()
-			}, function( response ){
-				console.log( response );
-			});
-		});
-	});
-</script>
-	<?php
-	}
 }
 
 new TheAppPushPlugin();
 
-add_filter('option_rewrite_rules','TheAppPushPlugin::rewrite_rules');
-add_filter('query_vars','TheAppPushPlugin::query_vars' );
-
-add_action('the_app_factory_redirect', 'TheAppPushPlugin::maybe_invoke_api' );
-add_action( 'admin_init', 'TheAppPushPlugin::maybeAddMetaBox' );
-
+include_once( 'class.PushPluginApi.php' );
+include_once( 'class.PushPluginAdmin.php' );
