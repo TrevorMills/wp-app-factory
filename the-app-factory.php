@@ -211,6 +211,7 @@ function the_app_factory_init()
 	include_once('add-ons/the-app-maps/the-app-maps.php');
 	include_once('add-ons/the-app-banner-ads/the-app-banner-ads.php');
 	include_once('add-ons/the-app-push-woosh/the-app-push-woosh.php');
+	include_once('add-ons/the-app-push-plugin/the-app-push-plugin.php');
 	do_action('TheAppFactory_load_plugins');
 }
 
@@ -375,6 +376,8 @@ function the_app_factory_redirect(){
 			$the_app->is( 'building', true );
 			break;
 		}
+		
+		do_action_ref_array( 'the_app_factory_redirect', array( &$the_app ) );
 		
 		switch(true){
 		case get_query_var(APP_JSON_VAR) != '': 
