@@ -18,5 +18,6 @@
 
     <!-- Include InAppBrowser -->
     <gap:plugin name="org.apache.cordova.inappbrowser" />
-
+	
+    <access origin="*" />
 </widget>
