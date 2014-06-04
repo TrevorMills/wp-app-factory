@@ -34,14 +34,6 @@
 				)
 			);
 			break;
-		case 'sql':
-			$post = $the_app->get( 'post' );
-			$store['localProxy'] = $store['proxy'] = array(
-				'type' => 'sql',
-				'model' => $store['model'],
-				'database' => 'sql_' . md5( $post->ID )
-			);
-			break;
 		}
 		$extend = 'Ext.ux.OfflineSyncStore';
 	}
