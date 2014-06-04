@@ -212,6 +212,7 @@ function the_app_factory_init()
 	include_once('add-ons/the-app-banner-ads/the-app-banner-ads.php');
 	include_once('add-ons/the-app-push-woosh/the-app-push-woosh.php');
 	include_once('add-ons/the-app-push-plugin/the-app-push-plugin.php');
+	include_once('add-ons/sqlite-storage/sqlite-storage.php');
 	do_action('TheAppFactory_load_plugins');
 }
 

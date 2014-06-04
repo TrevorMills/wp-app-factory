@@ -37,7 +37,15 @@ Ext.define('Sqlite.Connection', {
 		var me = this;
 
 		me.callParent([this]);
-		me.dbConn = openDatabase(me.dbName, me.dbVersion, me.dbDescription, me.dbSize);
+		if ( Ext.isDefined( window.sqlitePlugin ) && Ext.isFunction( window.sqlitePlugin.openDatabase ) ){
+			me.dbConn = window.sqlitePlugin.openDatabase({
+				name: me.dbName,
+				bgType: 1
+			});
+		}
+		else{
+			me.dbConn = openDatabase(me.dbName, me.dbVersion, me.dbDescription, me.dbSize);
+		}
 		return me;
 	}
 });
