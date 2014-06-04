@@ -177,7 +177,7 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 		sorters = this.applySorters(sorters);
 
 		// generate sql
-		var sql = "SELECT _ROWID_,*\nFROM " + me.getDbConfig().tablename;
+		var sql = "SELECT *\nFROM " + me.getDbConfig().tablename;
 		if (filters != null) sql += me.whereClause(filters);
 		if (grouper != null) sql += me.groupClause(grouper);
 		if (sorters != null) sql += me.orderClause(sorters);
@@ -313,8 +313,8 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 
 		Ext.each(fields, function (f) {
 
-			if ((f.config.persist || !Ext.isDefined(f.config.persist)) &&
-					(f.getName() != m.getIdProperty())) {
+			if ((f.config.persist || !Ext.isDefined(f.config.persist)) /* &&
+					(f.getName() != m.getIdProperty()) */) {
 				var name = f.getName(),
 						type = f.config.type,
 						option = (f.config.fieldOption) ? f.config.fieldOption : '';
@@ -601,7 +601,7 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 					}
 
 					// set the id
-					record.setId(insertId);
+					//record.setId(insertId);
 				},
 
 				onError = function (tx, err) {
@@ -650,7 +650,7 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 		values.push(record.getId());
 
 		var sql = 'UPDATE ' + tablename + ' SET ' + pairs.join(',') +
-				' WHERE _ROWID_ = ?';
+				' WHERE ' + record.getIdProperty() + ' = ?';
 
 		return function (tx) {
 			me.executeSql(tx, sql, values, onSuccess, onError);
@@ -668,7 +668,7 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 					me.throwDbError(tx, err);
 				};
 
-		var sql = 'DELETE FROM ' + tablename + ' WHERE _ROWID_ = ?';
+		var sql = 'DELETE FROM ' + tablename + ' WHERE ' + record.getIdProperty() + ' = ?';
 		values.push(record.getId());
 
 		return function (tx) {
