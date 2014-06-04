@@ -387,11 +387,11 @@ class TheAppFactory {
 			
 			if ( $this->is( 'using_manifest' ) ){
 				switch( $this->get( 'storage_engine' ) ){
+				case 'localstorage':
+					// No need to do anything, 
+					break;
 				case 'sqlitestorage':
 					$this->enqueue( 'require', 'SqliteDemo.util.InitSQLite' );
-					break;
-				case 'sql':
-					$this->enqueue( 'require', 'Ext.data.proxy.Sql' );
 					break;
 				}				
 			}
@@ -487,7 +487,7 @@ class TheAppFactory {
 			$meta_defaults = array(
 				'_is_debug_on' => false,	// sends Javascript messages to console.log() via a maybelog() call. Loads debug version of Sencha library.
 				'_is_using_manifest' => false,	// saves data to the user's device. An app gets 5MB for free without having to ask the user for permission.
-				'storage_engine' => 'localstorage', // (experimental) - could be sql or sqlitestorage
+				'storage_engine' => 'localstorage', // (experimental) - could be localstorage (default) or sqlitestorage
 				'transition' => 'slide',	// slide (default), fade, pop, flip, cube, wipe (buggy) --+ the CSS3 transition to use between pages
 				'manifest_version' => '',	// a version number for the manifest file.  Useful for forcing new manifest load. 
 				'maxtabbaritems' => '',		// If you want to enable a slide-up menu panel to appear when there are more than N tabs, enter N for maxtabbaritems
