@@ -13,15 +13,36 @@
 	// Setup offline versino of the store
 	if ($store['useLocalStorage']){
 		$store['serverProxy'] = $store['proxy'];
-		$store['localProxy'] = $store['proxy'] = array(
-			'type' => 'localstorage',
-			'id' => apply_filters('the_app_factory_localstorage_id',"{$store['storeId']}_{$the_app->get('app_id')}",$store)
-			/*	 Come back to it.  This is the way to catch that allowed storage has been exhausted.
-			'listeners' => array(
-				'exception' => $the_app->do_not_escape('function(proxy,e){console.log([\'error\',e]);}')
-			)
-			*/
-		);
+		switch( $the_app->get( 'storage_engine' ) ){
+		case 'localstorage':
+			$store['localProxy'] = $store['proxy'] = array(
+				'type' => 'localstorage',
+				'id' => apply_filters('the_app_factory_localstorage_id',"{$store['storeId']}_{$the_app->get('app_id')}",$store)
+				/*	 Come back to it.  This is the way to catch that allowed storage has been exhausted.
+				'listeners' => array(
+					'exception' => $the_app->do_not_escape('function(proxy,e){console.log([\'error\',e]);}')
+				)
+				*/
+			);
+			break;
+		case 'sqlitestorage':
+			$store['localProxy'] = $store['proxy'] = array(
+				'type' => 'sqlitestorage',
+				'dbConfig' => array(
+					'tablename' => str_replace( 'the_app.model.', '', $store['model'] ),
+					'dbConn' => $the_app->do_not_escape( 'SqliteDemo.util.InitSQLite.getConnection()' )
+				)
+			);
+			break;
+		case 'sql':
+			$post = $the_app->get( 'post' );
+			$store['localProxy'] = $store['proxy'] = array(
+				'type' => 'sql',
+				'model' => $store['model'],
+				'database' => 'sql_' . md5( $post->ID )
+			);
+			break;
+		}
 		$extend = 'Ext.ux.OfflineSyncStore';
 	}
 	else{
@@ -151,7 +172,7 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 						}
 					<?php endif; ?>
 
-					if (this.getProxy().config.type == 'localstorage' && !(successful && records.length)){
+					if (this.getProxy().config.type == "<?php echo $the_app->get( 'storage_engine' ); // 'localstorage' ?>" && !(successful && records.length)){
 						// Tried to load from localstorage, but there's nothing there.  Try and load from the server
 						Ext.Viewport.setMasked( {
 							xtype: 'loadmask',
