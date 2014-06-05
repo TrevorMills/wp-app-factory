@@ -21,8 +21,6 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 		this.callParent([config]);
 
 		this.setReader(this.reader);
-		var me = this;
-		me.setTable();
 	},
 	
 	executeSql: function( tx, query, values, successHandler ){
@@ -35,15 +33,8 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 
 	/* INTERFACE FUNCTIONS */
 	clear: function(){
-		var me = this,
-			queries = [];
-		
-		queries.push(function (tx) {
-			me.executeSql(tx, 'DELETE FROM ' + me.getDbConfig().tablename, []);
-		});
-
-		// do transaction
-		me.transactionDB(me.getDb(), queries);
+		this.dropTable( this.getDbConfig().tablename );
+		this.setTable();
 	},
 
 	//inherit docs

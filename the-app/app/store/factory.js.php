@@ -33,7 +33,7 @@
 				'type' => 'sqlitestorage',
 				'dbConfig' => array(
 					'tablename' => preg_replace( '/[^A-Za-z0-9_]/', '_', str_replace( 'the_app.model.', '', $store['model'] ) ),
-					'dbConn' => $the_app->do_not_escape( 'SqliteDemo.util.InitSQLite.getConnection()' )
+					'dbConn' => $the_app->do_not_escape( 'null' )
 				)
 			);
 			break;
@@ -69,6 +69,24 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 			storeTimestamp: 0,
 			localExists: false,
 			listeners: {
+				beforeload: function( store, operation, eOpts ){
+					// There seems to be an issue on the actual devices when this proxy is used in conjunction with the Cordova SQLite Native plugin
+					// If we set the dbConn to SqliteDemo.util.InitSQLite.getConnection() during configuration, the Codrova SQLite Native plugin
+					// hasn't necessarily had a chance to load (seems to occur when there is data in it).  So, we hold off setting the connection 
+					// until the first time it is needed.
+					if ( this.getLocalProxy().config.type == 'sqlitestorage' && this.getLocalProxy().getDbConfig().dbConn == null ){
+						var dbConfig = {
+							tablename: 'sessions_details',
+							dbConn: SqliteDemo.util.InitSQLite.getConnection()
+						}
+						this.getLocalProxy().setDbConfig( dbConfig );
+						this.getLocalProxy().setTable();
+						if ( this.getProxy().config.type == 'sqlitestorage' ){
+							this.getProxy().setDbConfig( dbConfig );
+							this.getProxy().setTable();
+						}
+					}
+				},
 				load: function(store, records, successful, operation, eOpts){
 					if ( Ext.Viewport.getMasked() ){
 						Ext.Viewport.unmask();
