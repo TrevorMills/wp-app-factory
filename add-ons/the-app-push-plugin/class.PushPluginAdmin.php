@@ -10,7 +10,7 @@ class PushPluginAdmin{
 	}
 	
 	public static function metaBox( $app ){
-		if ( !has_shortcode( $app->post_content, 'app_push_plugin' ) ){
+		if ( !preg_match( '/\[app_push_plugin/', $app->post_content ) ){
 			// No shortcode present, put out instructions 
 			?>
 			<p class="description"><?php printf( __('To enable Push Notifications for this app, add a shortcode of the following form: %s', 'app-factory'), '<pre>[app_push_plugin google_project_number="your_google_project_number" google_api_key="your_google_api_key"]</pre>' ); ?></p>
