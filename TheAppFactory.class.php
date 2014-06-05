@@ -725,7 +725,7 @@ class TheAppFactory {
 			$models['WrapperPage'] = array('fields' => array('id','title','pages','key'));
 		}
 		if ($this->get('html_store_contents')){
-			$models['HtmlPage'] = array('fields' => array('id','title','content','key'));
+			$models['HtmlPages'] = array('fields' => array('id','title','content','key'));
 		}
 		
 		$this->set('models',apply_filters('TheAppFactory_models',$models,array(&$this)));
@@ -878,7 +878,7 @@ class TheAppFactory {
 		
 		if ($this->get('html_store_contents')){
 			$stores['HtmlPagesStore'] = array(
-				'model' => 'HtmlPage',
+				'model' => 'HtmlPages',
 				'autoLoad' => true, //$this->do_not_escape('true'),
 				'proxy' => array(
 					'type' => 'scripttag',

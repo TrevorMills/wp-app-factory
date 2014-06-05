@@ -181,7 +181,7 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 		if (filters != null) sql += me.whereClause(filters);
 		if (grouper != null) sql += me.groupClause(grouper);
 		if (sorters != null) sql += me.orderClause(sorters);
-		if (limit != null && start != null) sql += me.limitClause(limit, start);
+		//if (limit != null && start != null) sql += me.limitClause(limit, start);
 		var onSuccess, onError;
 
 		onSuccess = function (tx, results) {
@@ -313,8 +313,7 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 
 		Ext.each(fields, function (f) {
 
-			if ((f.config.persist || !Ext.isDefined(f.config.persist)) /* &&
-					(f.getName() != m.getIdProperty()) */) {
+			if ((f.config.persist || !Ext.isDefined(f.config.persist))) {
 				var name = f.getName(),
 						type = f.config.type,
 						option = (f.config.fieldOption) ? f.config.fieldOption : '';

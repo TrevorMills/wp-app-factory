@@ -13,7 +13,10 @@
 	// Setup offline versino of the store
 	if ($store['useLocalStorage']){
 		$store['serverProxy'] = $store['proxy'];
-		switch( $the_app->get( 'storage_engine' ) ){
+		if ( !isset( $store[ 'storageEngine'] ) ){
+			$store[ 'storageEngine'] = $the_app->get( 'storage_engine' );
+		}
+		switch( $store[ 'storageEngine' ] ){
 		case 'localstorage':
 			$store['localProxy'] = $store['proxy'] = array(
 				'type' => 'localstorage',
@@ -29,7 +32,7 @@
 			$store['localProxy'] = $store['proxy'] = array(
 				'type' => 'sqlitestorage',
 				'dbConfig' => array(
-					'tablename' => str_replace( 'the_app.model.', '', $store['model'] ),
+					'tablename' => preg_replace( '/[^A-Za-z0-9_]/', '_', str_replace( 'the_app.model.', '', $store['model'] ) ),
 					'dbConn' => $the_app->do_not_escape( 'SqliteDemo.util.InitSQLite.getConnection()' )
 				)
 			);
@@ -163,8 +166,8 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 							},60 * 60 * 24 * 1000,this); // check again in a day - this is mostly only pertinant to packaged apps
 						}
 					<?php endif; ?>
-
-					if (this.getProxy().config.type == "<?php echo $the_app->get( 'storage_engine' ); // 'localstorage' ?>" && !(successful && records.length)){
+					
+					if (this.getProxy().config.type == "<?php echo $store[ 'storageEngine' ]; // 'localstorage' ?>" && !(successful && records.length)){
 						// Tried to load from localstorage, but there's nothing there.  Try and load from the server
 						Ext.Viewport.setMasked( {
 							xtype: 'loadmask',
@@ -175,9 +178,8 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 							// load from the initial data in the resources/data directory 
 							<?php 
 								$true_proxy = $data_proxy = $store['serverProxy']; 
-								$parts = explode('.', $store['model']);
 								$data_proxy['type'] = 'ajax';
-								$data_proxy['url'] = 'resources/data/'.end($parts).'.json';
+								$data_proxy['url'] = 'resources/data/'.preg_replace( '/Store$/', '', $key ).'.json';
 							?>
 							this.setServerProxy(<?php echo json_encode($data_proxy); ?>);
 							this.loadServer();

@@ -41,6 +41,8 @@
 			$latest['Wrapper'] = strtotime($the_app->get('post')->post_modified);
 		}
 		
+		$latest = apply_filters( 'the_app_storemeta', $latest );
+		
 		$s = 1;
 		foreach ($latest as $type => $time){
 			$output['stores'][] = array('id' => $s++, 'store' => "{$type}Store", 'timestamp' => $time);
