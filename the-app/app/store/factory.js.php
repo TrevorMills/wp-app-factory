@@ -65,8 +65,8 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 			<?php endforeach; ?>
 			queryInstance: undefined,
 			grouped: undefined,
-			<?php if ($store['useLocalStorage']) : ?>
 			storeTimestamp: 0,
+			<?php if ($store['useLocalStorage']) : ?>
 			localExists: false,
 			listeners: {
 				beforeload: function( store, operation, eOpts ){
@@ -148,7 +148,12 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 											single: true
 										}
 									});
-									Ext.getStore(storeId).loadServer();
+									if ( Ext.isFunction( Ext.getStore(storeId).loadServer ) ){
+										Ext.getStore(storeId).loadServer();
+									}
+									else{
+										stores_updated++;
+									}
 								});
 								
 								var me = this;
