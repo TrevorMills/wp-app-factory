@@ -580,5 +580,13 @@ function the_app_whitelist_options($whitelist_options){
 	return $whitelist_options;
 }
 
+/* Prevent unauthorized users from being able to see the source code for the app */
+add_filter( 'the_content', 'the_app_the_content' );
+function the_app_the_content( $content ){
+	if ( APP_POST_TYPE == get_post_type() && !is_single() && !current_user_can( 'edit_post' ) ){
+		$content = '<a href="' . get_permalink() . '">' . sprintf( __( 'View "%s" app here', 'app-factory' ), get_the_title() ) . '</a>'; 
+	}
+	return $content;
+}
 
 ?>

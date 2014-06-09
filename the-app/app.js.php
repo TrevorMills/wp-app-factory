@@ -175,119 +175,151 @@ else{
 		},
 		
 		confirm: function( options ){
-			if (this.popupStack == undefined){
-				this.popupStack = {};
-			}
-
-			if (this.popupStack[options.id] == undefined){
-				this.popupStack[options.id] = Ext.create('Ext.Panel',
+			Ext.apply( options, {
+				buttons: [
 					{
-		                modal: true,
-						hideOnMaskTap: (options.hideOnMaskTap ? true : false),
-						hidden: true,
-		                centered: true,
-		                width: (options.width  ? options.width : 300),
-		                height: (options.height  ? options.height : 200),
-						cls: 'popup '+options.id,
-						items: [
-							{
-			                    xtype: 'toolbar',
-			                    docked: 'top',
-			                    title: options.title
-							},
-							{
-								xtype: 'component',
-								html: options.html,
-				                styleHtmlContent: true,
-				                scrollable: 'vertical'
-							},
-							{
-								xtype: 'toolbar',
-								docked: 'bottom',
-								layout: {
-									type: 'hbox',
-									align: 'center',
-									pack: 'center'
-								},
-								items: [
-									{
-										xtype: 'button',
-										text: WP.__('No'),
-										handler: function(){
-											this.hidePopup( options.id );
-										},
-										scope: this
-									},
-									{
-										xtype: 'button',
-										text: WP.__('Yes'),
-										handler: function(){
-											var handler = options.handler || function(){};
-											handler();
-											this.hidePopup( options.id );
-										},
-										scope: this
-									}
-								]
-							}
-						]
-	            	}
-				);
-				Ext.Viewport.add(this.popupStack[options.id]);
+						xtype: 'button',
+						text: WP.__('No'),
+						handler: function( button ){
+							this.hidePopup( button.up( 'panel' ).getId() );
+						},
+						scope: this
+					},
+					{
+						xtype: 'button',
+						text: WP.__('Yes'),
+						handler: function( button ){
+							var handler = options.handler || function(){};
+							handler();
+							this.hidePopup( button.up( 'panel' ).getId() );
+						},
+						scope: this
+					}
+				]
+			});
+			this.showPopup( options );
+		},
+		
+		alert: function( options ){
+			Ext.apply( options, {
+				hideOnMaskTap: true,
+				buttons: [
+					{
+						xtype: 'button',
+						text: options.buttonText ? options.buttonText : WP.__('Ok'),
+						handler: function( button ){
+							this.hidePopup( button.up( 'panel' ).getId() );
+						},
+						scope: this
+					},
+				]
+			});
+			this.showPopup( options );
+		},
+		
+		showPopup: function( options ){
+			var config = {
+				xtype: 'panel',
+				modal: true,
+				hideOnMaskTap: (options.hideOnMaskTap ? true : false),
+				hidden: true,
+				centered: true,
+                width: (options.width  ? options.width : 300),
+                height: (options.height  ? options.height : 200),
+				cls: 'popup',
+				hideAnimation: {
+					type: 'popOut',
+					duration: 250,
+					easing: 'ease-out',
+					listeners: {
+						animationend: function(evt, obj) {
+							this.removePopup( obj.id );
+						},
+						scope: this
+					},
+				},
+				showAnimation: {
+					type: 'popIn',
+					duration: 250,
+					easing: 'ease-out',
+					listeners: {
+						animationend: function(evt, obj) {
+						}
+					},
+				},
+				items: []
+			};
+			if ( options.id ){
+				config.cls += ' ' + options.id;
+				config.id = options.id;
+				var existing = Ext.getCmp( config.id );
+				if ( existing ){
+					this.removePopup( existing );
+				}
 			}
-			else{
-				this.popupStack[options.id].destroy();
-				delete this.popupStack[options.id];
-				this.confirm( options );
+			
+			if ( this.last_popup ){
+				this.last_popup.hide();
+				config.showAnimation = false;
+			}
+			
+			if ( options.title ){
+				config.items.push( {
+                    xtype: 'toolbar',
+                    docked: 'top',
+                    title: options.title
+				});
+			}
+			if ( !options.html && options.message ){
+				options.html = options.message;
+			}
+			if ( options.html ){
+				config.items.push( {
+					xtype: 'component',
+					html: options.html + (options.spinner ? '<div class="spinner ' + options.spinner + '"></div>' : '' ),
+	                styleHtmlContent: true,
+	                scrollable: 'vertical'
+				});
+			}
+			if ( options.buttons ){
+				config.items.push( {
+					xtype: 'toolbar',
+					docked: 'bottom',
+					layout: {
+						type: 'hbox',
+						align: 'center',
+						pack: 'center'
+					},
+					items: options.buttons
+				});
+			}
+			
+			this.last_popup = Ext.Viewport.add( config );
+			this.last_popup.show();
+		},
+		
+		hidePopup: function( id ){
+			var cmp;
+			if ( cmp = Ext.getCmp( id ) ){
+				cmp.hide();
+			}
+		},
+		
+		removePopup: function( cmp ){
+			if ( Ext.isString( cmp ) ){
+				cmp = Ext.getCmp( cmp );
+			}
+			if ( !cmp ){
 				return;
 			}
-
-			this.popupStack[options.id].show('pop');
+			cmp.destroy();
+			// For some reason, ST leaves masks lying around.  I'm going to clean them up
+			Ext.each( Ext.Viewport.query( 'mask' ), function( mask ){
+				mask.destroy();
+			});
+			this.last_popup = false;
 		},
-
-		showPopup: function(options){
-			if (this.popupStack == undefined){
-				this.popupStack = {};
-			}
-
-			if (this.popupStack[options.id] == undefined){
-				this.popupStack[options.id] = Ext.create('Ext.Panel',
-					{
-		                modal: true,
-						hideOnMaskTap: (options.hideOnMaskTap ? true : false),
-						hidden: true,
-		                centered: true,
-		                width: (options.width  ? options.width : 300),
-		                height: (options.height  ? options.height : 200),
-		                styleHtmlContent: true,
-		                scrollable: 'vertical',
-		                html: options.html+(options.spinner ? '<div class="spinner '+options.spinner+'"></div>' : ''),
-						cls: 'popup '+options.id,
-						items: [
-							{
-			                    xtype: 'toolbar',
-			                    docked: 'top',
-			                    title: options.title
-							}
-						]
-	            	}
-				);
-				Ext.Viewport.add(this.popupStack[options.id]);
-			}
-			else{
-				this.popupStack[options.id].setHtml(options.html+(options.spinner ? '<div class="spinner '+options.spinner+'"></div>' : ''));
-			}
-
-			this.popupStack[options.id].show('pop');
-		},
-
-		hidePopup: function(id){
-			if (this.popupStack != undefined && this.popupStack[id] != undefined){
-				this.popupStack[id].hide('fadeOut');
-			}
-
-		},
-
+		
 	    onUpdated: function() {
 			the_app.app.confirm(
 				{
