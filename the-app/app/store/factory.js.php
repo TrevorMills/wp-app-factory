@@ -3,57 +3,22 @@
 	$stores = $the_app->get('stores'); 
 	$key = basename(get_query_var(APP_APP_VAR),'.js');
 	$store = $stores[$key];
-	if (!isset($store['storeId'])){
-		$store['storeId'] = $key;
+	if ( $store['extend'] == 'Ext.ux.IncrementalUpdateStore'){
+		include( 'factory-when-packaging.js.php' );
+		exit;
 	}
-	if(isset($store['model']) and strpos($store['model'],'the_app.model') === false){
-		$store['model'] = 'the_app.model.'.$store['model'];
+	if ( $store['storeId'] == 'StoreStatusStore' ){
+		$store['autoLoad'] = true;
 	}
-	
-	// Setup offline versino of the store
-	if ($store['useLocalStorage']){
-		$store['serverProxy'] = $store['proxy'];
-		if ( !isset( $store[ 'storageEngine'] ) ){
-			$store[ 'storageEngine'] = $the_app->get( 'storage_engine' );
-		}
-		switch( $store[ 'storageEngine' ] ){
-		case 'localstorage':
-			$store['localProxy'] = $store['proxy'] = array(
-				'type' => 'localstorage',
-				'id' => apply_filters('the_app_factory_localstorage_id',"{$store['storeId']}_{$the_app->get('app_id')}",$store)
-				/*	 Come back to it.  This is the way to catch that allowed storage has been exhausted.
-				'listeners' => array(
-					'exception' => $the_app->do_not_escape('function(proxy,e){console.log([\'error\',e]);}')
-				)
-				*/
-			);
-			break;
-		case 'sqlitestorage':
-			$store['localProxy'] = $store['proxy'] = array(
-				'type' => 'sqlitestorage',
-				'dbConfig' => array(
-					'tablename' => preg_replace( '/[^A-Za-z0-9_]/', '_', str_replace( 'the_app.model.', '', $store['model'] ) ),
-					'dbConn' => $the_app->do_not_escape( 'null' )
-				)
-			);
-			break;
-		}
-		$extend = 'Ext.ux.OfflineSyncStore';
+	if( isset( $store['model'] ) and strpos( $store['model'], 'the_app.model' ) === false){
+		$store['model'] = 'the_app.model.' . $store['model'];
 	}
-	else{
-		$extend = 'Ext.data.Store';
-	}
-	if ( !$the_app->is('building') and !in_array($store['storeId'],apply_filters('the_app_factory_autoload_stores',array('StoreStatusStore')) ) ){ // @dev
-		$store['autoLoad'] = false; //$the_app->do_not_escape('false');
-	}
-	else{
-		$store['autoLoad'] = true; //$the_app->do_not_escape('true');
-	}
+
 	header('Content-type: text/javascript');
 ?>
 Ext.define('the_app.store.<?php echo $key; ?>',
 	{
-		extend: '<?php echo $extend; ?>',
+		extend: '<?php echo $store['extend']; ?>',
 		maybeLoad: function(){
 			if ( !( this.getAutoLoad() || this.isLoading() || this.isLoaded() ) ){
 				this.load();
