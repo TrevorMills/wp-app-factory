@@ -89,7 +89,8 @@ class TheAppFactory {
 		add_filter('TheAppFactory_models',array(&$this,'addRegisteredModels'),10,2);
 		add_filter('TheAppFactory_stores',array(&$this,'addRegisteredStores'),10,2);	
 		
-		add_action('TheAppFactory_setupStores',array(&$this, 'setupStoreStatusStore'),999); // Make sure the Store Status is setup last so as to allow the other stores to instantiate first
+		add_action('TheAppFactory_setupStores',array(&$this, 'setupStoreStatusStore'),500); // Make sure the Store Status is setup last so as to allow the other stores to instantiate first
+		add_action('TheAppFactory_setupStores',array(&$this, 'massageStoreConfigs'),600);
 		
 		do_action_ref_array('TheAppFactory_init',array(& $this));
 	}
@@ -494,7 +495,7 @@ class TheAppFactory {
 				'splash_pause' => 2,		// If you have a splashscreen, you can force it to display for N seconds by setting splash_pause=N
 				'ios_install_popup' => false, // True to enable the Install App popup on iOS devices,
 				'sdk' => '2.3.1',				// the Sencha Touch SDK to use - only valid value currently is 2.3.1
-				'theme' => 'sencha-touch'		// valid values are base, bb10, sencha-touch (default).  The blank SDK also have wp-app-factory
+				'theme' => 'sencha-touch',		// valid values are base, bb10, sencha-touch (default).  The blank SDK also have wp-app-factory
 			);
 			break;
 		case 'app_item':
@@ -910,6 +911,79 @@ class TheAppFactory {
 			);
 			$stores = $this->set('stores',$stores);
 		}		
+	}
+	
+	public function massageStoreConfigs( & $the_app ){
+		$stores = $this->get( 'stores' );
+		
+		foreach( $stores as $key => $store ){
+
+			if (!isset($store['storeId'])){
+				$store['storeId'] = $key;
+			}
+			/*
+			// because of other functionality, I'm going to hold off on this and only do it in the actual store factory
+			if( isset( $store['model'] ) and strpos( $store['model'], 'the_app.model' ) === false){
+				$store['model'] = 'the_app.model.' . $store['model'];
+			}
+			*/
+	
+			// Setup offline versino of the store
+			if ( $store[ 'useLocalStorage' ] ){
+				$store[ 'serverProxy' ] = $store[ 'proxy' ];
+				if ( !isset( $store[ 'storageEngine'] ) ){
+					$store[ 'storageEngine'] = $the_app->get( 'storage_engine' );
+				}
+				switch( $store[ 'storageEngine' ] ){
+				case 'localstorage':
+					$store['localProxy'] = /* $store['proxy'] = */ array(
+						'type' => 'localstorage',
+						'id' => apply_filters('the_app_factory_localstorage_id',"{$store['storeId']}_{$the_app->get('app_id')}",$store)
+						/*	 Come back to it.  This is the way to catch that allowed storage has been exhausted.
+						'listeners' => array(
+							'exception' => $the_app->do_not_escape('function(proxy,e){console.log([\'error\',e]);}')
+						)
+						*/
+					);
+					break;
+				case 'sqlitestorage':
+					$store['localProxy'] = /* $store['proxy'] = */ array(
+						'type' => 'sqlitestorage',
+						'dbConfig' => array(
+							'tablename' => preg_replace( '/[^A-Za-z0-9_]/', '_', str_replace( 'the_app.model.', '', $store['model'] ) ),
+							'dbConn' => $the_app->do_not_escape( 'null' )
+						)
+					);
+					break;
+				}
+				$store['extend'] = 'Ext.ux.OfflineSyncStore';
+			}
+			else{
+				$store['extend'] = 'Ext.data.Store';
+			}
+			
+			// Going to try lazy loading all stores, unless we're building (even StoreStatusStore)
+			if ( $the_app->is( 'building' ) || in_array($store['storeId'],apply_filters('the_app_factory_autoload_stores',array() ) ) ){
+				$store[ 'autoLoad' ] = true;
+			}
+			else{
+				$store[ 'autoLoad' ] = false;
+			}
+			
+			if ( $the_app->is( 'packaging' ) ){
+				$store['ajaxProxy'] = $store['serverProxy'];
+				$store['ajaxProxy']['type'] = 'ajax';
+				$store['ajaxProxy']['url'] = 'resources/data/'.preg_replace( '/Store$/', '', $key ).'.json';
+			}
+			
+			if ( $key == 'StoreStatusStore' ){
+				$store[ 'isStoreMeta' ] = true;
+			}
+			
+			$stores[ $key ] = $store;
+		}
+		$this->set( 'stores', $stores );
+		
 	}
 	
 	function addRegisteredStores($stores,$_this){
