@@ -3,7 +3,7 @@
 	$stores = $the_app->get('stores'); 
 	$key = basename(get_query_var(APP_APP_VAR),'.js');
 	$store = $stores[$key];
-	if ( $store['extend'] == 'Ext.ux.IncrementalUpdateStore'){
+	if ( $store['extend'] == 'Ext.ux.IncrementalUpdateStore' || $store['extend'] == 'Ext.ux.IncrementalUpdateMetaStore' ){
 		include( 'factory-when-packaging.js.php' );
 		exit;
 	}
@@ -13,7 +13,9 @@
 	if( isset( $store['model'] ) and strpos( $store['model'], 'the_app.model' ) === false){
 		$store['model'] = 'the_app.model.' . $store['model'];
 	}
-
+	if ( $store['useLocalStorage'] ){
+		$store['proxy'] = $store['localProxy'];
+	}
 	header('Content-type: text/javascript');
 ?>
 Ext.define('the_app.store.<?php echo $key; ?>',
@@ -41,7 +43,7 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 					// until the first time it is needed.
 					if ( this.getLocalProxy().config.type == 'sqlitestorage' && this.getLocalProxy().getDbConfig().dbConn == null ){
 						var dbConfig = {
-							tablename: 'sessions_details',
+							tablename: "<?php echo preg_replace( '/[^A-Z0-9_]/i', '_', preg_replace( '/Store$/', '', $key ) ); ?>",
 							dbConn: SqliteDemo.util.InitSQLite.getConnection()
 						}
 						this.getLocalProxy().setDbConfig( dbConfig );

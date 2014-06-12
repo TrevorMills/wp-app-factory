@@ -57,12 +57,18 @@ Ext.Loader.setPath('Ext.ux.InstallApp','app/helper/Ext.ux.InstallApp.js');
 
 <?php if ($the_app->is('using_manifest')) : 
 	$the_app->enqueue('require','Ext.ux.OfflineSyncStore'); 
-	$the_app->enqueue('require','Ext.ux.IncrementalUpdateStore'); 
+	if ( $the_app->get( 'use_incremental_updating' ) ){
+		$the_app->enqueue('require','Ext.ux.IncrementalUpdateStore'); 
+		$the_app->enqueue('require','Ext.ux.IncrementalUpdateMetaStore'); 
+	}
 	$the_app->enqueue('require','Ext.data.proxy.LocalStorage'); 
 	?>
 // Tell the loader where to find the some offline storage files that are outside of the main source tree
 Ext.Loader.setPath('Ext.ux.OfflineSyncStore','app/store/Ext.ux.OfflineSyncStore.js');
+<?php if ( $the_app->get( 'use_incremental_updating' ) ) : ?>
 Ext.Loader.setPath('Ext.ux.IncrementalUpdateStore','app/store/Ext.ux.IncrementalUpdateStore.js');
+Ext.Loader.setPath('Ext.ux.IncrementalUpdateMetaStore','app/store/Ext.ux.IncrementalUpdateMetaStore.js');
+<?php endif; ?>
 Ext.Loader.setPath('Sqlite.Connection','app/proxy/SqliteConnection.js');	
 Ext.Loader.setPath('Sqlite.data.proxy.SqliteStorage','app/proxy/SqliteStorage.js');	
 Ext.Loader.setPath('SqliteDemo.util.InitSQLite','app/proxy/SqliteInit.js');	

@@ -495,7 +495,8 @@ class TheAppFactory {
 				'splash_pause' => 2,		// If you have a splashscreen, you can force it to display for N seconds by setting splash_pause=N
 				'ios_install_popup' => false, // True to enable the Install App popup on iOS devices,
 				'sdk' => '2.3.1',				// the Sencha Touch SDK to use - only valid value currently is 2.3.1
-				'theme' => 'sencha-touch'		// valid values are base, bb10, sencha-touch (default).  The blank SDK also have wp-app-factory
+				'theme' => 'sencha-touch',		// valid values are base, bb10, sencha-touch (default).  The blank SDK also have wp-app-factory
+				'use_incremental_updating' => true
 			);
 			break;
 		case 'app_item':
@@ -956,8 +957,13 @@ class TheAppFactory {
 					);
 					break;
 				}
-				if ( $the_app->is( 'packaging' ) ){
-					$store['extend'] = 'Ext.ux.IncrementalUpdateStore';
+				if ( $the_app->get( 'use_incremental_updating' ) && $the_app->is( 'packaging' ) ){
+					if ( $key == 'StoreStatusStore' ){
+						$store['extend'] = 'Ext.ux.IncrementalUpdateMetaStore';
+					}
+					else{
+						$store['extend'] = 'Ext.ux.IncrementalUpdateStore';
+					}
 				}
 				else{
 					$store['extend'] = 'Ext.ux.OfflineSyncStore';
