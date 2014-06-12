@@ -75,7 +75,7 @@
     <!-- The line below must be kept intact for Sencha Command to build your application -->
     <script id="microloader" type="text/javascript" src="<?php echo APP_FACTORY_URL;  ?>the-app/sdk<?php echo $the_app->get('sdk'); ?>/microloader/development.js"></script>
 </head>
-<body>
+<body class="<?php echo implode(' ', apply_filters( 'app_body_class', array( 'theme-' . $the_app->get( 'theme' ) ) ) ); ?>">
 <div id="app-loading"></div>
 </body>
 </html>
