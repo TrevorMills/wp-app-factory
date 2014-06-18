@@ -88,11 +88,24 @@ public class GCMIntentService extends GCMBaseIntentService {
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		String appName = getAppName(this);
 
+		/* TMills - editted this based on discussion at https://github.com/phonegap-build/PushPlugin/issues/192 */
+		// we do this once...
+		Intent notificationIntent_forclear = new Intent(this, PushHandlerActivity.class);
+		notificationIntent_forclear.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		notificationIntent_forclear.putExtra("pushBundle", extras);
+
+		// just so we can cancel the intent
+		PendingIntent contentIntent_forclear = PendingIntent.getActivity(this, 0, notificationIntent_forclear, PendingIntent.FLAG_UPDATE_CURRENT);
+		contentIntent_forclear.cancel();
+
+		// then we do it again
 		Intent notificationIntent = new Intent(this, PushHandlerActivity.class);
 		notificationIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 		notificationIntent.putExtra("pushBundle", extras);
 
+		// so we have a pending intent that is DEFINIATELY related to the currently installed app
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		/* TMills - done editing */
 		
 		NotificationCompat.Builder mBuilder =
 			new NotificationCompat.Builder(context)

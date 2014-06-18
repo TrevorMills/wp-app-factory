@@ -6,6 +6,7 @@ Plugin Name: The App Push Plugin
 class TheAppPushPlugin{
 	public function __construct(){
 		add_action( 'TheAppFactory_init', array( &$this, 'init' ) );
+		add_filter( 'upload_mimes', array( &$this, 'upload_mimes' ) );
 	}
 	
 	public function init( &$the_app ){
@@ -17,18 +18,31 @@ class TheAppPushPlugin{
 	public function shortcodes( $atts = array(), $content = null, $code = '' ){
 		$the_app = & TheAppFactory::getInstance();
 		
-		$defaults = array(
-			'google_project_number' => '', 		// Android only
-			'google_api_key' => '',				// Android only
-			'app_api_key' => PushPluginApi::getApiKey()
-		);
-		$the_app->set( 'pushplugin_atts', shortcode_atts( $defaults, $atts ) );		
+		$the_app->set( 'pushplugin_atts', $this->getPushPluginSettings() );		
 		$the_app->enqueue( 'controller', 'PushPluginController' );
 		
 		add_action( 'TheAppFactory_setupHelpers', array( &$this, 'helper' ) );
 		add_action( 'the_app_package_cordova', array( &$this, 'package_cordova' ) );
 		add_action( 'the_app_config_xml', array( &$this, 'config_xml' ), 10, 2 );
 		add_filter( 'the_app_factory_package_app_json', array( &$this, 'app_json' ) );
+	}
+	
+	public function getPushPluginSettings(){
+		$the_app = & TheAppFactory::getInstance( 'TheAppPackager' ); 
+
+		$app_meta = the_app_get_app_meta( $the_app->get('post')->ID );
+		
+		$pushplugin_atts = $app_meta[ 'pushplugin' ];
+		if ( !isset( $pushplugin_atts['pem'] ) ){
+			$pushplugin_atts['pem'] = array(
+				'sandbox' => '',
+				'production' => '',
+				'entrust' => ''
+			);
+		}
+		
+		$pushplugin_atts[ 'app_api_key' ] = PushPluginApi::getApiKey();
+		return $pushplugin_atts;
 	}
 	
 	public function helper( &$the_app ){
@@ -204,6 +218,10 @@ class TheAppPushPlugin{
 		return $json;
 	}
 	
+	public function upload_mimes( $mimes ){
+		$mimes[ 'pem' ] = 'application/x-pem-file';
+		return $mimes;
+	}
 
 }
 
