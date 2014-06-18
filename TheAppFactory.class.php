@@ -101,7 +101,7 @@ class TheAppFactory {
 	}
 	
 	// Override in subclasses
-	public function setup_environment(){
+	public static function setup_environment(){
 
 	}
 	
