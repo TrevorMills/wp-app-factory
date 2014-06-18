@@ -199,17 +199,32 @@ jQuery(function($){
 		?>
 		<p class="description"><?php printf( __('You can send push notifications from outside of this system by using the Push Plugin API.  To access it, you must POST to the following URL: %sPassing along the following POST variables:' ), '<pre>' . get_permalink( $post->ID ) . 'push/send/</pre>' ); ?></p>
 		
-		<pre>
+		<div style="overflow:scroll">
+			<pre>
 {
 	api_key: "<?php echo PushPluginApi::getApiKey( $post->ID ); ?>",
 	secret: "<?php echo PushPluginApi::getApiSecret( $post->ID ); ?>",
 	os: "<?php echo implode( ',', array_keys( PushPluginApi::getAvailableTargets() ) ); ?>",	// comma separated list of targets (available targets are <?php echo implode( ' &amp; ', array_keys( PushPluginApi::getAvailableTargets() ) ); ?>)
-	message: "<?php _e( 'The Message you want to push', 'app-factory' ); ?>",
 	ios_environment: "sandbox", // or "production"
 	ios_badge: "", // an integer to set the badge text to
-}
-		</pre>
+	data: {
+		message: <?php _e( 'The Message you want to push.  Example: "Hello World"', 'app-factory' ); ?>,
+		title: <?php _e( 'The Title for the Push (defaults to the name of the app).  Example: "Check it out!"', 'app-factory' ); ?>,
+		url: <?php _e( '(optional) A URL to open as part of the notification.  Useful for creating splash ads.  Example: "http://mydomain.com/buystuff.html"', 'app-factory' ); ?>,
+		route: <?php _e( '(optional) The route to redirectTo upon notification.  This is an advanced and somewhat unstable feature.  Example: "#tab/2"', 'app-factory' ); ?>,
+		foo: "bar", <?php _e( 'You can additionally specify any other attributes you want to pass along.'); ?>
 		
+	},
+}
+			</pre>
+		</div>
+		
+		<p class="description"><?php _e( 'cURL example:', 'app-factory'); ?></p>
+		<div style="overflow:scroll">
+			<pre style="word-wrap:break-word">
+curl --data "api_key=<?php echo PushPluginApi::getApiKey( $post->ID ); ?>&secret=<?php echo PushPluginApi::getApiSecret( $post->ID ); ?>&os=ios&data[message]=Hello%20World&data[route]=%23tab%2F2&ios_environment=sandbox&ios_badge=1" <?php echo get_permalink( $post->ID ); ?>push/send/
+			</pre>
+		</div>
 		<?php
 	}
 	

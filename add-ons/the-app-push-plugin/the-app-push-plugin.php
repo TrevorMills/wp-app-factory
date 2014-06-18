@@ -47,7 +47,12 @@ class TheAppPushPlugin{
 	
 	public function helper( &$the_app ){
 		$helpers = $the_app->get( 'helpers' );
-		$helpers['PUSHPLUGIN'] = $the_app->get( 'pushplugin_atts' );
+		$helpers['PUSHPLUGIN'] = wp_parse_args( $the_app->get( 'pushplugin_atts' ), array(
+			// Only publish these keys
+			'google_api_key' => '',
+			'google_project_number' => '',
+			'app_api_key' => ''
+		) );
 		$the_app->set( 'helpers', $helpers );
 		$the_app->enqueue( 'require', 'the_app.helper.PUSHPLUGIN');
 	}

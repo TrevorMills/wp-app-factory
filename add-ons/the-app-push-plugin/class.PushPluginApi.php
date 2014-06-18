@@ -185,6 +185,8 @@ class PushPluginApi{
 				break;
 			}
 		}
+		//print_r( $result );
+		//echo "\n\n\n";
 		return $result;
 	}
 	
@@ -299,14 +301,6 @@ class PushPluginApi{
 	}
 	
 	public static function sendMessageIOS( $options ){
-		$registration_ids = get_post_meta( get_the_ID(), 'ios_devices' );
-		if ( !count( $registration_ids ) ){
-			return array(
-				'status' => 200,
-				'count' => 0
-			);
-		}
-		
 		if ( self::isBlank( $options['data'] ) ){
 			return array( 
 				'status' => 400,
@@ -340,6 +334,27 @@ class PushPluginApi{
 		}
 		$server_certificates_bundle = get_attached_file( $pushplugin_atts['pem'][ $environment ] );
 		$entrust_certification = get_attached_file( $pushplugin_atts['pem']['entrust'] );
+		if ( !$server_certificates_bundle ){
+			return array(
+				'status' => 400,
+				'message' => 'Missing Server Certificate Bundle' 
+			);
+		}
+		if ( !$entrust_certification ){
+			return array(
+				'status' => 400,
+				'message' => 'Missing Entrust Peer Verification Certificate' 
+			);
+		}
+
+		$registration_ids = get_post_meta( get_the_ID(), 'ios_devices' );
+		if ( !count( $registration_ids ) ){
+			return array(
+				'status' => 200,
+				'count' => 0
+			);
+		}
+		
 
 		// Instanciate a new ApnsPHP_Push object
 		$push = new ApnsPHP_Push(
@@ -402,10 +417,22 @@ class PushPluginApi{
 		
 		$log = ob_get_clean();
 		if (!empty($aErrorQueue)) {
+			// Clean up - remove any registration_ids that are no longer valid
+			// Only do this in production environment as (I think) it's easier to 
+			// setup a sandbox device again than production.
+			if ( $environment == 'production' ){
+				foreach ( $aErrorQueue as $index => $item ){
+					foreach ( $item['ERRORS'] as $e => $error ){
+						if ( $error['statusMessage'] == 'Invalid token' && $token = $item['MESSAGE']->getRecipient($e) ){
+							delete_post_meta( get_the_ID(), 'ios_devices', $token );
+						}
+					}
+				}
+			}
+		
 			return array(
 				'status' => 400,
 				'count' => count( $registration_ids ) - count( $aErrorQueue ),
-				'errors' => $aErrorQueue
 			);
 		}
 		else{
