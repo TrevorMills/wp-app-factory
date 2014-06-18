@@ -8,7 +8,7 @@ class TheAppPackager extends TheAppBuilder {
 		self::setup_environment();
 	}
 	
-	public function setup_environment(){
+	public static function setup_environment(){
 		$the_app = & TheAppFactory::getInstance();
 		
 		global $post;
@@ -76,7 +76,7 @@ class TheAppPackager extends TheAppBuilder {
 					)
 				));
 				$the_app->enqueue('controller','Package');
-				add_filter('TheAppFactory_helpers',array(&$this,'target_helper'),10,2);
+				add_filter('TheAppFactory_helpers',array( __CLASS__,'target_helper'),10,2);
 			}
 		}
 
@@ -832,7 +832,7 @@ class TheAppPackager extends TheAppBuilder {
 		return $path;
 	}
 	
-	public function target_helper( $helpers, $args ){
+	public static function target_helper( $helpers, $args ){
 		$the_app = & $args[0];
 		$helpers['WP']['packageTarget'] = $the_app->get('package_target');
 		$helpers['WP']['isMinifying'] = $the_app->is('minifying');
