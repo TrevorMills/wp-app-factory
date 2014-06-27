@@ -8,6 +8,8 @@ Ext.define("the_app.view.Launcher", {
 		layout: {
 			type: 'card'
 		},
+		title: '',
+		mainItems: [],
         items: [
 			{
 				xtype: 'carousel',

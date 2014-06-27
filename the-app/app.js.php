@@ -159,7 +159,7 @@ else{
 	        Ext.Viewport.add({
 				xtype: 'launcher',
 				title: <?php echo json_encode($the_app->get('title')); ?>,
-				itemseh: <?php echo TheAppFactory::anti_escape(json_encode( $items )); ?>,
+				mainItems: <?php echo TheAppFactory::anti_escape(json_encode( $items )); ?>,
 			});
 		},
 		

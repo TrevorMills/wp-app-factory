@@ -963,7 +963,7 @@ class TheAppFactory {
 			}
 			
 			// Going to try lazy loading all stores, unless we're building (even StoreStatusStore)
-			if ( $the_app->is( 'building' ) || in_array($store['storeId'],apply_filters('the_app_factory_autoload_stores',array() ) ) ){
+			if ( $the_app->is( 'building' ) || in_array($store['storeId'],apply_filters('the_app_factory_autoload_stores',array( 'HtmlPagesStore' ) ) ) ){
 				$store[ 'autoLoad' ] = true;
 			}
 			else{
@@ -1031,8 +1031,8 @@ class TheAppFactory {
 		$this->register('path','My.data.proxy.LocalStorage','app/proxy/LocalStorage.js');
 		$this->register('path','Ext.data.ModelFaster','app/model/Ext.data.ModelFaster.js');
 		
-		$this->enqueue('controller','Main');
 		$this->enqueue('controller','Launcher');
+		$this->enqueue('controller','Main');
 		$this->enqueue('controller','ExpandedTabBar');
 		$this->enqueue('require','Ext.MessageBox');
 		$this->enqueue('require','Ext.log.Logger');
