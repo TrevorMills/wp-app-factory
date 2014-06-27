@@ -1009,16 +1009,30 @@ class TheAppFactory {
 
 	private function setupSencha(){
 		$this->register('controller','Main');
+		$this->register('controller','Launcher');
 		$this->register('controller','Search');
 		$this->register('controller','ExpandedTabBar');
 		$this->register('view','HtmlPage');
 		$this->register('view','Main');
+		$this->register('view','Launcher');
 		$this->register('view','ItemWrapper');
 		$this->register('view','ItemList');
 		$this->register('view','UnsupportedBrowser');
 		$this->register('view','LazyPanel');
+
+		// This is a way to set the path for components that are not in the normal path tree
+		// The third argument is the path and it is relative the wp-app-factory/the-app directory
+		// It can be a full URL
+		$this->register('path','Ext.ux.OfflineSyncStore','app/store/Ext.ux.OfflineSyncStore.js');
+		$this->register('path','Ext.ux.InstallApp','app/helper/Ext.ux.InstallApp.js');
+		$this->register('path','Sqlite.Connection','app/proxy/SqliteConnection.js');
+		$this->register('path','Sqlite.data.proxy.SqliteStorage','app/proxy/SqliteStorage.js');
+		$this->register('path','SqliteDemo.util.InitSQLite','app/proxy/SqliteInit.js');
+		$this->register('path','My.data.proxy.LocalStorage','app/proxy/LocalStorage.js');
+		$this->register('path','Ext.data.ModelFaster','app/model/Ext.data.ModelFaster.js');
 		
 		$this->enqueue('controller','Main');
+		$this->enqueue('controller','Launcher');
 		$this->enqueue('controller','ExpandedTabBar');
 		$this->enqueue('require','Ext.MessageBox');
 		$this->enqueue('require','Ext.log.Logger');
@@ -1027,6 +1041,7 @@ class TheAppFactory {
 		$this->enqueue('require','Ext.layout.VBox'); // This seems to be necessary in Sencha Touch 2.1.1 - not sure why.
 		$this->enqueue('require','Ext.layout.HBox'); // This seems to be necessary in Sencha Touch 2.1.1 - not sure why.
 		$this->enqueue('view','Main');
+		$this->enqueue('view','Launcher');
 		$this->enqueue('view','UnsupportedBrowser');
 		$this->enqueue('view','LazyPanel');
 		$this->enqueue('require','the_app.helper.WP');

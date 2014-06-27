@@ -14,6 +14,14 @@
 		);
 		
 	}
+	
+	if ($the_app->get('ios_install_popup')){
+		$the_app->enqueue('require','Ext.ux.InstallApp');
+	}
+	if ($the_app->is('using_manifest')){
+		$the_app->enqueue('require','Ext.ux.OfflineSyncStore'); 
+		$the_app->enqueue('require','My.data.proxy.LocalStorage');
+	}
 ?>
 <?php header('Content-type: text/javascript'); ?>
 // While tracking down unacceptable browsers,
@@ -35,37 +43,9 @@ if (!Ext.Loader.config.paths.Ext.match(/\/sdk\//)){
 // Disable the _dc=<timestamp> caching of the SDK files. 
 Ext.Loader.setConfig({disableCaching:false});
 
-Ext.define('Ext.data.MyModel', {
-	override: 'Ext.data.Model',
-    commit: function(silent) {
-        var me = this,
-            modified = this.modified;
-
-        me.phantom = me.dirty = me.editing = false;
-        me.modified = {};
-
-        if (false && silent !== true) {
-            me.afterCommit(modified);
-        }
-    }
-});
-
-<?php if ($the_app->get('ios_install_popup')) : $the_app->enqueue('require','Ext.ux.InstallApp'); ?>
-// Tell the loader where to find the Ext.ux.InstallApp.js
-Ext.Loader.setPath('Ext.ux.InstallApp','app/helper/Ext.ux.InstallApp.js');
-<?php endif; ?>
-
-<?php if ($the_app->is('using_manifest')) : $the_app->enqueue('require','Ext.ux.OfflineSyncStore'); $the_app->enqueue('require','My.data.proxy.LocalStorage'); ?>
-// Tell the loader where to find the some offline storage files that are outside of the main source tree
-Ext.Loader.setPath('Ext.ux.OfflineSyncStore','app/store/Ext.ux.OfflineSyncStore.js');
-Ext.Loader.setPath('Sqlite.Connection','app/proxy/SqliteConnection.js');	
-Ext.Loader.setPath('Sqlite.data.proxy.SqliteStorage','app/proxy/SqliteStorage.js');	
-Ext.Loader.setPath('SqliteDemo.util.InitSQLite','app/proxy/SqliteInit.js');	
-Ext.Loader.setPath('My.data.proxy.LocalStorage','app/proxy/LocalStorage.js');	
-<?php endif; ?>
-
-// Tell the loader where to find the Ext.data.ModelFaster.js
-Ext.Loader.setPath('Ext.data.ModelFaster','app/model/Ext.data.ModelFaster.js');
+<?php foreach ( $the_app->registered['path'] as $name ) : ?>
+Ext.Loader.setPath( '<?php echo $name; ?>', '<?php echo $the_app->registered['paths']['path'][$name]; ?>' );
+<?php endforeach; ?>	
 
 <?php if (!$the_app->is('packaging')) : ?>
 var ub = <?php $meta = $the_app->get('meta'); echo json_encode($meta['unacceptable_browser']); ?>;
@@ -143,7 +123,7 @@ else{
 			// autoMaximize: false
 	    },
 
-		launch: function(){
+		launchold: function(){
 	        // Initialize the main view
 			Ext.Viewport.mask({
 				xtype: 'loadmask',
@@ -173,6 +153,14 @@ else{
 			},<?php echo $the_app->get('splash_pause')*1000; ?>);
 			<?php endif; ?>
 			
+		},
+		
+		launch: function(){
+	        Ext.Viewport.add({
+				xtype: 'launcher',
+				title: <?php echo json_encode($the_app->get('title')); ?>,
+				itemseh: <?php echo TheAppFactory::anti_escape(json_encode( $items )); ?>,
+			});
 		},
 		
 		confirm: function( options ){
