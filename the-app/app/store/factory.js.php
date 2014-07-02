@@ -154,7 +154,7 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 						}
 					<?php endif; ?>
 					
-					if (this.getProxy().config.type == "<?php echo $store[ 'storageEngine' ]; // 'localstorage' ?>" && !(successful && records.length)){
+					if (this.getProxy().config.type == "<?php echo $store[ 'storage_engine' ]; // 'localstorage' ?>" && !(successful && records.length)){
 						// Tried to load from localstorage, but there's nothing there.  Try and load from the server
 						/*
 						Ext.Viewport.setMasked( {
