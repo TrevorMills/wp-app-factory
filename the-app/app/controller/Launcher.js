@@ -2,7 +2,8 @@ Ext.define('the_app.controller.Launcher', {
     extend: 'Ext.app.Controller',
 
 	config: {
-		waitFors: new Ext.util.MixedCollection(),
+		queue: new Ext.util.MixedCollection(),
+		pauseForHumans: 100,
 		text: null,
 	    refs: {
 			launcher: 'launcher',
@@ -22,62 +23,109 @@ Ext.define('the_app.controller.Launcher', {
 	},
 	
 	init: function(){
-		this.getWaitFors().on( 'remove', this.monitorWaitFors, this );
-		this.getWaitFors().on( 'add', this.monitorWaitFors, this );
+		var me = this;
+		this.getQueue().on( 'remove', this.processQueue, this );
+
+		// Start off on the home screen
+		// @TODO - eventually it would be good to reinstate deeplinking, but it's not
+		// working properly right now.  
+		this.redirectTo( 'tab/1' );
+		
+		if ( typeof FORCE_CLEAR_LOCALSTORAGE != 'undefined' && FORCE_CLEAR_LOCALSTORAGE ){
+			Ext.each( Ext.data.StoreManager.getRange(), function( store ){
+				if ( store instanceof Ext.ux.OfflineSyncStore ){
+					var proxy = Ext.factory( store.getLocalProxy() );					
+					store.fireEvent( 'beforeload', store ); // a hacky way to make sure that the DBConn connection for sqlitestorage proxies is setup properly
+					proxy.clear();
+				}
+			});
+		}
 
 		Ext.each( Ext.data.StoreManager.getRange(), function( store ){
 			if ( !store.getAutoLoad() ){
-				this.waitFor( 'load', store, 'Loaded ' + store.getStoreId().replace( /Store$/, '' ) + ' data...' );
-				store.load();
+				this.enqueue( {
+					fn: function(){
+						store.load();
+					},
+					complete: {
+						object: store,
+						event: 'load',
+						fn: function( store, records, successful, operation ){
+							if ( store.isLoading() ){
+								return {
+									fn: Ext.emptyFn,
+									complete: {
+										object: store,
+										event: 'load',
+									},
+									text: 'Loading ' + store.getStoreId().replace( /Store$/, '' )
+								};
+							}
+						}
+					},
+					text: 'Loading ' + store.getStoreId().replace( /Store$/, '' )
+				}); 
 			}
 		}, this);
+
+		this.processQueue();
 	},
 	
-	waitFor: function( event, object ){
-		var me = this, args = arguments, callback, text;
-		if ( args.length > 2 ){
-			if ( Ext.isFunction( args[2] ) ){
-				callback = args[2];
-				text = args[3];
+	enqueue: function( options, uuid ){
+		var me = this, queueMethod = 'add';
+		
+		if ( typeof uuid == 'undefined' ){
+			uuid = Ext.create( 'Ext.data.identifier.Uuid' ).generate();
+		}
+		else{
+			queueMethod = 'replace';
+		}
+			
+		options.complete.object.on( options.complete.event, function(){
+			var passback = false;
+			if ( Ext.isFunction( options.complete.fn ) ){
+				passback = options.complete.fn.apply( this, arguments );
+			}
+			if ( !Ext.isObject( passback ) ){
+				me.getQueue().removeAtKey( uuid );
 			}
 			else{
-				text = args[2];
+				me.enqueue( Ext.apply( options, passback ), uuid );
+				me.processQueue();
 			}
-		}
+		}, options.complete.object, {
+			single: true
+		});
 		
-		var uuid = Ext.create( 'Ext.data.identifier.Uuid' ).generate();
-		
-		this.getWaitFors().add( uuid, {event: event, object: object} );
-		
-		object.on( event, function(){
-				if ( typeof callback != 'undefined' ){
-					callback.apply( this, arguments );
-				}
-				if ( typeof text != 'undefined' ){
-					me.setText( text );
-				}
-				me.getWaitFors().removeAtKey( uuid );
-			}, object, {
-				single: true,
-			}
-		);
+		me.getQueue()[ queueMethod ]( uuid, options );
 	},
 	
-	monitorWaitFors: function(){
-		if ( this.getLauncher() && !this.getWaitFors().getRange().length ){
-			// We have reached the end of the WaitFors
-			
-			console.log( this.getLauncher().getMainItems() );
-			Ext.defer( function(){
-		        this.getLauncher().add({
-					xtype: 'mainpanel',
-					title: this.getLauncher().getTitle(),
-					items: this.getLauncher().getMainItems(),
-					showAnimation: {type: 'fade'},
-				});
-			}, 2000, this );
+	processQueue: function(){
+		var queue = this.getQueue();
+		if ( queue.getCount() ){
+			var job = queue.first(); // get the first job
+			if ( !Ext.isEmpty( job.text ) ){
+				this.setText( job.text );
+			}
+			if ( job && Ext.isFunction( job.fn ) ){
+				Ext.defer( job.fn, this.getPauseForHumans() );
+			}
 		}
-		console.log( this.getWaitFors().items );
+		else{
+			this.launchApp();
+		}
+	},
+	
+	launchApp: function(){
+		this.setText( 'Launching App' );
+		Ext.defer( function(){
+	        this.getLauncher().add({
+				xtype: 'mainpanel',
+				title: this.getLauncher().getTitle(),
+				items: this.getLauncher().getMainItems(),
+				showAnimation: {type: 'fade'},
+			});
+		}, this.getPauseForHumans() * 2, this );
 	},
 	
 	applyText: function( text ){
@@ -94,7 +142,6 @@ Ext.define('the_app.controller.Launcher', {
 	},
 	
 	onMainPanelInitialize: function( panel ){
-		console.log( 'initialized' );
 		this.getTextPanel().destroy();
 		this.getLauncher().on( 'activeitemchange', function(){
 			this.getCarousel().destroy();
