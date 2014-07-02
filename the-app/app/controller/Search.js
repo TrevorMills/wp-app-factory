@@ -57,7 +57,8 @@ Ext.define('the_app.controller.Search', {
 				listeners: {
 					scope: this,
 					clearicontap: this.onSearchClearIconTap,
-					keyup: this.onSearchKeyUp
+					keyup: this.onSearchKeyUp,
+					clearcache: this.clearSearchCache
 				}
 			}]
 		}]);
@@ -88,6 +89,16 @@ Ext.define('the_app.controller.Search', {
 		});
 	},
 	
+	clearSearchCache: function( panel_id ){
+		console.log( 'clearing ' + panel_id );
+		if ( typeof panel_id == 'undefined' ){
+			this.setLastSearch( {} );
+		}
+		else{
+			this._lastSearch[ panel_id ] = '';
+		}
+	},
+	
 	onSearchKeyUp: function(field){
         //get the store and the value of the field
         var value = field.getValue(),
@@ -114,7 +125,7 @@ Ext.define('the_app.controller.Search', {
 			// when they're typing.  This is a performance optimization.  
 			var stillTyping = !( this._lastSearch[panel.getItemId()] == '' || !value.match(new RegExp('^'+this._lastSearch[panel.getItemId()])) );
 			if ( !stillTyping ){
-		        store.clearFilter();
+		        store.clearFilter(true);
 			}
             //the user could have entered spaces, so we must split them so we can loop through them all
             var searches = value.split(' '),
@@ -166,8 +177,8 @@ Ext.define('the_app.controller.Search', {
 			
 		}
 		this._lastSearch[panel.getItemId()] = value;
-		store.resumeEvents();
-		panel.down('list').resumeEvents(false);
+		store.resumeEvents(true);
+		panel.down('list').resumeEvents(true);
 		store.fireEvent('refresh');
 	},
 	
@@ -179,7 +190,7 @@ Ext.define('the_app.controller.Search', {
 		
 		// @DEBUG
 		panel.fireAction( 'searchClear', [], function(){
-			store.clearFilter();
+			store.clearFilter(true);
 		});
 	},
 	
