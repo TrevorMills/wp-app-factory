@@ -10,10 +10,31 @@ class SqliteStorage{
 	
 	public function parsePost( &$the_app ){
 		if ( $the_app->is( 'using_manifest' ) && $the_app->get( 'storage_engine' ) == 'sqlitestorage' ){
-			add_action( 'the_app_package_cordova', array( &$this, 'package_cordova' ) );
-			add_action( 'the_app_config_xml', array( &$this, 'config_xml' ), 10, 2 );
+			$this->setupSQLiteStorage();
 			//add_filter( 'the_app_factory_package_app_json', array( &$this, 'app_json' ) );
 		}
+		else{
+			add_action( 'TheAppFactory_setupStores', array( &$this, 'maybeIncludeSQLiteStorage') );
+		}
+		
+	}
+	
+	public function maybeIncludeSQLiteStorage( & $the_app ){
+		$stores = $the_app->get( 'stores' );
+		foreach ( $stores as $store ){
+			if ( $store['storage_engine'] == 'sqlitestorage' ){
+				$this->setupSQLiteStorage();
+				break;
+			}
+		}
+	}
+	
+	public function setupSQLiteStorage(){
+		add_action( 'the_app_package_cordova', array( &$this, 'package_cordova' ) );
+		add_action( 'the_app_config_xml', array( &$this, 'config_xml' ), 10, 2 );
+		
+		$the_app = & TheAppFactory::getInstance();
+		$the_app->enqueue( 'require', 'SqliteDemo.util.InitSQLite' );
 	}
 	
 	public function package_cordova( &$the_app ){
