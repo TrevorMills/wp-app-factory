@@ -554,6 +554,7 @@ class TheAppFactory {
 				'searchable' => false,		// Include a search field at the top of the list
 				'searchableFields' => 'title',	// which fields are searchable - accepts a comma separated list
 				// the Sencha tpl for the list item
+				'storage_engine' => 'localstorage', // if there is a lot of data, try using 'sqlitestorage'
 				'list_template' => '<div class="avatar"<tpl if="thumbnail"> style="background-image: url({thumbnail})"</tpl>></div><span class="name">{title}</span>',
 				// the Sencha tpl for the detail page
 				'detail_template' => '<tpl if="thumbnail"><img class="thumbnail" src="{thumbnail}"></tpl></div><h3>{title}</h3> {content}'
@@ -931,10 +932,10 @@ class TheAppFactory {
 			// Setup offline versino of the store
 			if ( $store[ 'useLocalStorage' ] ){
 				$store[ 'serverProxy' ] = $store[ 'proxy' ];
-				if ( !isset( $store[ 'storageEngine'] ) ){
-					$store[ 'storageEngine'] = $the_app->get( 'storage_engine' );
+				if ( !isset( $store[ 'storage_engine'] ) ){
+					$store[ 'storage_engine'] = $the_app->get( 'storage_engine' );
 				}
-				switch( $store[ 'storageEngine' ] ){
+				switch( $store[ 'storage_engine' ] ){
 				case 'localstorage':
 					$store['localProxy'] = /* $store['proxy'] = */ array(
 						'type' => 'localstorage',
@@ -1002,6 +1003,9 @@ class TheAppFactory {
 					'reader' => array('type' => 'json', 'rootProperty' => $post_type)
 				);
 				$stores[$store_name]['autoLoad'] = true; //$this->do_not_escape('true');  // Note camelCase...
+				if ( isset( $registered_meta[0][ 'storage_engine' ] ) ){
+					$stores[$store_name]['storage_engine'] = $registered_meta[0][ 'storage_engine' ];
+				}
 			}
 		}
 		return $stores;
