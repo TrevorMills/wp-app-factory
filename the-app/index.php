@@ -17,7 +17,7 @@
 <?php if ($the_app->is('doing_package_command') || $the_app->is('doing_build_command')) : ?>
 <script type="text/javascript">
 	// When building or packaging, clear the localStorage off the top. 
-	localStorage.clear();
+	var FORCE_CLEAR_LOCALSTORAGE = true;
 </script>
 <?php endif; ?>
 <?php if ($the_app->is('packaging')) : ?>
