@@ -2,7 +2,7 @@ Ext.define("the_app.view.Launcher", {
     extend: 'Ext.Panel',
 	xtype: 'launcher',
 	id: 'launcher',
-    requires: [],
+    requires: ['Ext.carousel.Carousel'],
     config: {
 		id: 'launcher',
 		layout: {
