@@ -175,24 +175,26 @@ Ext.define('the_app.controller.Main', {
 		this.goToTab(id);
 		this.setCardJustSwitched(true); // Set to true so that tapping on the tabbar tab will return to the proper page
 		var wrapper = this.getMainPanel().getInnerItems()[parseInt(id)-1];
-		var list = wrapper.down('list');
-		doit = function(){
-			var record = list.getStore().getById(record_id);
+		var list = wrapper.down('list'), store = list.getStore();
+		doit = function(store){
+			var record = store.getById(record_id);
 			if (record){
+				store.suspendEvents();
 				list.up('itemlist').push({
 					xtype: 'itemdetail',
 					title: record.get('title'),
 					tpl: list.up('itemlist').getMeta().detail_template,
 					data: record.getData()
 				});
+				store.resumeEvents( true );
 			}
 		}
 		// Store is loaded asynchronously, so wait until it's loaded
-		if (list.getStore().isLoaded()){
-			doit();
+		if (store.isLoaded()){
+			doit(store);
 		}
 		else{
-			list.getStore().on('load',doit);
+			store.on('load',doit);
 		}
 	},
 	
