@@ -40,6 +40,9 @@ if (!Ext.Loader.config.paths.Ext.match(/\/sdk\//)){
 	});
 }
 
+// Doing this greatly improves the performance of Ext.decode
+Ext.USE_NATIVE_JSON = true;
+
 // Disable the _dc=<timestamp> caching of the SDK files. 
 Ext.Loader.setConfig({disableCaching:false});
 

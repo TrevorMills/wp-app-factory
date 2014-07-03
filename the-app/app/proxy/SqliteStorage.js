@@ -155,6 +155,7 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 
 	//inherit docs
 	read: function (operation, callback, scope) {
+		var starttime = new Date(), now;
 		var me = this,
 				limit = operation.getLimit(),
 				start = operation.getStart(),
@@ -176,7 +177,10 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 		var onSuccess, onError;
 
 		onSuccess = function (tx, results) {
+			
+			now = new Date(); console.log( [now, starttime] ); console.log( sql + ' took ' + ( now.getTime() - starttime.getTime() ) ); starttime = now;
 			me.applyDataToModel(tx, results, operation, callback, scope);
+			now = new Date(); console.log( 'applyDataToModel took ' + ( now.getTime() - starttime.getTime() ) ); starttime = now;
 		};
 
 		onError = function (tx, err) {
@@ -360,7 +364,7 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 
 				// need to encode?
 				if (f.field.getType().type.toUpperCase() == 'AUTO') {
-					value = Ext.encode(value);
+					value = Ext.isString( value ) ? me.encodeString( value ) : Ext.encode(value);
 				}
 
 				recObj[f.name] = value;
@@ -549,6 +553,7 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 		var records = me.parseData(tx, results);
 		var storedatas = [];
 
+		var starttime = new Date(), now;
 		if (results.rows && records.length) {
 			for (i = 0; i < results.rows.length; i++) {
 				var rowid = records[i].rowid;
@@ -568,8 +573,12 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 				storedatas.push(new Model(record, rowid));
 			}
 		}
+		now = new Date(); console.log( 'this part took ' + ( now.getTime() - starttime.getTime() ) ); starttime = now;
 
 		me.applyData(storedatas, operation, callback, scope);
+		
+		now = new Date(); console.log( 'applyData ' + ( now.getTime() - starttime.getTime() ) ); starttime = now;
+		
 	},
 
 
@@ -704,6 +713,28 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 			});
 		}
 		return appliedSorters;
-	}
-
+	},
+	
+	// Following are copied from Sencha Touch Library.
+	// The reason is that the native JSON.stringify flubs on 
+	// some crazy control characters that may be present in the data
+    encodeMap: {
+        "\b": '\\b',
+        "\t": '\\t',
+        "\n": '\\n',
+        "\f": '\\f',
+        "\r": '\\r',
+        '"': '\\"',
+        "\\": '\\\\',
+        '\x0b': '\\u000b' //ie doesn't handle \v
+    },
+    charToReplace: /[\\\"\x00-\x1f\x7f-\uffff]/g,
+	
+    encodeString:  function(s) {
+		var me = this;
+        return '"' + s.replace( this.charToReplace, function(a) {
+            var c = me.encodeMap[a];
+            return typeof c === 'string' ? c : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+        }) + '"';
+    },
 });
