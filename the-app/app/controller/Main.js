@@ -517,7 +517,7 @@ Ext.define('the_app.controller.Main', {
 					styleHtmlContent: true,
 					centered: true,
 					style: 'text-align:center',
-					html: WP.__( 'Loading Content' ) + '<br/>' + WP.__( 'Please Stand By' )
+					html: WP.__( 'Preparing Content' ) + '<br/>' + WP.__( 'Please Stand By' )
 				}
 			],
 			listeners: {
