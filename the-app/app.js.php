@@ -159,6 +159,9 @@ else{
 		},
 		
 		launch: function(){
+			if ( typeof navigator.splashscreen != 'undefined' ){
+				navigator.splashscreen.hide();
+			}
 	        Ext.Viewport.add({
 				xtype: 'launcher',
 				title: <?php echo json_encode($the_app->get('title')); ?>,
