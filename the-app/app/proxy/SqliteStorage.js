@@ -155,7 +155,6 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 
 	//inherit docs
 	read: function (operation, callback, scope) {
-		var starttime = new Date(), now;
 		var me = this,
 				limit = operation.getLimit(),
 				start = operation.getStart(),
@@ -178,9 +177,7 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 
 		onSuccess = function (tx, results) {
 			
-			now = new Date(); console.log( [now, starttime] ); console.log( sql + ' took ' + ( now.getTime() - starttime.getTime() ) ); starttime = now;
 			me.applyDataToModel(tx, results, operation, callback, scope);
-			now = new Date(); console.log( 'applyDataToModel took ' + ( now.getTime() - starttime.getTime() ) ); starttime = now;
 		};
 
 		onError = function (tx, err) {
@@ -553,7 +550,6 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 		var records = me.parseData(tx, results);
 		var storedatas = [];
 
-		var starttime = new Date(), now;
 		if (results.rows && records.length) {
 			for (i = 0; i < results.rows.length; i++) {
 				var rowid = records[i].rowid;
@@ -573,12 +569,8 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 				storedatas.push(new Model(record, rowid));
 			}
 		}
-		now = new Date(); console.log( 'this part took ' + ( now.getTime() - starttime.getTime() ) ); starttime = now;
 
 		me.applyData(storedatas, operation, callback, scope);
-		
-		now = new Date(); console.log( 'applyData ' + ( now.getTime() - starttime.getTime() ) ); starttime = now;
-		
 	},
 
 
