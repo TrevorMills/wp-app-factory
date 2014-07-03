@@ -503,12 +503,50 @@ Ext.define('the_app.controller.Main', {
     },
 
     handleLazyPanelActivate: function( panel ) {
-//		console.log(['handleLazyPanelActivate',panel,panel.getLazyItem(),panel.getDestroyOnDeactivate()]); // @dev
-        panel.add( panel.getOriginalItem() );
+		//	console.log(['handleLazyPanelActivate',panel,panel.getLazyItem(),panel.getDestroyOnDeactivate()]); // @dev
+		panel.add( {
+			xtype: 'panel',
+			masked: true,
+			layout: {
+				type: 'vbox',
+				align: 'center',
+				pack: 'center'
+			},
+			items: [
+				{
+					styleHtmlContent: true,
+					centered: true,
+					style: 'text-align:center',
+					html: WP.__( 'Loading Content' ) + '<br/>' + WP.__( 'Please Stand By' )
+				}
+			],
+			listeners: {
+				painted: {
+					fn: function(){
+						Ext.factory( Ext.apply( {}, panel.getOriginalItem(), {
+							listeners: {
+								initialize: {
+									fn: function(){
+										// A slight pause to make sure that the stand by message is painted.
+										Ext.defer( function(){
+											panel.removeAll(true);
+											panel.add( this );
+										}, 50, this );
+									},
+									single: true
+								}
+							}
+						}));
+					},
+					single: true,
+					order: 'after'
+				}
+			}
+		});
 	    panel.on('deactivate', this.handleLazyPanelDeactivate, this, { single : true });
     },
     handleLazyPanelDeactivate: function( panel ) {
-//		console.log(['handleLazyPanelDeactivate',panel]); // @dev
+		//	console.log(['handleLazyPanelDeactivate',panel]); // @dev
 
 		if (panel.getDestroyOnDeactivate()){
 	        panel.removeAll(true);
