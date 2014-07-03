@@ -90,7 +90,6 @@ Ext.define('the_app.controller.Search', {
 	},
 	
 	clearSearchCache: function( panel_id ){
-		console.log( 'clearing ' + panel_id );
 		if ( typeof panel_id == 'undefined' ){
 			this.setLastSearch( {} );
 		}
@@ -186,11 +185,12 @@ Ext.define('the_app.controller.Search', {
 		var panel = field.up('itemlist'),
 			store = field.up('itemlist').down('list').getStore();
 
-		this._lastSearch[panel.getItemId()] = '';
-		
+		this.clearSearchCache( panel.getItemId() );
+	
 		// @DEBUG
 		panel.fireAction( 'searchClear', [], function(){
 			store.clearFilter(true);
+			store.fireEvent('refresh');
 		});
 	},
 	
