@@ -223,7 +223,7 @@ class TheAppPackager extends TheAppBuilder {
 			file_put_contents( "{$native_root}www/config.xml", $contents );
 			*/
 			self::config_xml( "$name/config.xml" );
-			self::config_xml( "www/config.xml" );
+			//self::config_xml( "www/config.xml" );
 			
 			break;
 		case 'android':
@@ -255,7 +255,7 @@ class TheAppPackager extends TheAppBuilder {
 			rename( $native_root.'src/'.$name.'.java',$target_dest.'/'.$name.'.java');
 			
 			self::config_xml( 'res/xml/config.xml' );
-			self::config_xml( 'assets/www/config.xml' );
+			//self::config_xml( 'assets/www/config.xml' );
 			
 			break;
 		case 'pb':

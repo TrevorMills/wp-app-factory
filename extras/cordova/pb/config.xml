@@ -18,6 +18,12 @@
 
     <!-- Include InAppBrowser -->
     <gap:plugin name="org.apache.cordova.inappbrowser" />
+    <!-- Include SplashScreen -->
+	<gap:plugin name="org.apache.cordova.splashscreen" />
 	
     <access origin="*" />
+	
+    <preference name="splashscreen" value="splash" />
+    <preference name="splashScreenDelay" value="10000" />
+	
 </widget>
