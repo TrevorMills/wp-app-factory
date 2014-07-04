@@ -43,10 +43,13 @@ Ext.define('the_app.controller.Launcher', {
 
 		Ext.each( Ext.data.StoreManager.getRange(), function( store ){
 			if ( Ext.isFunction( store.getLaunchLoad ) && store.getLaunchLoad() ){
+				
+				var prettyLabel = Ext.isFunction( store.getPrettyLabel ) ? store.getPrettyLabel() : store.getStoreId().replace( /Store$/, '' );
 				this.enqueue( {
 					fn: function(){
 						store.load();
 					},
+					text: WP.__( 'Loading %1' ).replace( /%1/, prettyLabel ),
 					complete: {
 						object: store,
 						event: 'load',
@@ -56,6 +59,7 @@ Ext.define('the_app.controller.Launcher', {
 									// It's the StoreStatusStore, we'll wait for 'load' again
 									return {
 										fn: Ext.empty,
+										text: WP.__( 'Checking for Updates' ),
 										complete: {
 											object: store,
 											event: 'synccheck',
@@ -66,15 +70,15 @@ Ext.define('the_app.controller.Launcher', {
 														complete: {
 															object: this,
 															event: 'syncdecision',
-															fn: function( doupdate ){
-																if ( doupdate ){
+															fn: function( updating ){
+																if ( updating ){
 																	return {
 																		fn: Ext.emptyFn,
+																		text: WP.__( 'Performing Updates' ),
 																		complete: {
 																			object: this,
 																			event: 'sync_complete'
 																		},
-																		text: WP.__( 'Performing Updates' )
 																	}
 																}
 															}
@@ -83,7 +87,6 @@ Ext.define('the_app.controller.Launcher', {
 												}
 											}
 										},
-										text: WP.__( 'Checking for Updates' )
 									}
 								}
 								else{
@@ -92,17 +95,16 @@ Ext.define('the_app.controller.Launcher', {
 									// be triggered immediately and store.isLoading() will be true by the time we're here
 									return {
 										fn: Ext.emptyFn,
+										text: WP.__( 'Storing %1' ).replace( /%1/, prettyLabel ),
 										complete: {
 											object: store,
 											event: 'sync_complete'
 										},
-										text: WP.__( 'Synchronizing %1' ).replace( /%1/, store.getStoreId().replace( /Store$/, '' ) )
 									}
 								}
 							}
 						}
 					},
-					text: WP.__( 'Loading %1' ).replace( /%1/, store.getStoreId().replace( /Store$/, '' ) )
 				})
 			}
 		}, this);

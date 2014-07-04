@@ -994,8 +994,8 @@ class TheAppFactory {
 				$store['ajaxProxy']['url'] = 'resources/data/'.preg_replace( '/Store$/', '', $key ).'.json';
 			}
 			
-			if ( $key == 'StoreStatusStore' ){
-				$store[ 'isStoreMeta' ] = true;
+			if ( !isset( $store['prettyLabel'] ) ){
+				$store['prettyLabel'] = preg_replace( '/Store$/', '', $key );
 			}
 			
 			$stores[ $key ] = $store;

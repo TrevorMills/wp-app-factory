@@ -39,7 +39,7 @@ Ext.define("the_app.view.Launcher", {
 				floatingCls: 'x-floating-no-border',
 				style: 'text-align:center',
 				data: {
-					text: 'Foo Bar'
+					text: null
 				}
 			},
 			
