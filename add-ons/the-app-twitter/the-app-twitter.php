@@ -96,7 +96,8 @@ function app_twitter_authentication($atts=array()){
 			'xtype' => 'tweet',
 			'data_callback' => 'app_twitter_tweets'
 		),
-		'useLocalStorage' => false
+		'useLocalStorage' => false,
+		'autoLoad' => false
 	);
 	$the_app->set('registered_post_queries',$registered);
 }

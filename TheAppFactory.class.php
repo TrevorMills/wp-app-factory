@@ -866,7 +866,7 @@ class TheAppFactory {
 			);
 			$stores['WrapperStore'] = array(
 				'model' => 'WrapperPage',
-				'autoLoad' => true, //$this->do_not_escape('true'),
+				'autoLoad' => true, 
 				'proxy' => array(
 					'type' => 'scripttag',
 					'url' => $this->get('mothership').'data/wrapperpages',
@@ -881,7 +881,7 @@ class TheAppFactory {
 		if ($this->get('html_store_contents')){
 			$stores['HtmlPagesStore'] = array(
 				'model' => 'HtmlPages',
-				'autoLoad' => true, //$this->do_not_escape('true'),
+				'autoLoad' => true, 
 				'proxy' => array(
 					'type' => 'scripttag',
 					'url' => $this->get('mothership').'data/htmlpages',
@@ -904,7 +904,7 @@ class TheAppFactory {
 			$stores['StoreStatusStore'] = array();
 			$stores['StoreStatusStore']['model'] = 'StoreStatus';
 			$stores['StoreStatusStore']['useLocalStorage'] = true;
-			$stores['StoreStatusStore']['autoLoad'] = true; //$this->do_not_escape('true');  // Note camelCase...
+			$stores['StoreStatusStore']['autoLoad'] = true; // Note camelCase...
 			$stores['StoreStatusStore']['proxy'] = array(
 				'type' => 'scripttag',
 				'url' => $this->get('mothership').'data/storemeta',
@@ -948,27 +948,44 @@ class TheAppFactory {
 					);
 					break;
 				case 'sqlitestorage':
+					$tablename = preg_replace( '/[^A-Za-z0-9_]/', '_', str_replace( 'the_app.model.', '', $store['model'] ) );
 					$store['localProxy'] = /* $store['proxy'] = */ array(
 						'type' => 'sqlitestorage',
 						'dbConfig' => array(
-							'tablename' => preg_replace( '/[^A-Za-z0-9_]/', '_', str_replace( 'the_app.model.', '', $store['model'] ) ),
+							'tablename' => $tablename,
 							'dbConn' => $the_app->do_not_escape( 'null' )
 						)
 					);
+					$store['tableName'] = $tablename;
 					break;
 				}
-				$store['extend'] = 'Ext.ux.OfflineSyncStore';
+				$store['storageEngine'] = $store['storage_engine']; // for happy Sencha configuration
+				if ( $key == 'StoreStatusStore' ){
+					$store['extend'] = 'Ext.ux.OfflineSyncStatusStore';
+				}
+				else{
+					$store['extend'] = 'Ext.ux.OfflineSyncStore';
+				}
 			}
 			else{
 				$store['extend'] = 'Ext.data.Store';
 			}
 			
 			// Going to try lazy loading all stores, unless we're building (even StoreStatusStore)
-			if ( $the_app->is( 'building' ) || in_array($store['storeId'],apply_filters('the_app_factory_autoload_stores',array( 'HtmlPagesStore' ) ) ) ){
-				$store[ 'autoLoad' ] = true;
+			//if ( $the_app->is( 'building' ) || in_array($store['storeId'],apply_filters('the_app_factory_autoload_stores',array( 'HtmlPagesStore' ) ) ) ){
+			//	$store[ 'autoLoad' ] = true;
+			//}
+			//else{
+			//	$store[ 'autoLoad' ] = false;
+			//}
+			
+			$store['launchLoad'] = false;
+			if ( $the_app->is( 'building' ) ){
+				$store['autoLoad'] = true;
 			}
-			else{
-				$store[ 'autoLoad' ] = false;
+			elseif ( isset($store['autoLoad']) && $store['autoLoad'] ){
+				$store['launchLoad'] = true;
+				$store['autoLoad'] = false;
 			}
 			
 			if ( $the_app->is( 'packaging' ) ){
@@ -1002,7 +1019,7 @@ class TheAppFactory {
 					'url' => $this->get('mothership').'data/'.$post_type.'/', // Note trailing slash, necesasry to avoid Status: 301 calls (which merely add a slash)
 					'reader' => array('type' => 'json', 'rootProperty' => $post_type)
 				);
-				$stores[$store_name]['autoLoad'] = true; //$this->do_not_escape('true');  // Note camelCase...
+				$stores[$store_name]['autoLoad'] = isset( $registered_meta[0][ 'autoLoad' ] ) ? $registered_meta[0][ 'autoLoad' ] : true; // Note camelCase...
 				if ( isset( $registered_meta[0][ 'storage_engine' ] ) ){
 					$stores[$store_name]['storage_engine'] = $registered_meta[0][ 'storage_engine' ];
 				}
@@ -1028,6 +1045,7 @@ class TheAppFactory {
 		// The third argument is the path and it is relative the wp-app-factory/the-app directory
 		// It can be a full URL
 		$this->register('path','Ext.ux.OfflineSyncStore','app/store/Ext.ux.OfflineSyncStore.js');
+		$this->register('path','Ext.ux.OfflineSyncStatusStore','app/store/Ext.ux.OfflineSyncStatusStore.js');
 		$this->register('path','Ext.ux.InstallApp','app/helper/Ext.ux.InstallApp.js');
 		$this->register('path','Sqlite.Connection','app/proxy/SqliteConnection.js');
 		$this->register('path','Sqlite.data.proxy.SqliteStorage','app/proxy/SqliteStorage.js');

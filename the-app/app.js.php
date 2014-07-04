@@ -20,6 +20,7 @@
 	}
 	if ($the_app->is('using_manifest')){
 		$the_app->enqueue('require','Ext.ux.OfflineSyncStore'); 
+		$the_app->enqueue('require','Ext.ux.OfflineSyncStatusStore'); 
 		$the_app->enqueue('require','My.data.proxy.LocalStorage');
 	}
 ?>
@@ -176,6 +177,8 @@ else{
 						xtype: 'button',
 						text: WP.__('No'),
 						handler: function( button ){
+							var handler = options.handlerNo || Ext.emptyFn;
+							handler.apply( this );
 							this.hidePopup( button.up( 'panel' ).getId() );
 						},
 						scope: this
@@ -184,8 +187,8 @@ else{
 						xtype: 'button',
 						text: WP.__('Yes'),
 						handler: function( button ){
-							var handler = options.handler || function(){};
-							handler();
+							var handler = options.handler || Ext.emptyFn;
+							handler.apply( this );
 							this.hidePopup( button.up( 'panel' ).getId() );
 						},
 						scope: this

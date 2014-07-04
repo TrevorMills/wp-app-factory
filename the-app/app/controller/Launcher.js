@@ -42,7 +42,7 @@ Ext.define('the_app.controller.Launcher', {
 		}
 
 		Ext.each( Ext.data.StoreManager.getRange(), function( store ){
-			if ( !store.getAutoLoad() ){
+			if ( Ext.isFunction( store.getLaunchLoad ) && store.getLaunchLoad() ){
 				this.enqueue( {
 					fn: function(){
 						store.load();
@@ -52,25 +52,64 @@ Ext.define('the_app.controller.Launcher', {
 						event: 'load',
 						fn: function( store, records, successful, operation ){
 							if ( store.isLoading() ){
-								return {
-									fn: Ext.emptyFn,
-									complete: {
-										object: store,
-										event: 'load',
-									},
-									text: 'Loading ' + store.getStoreId().replace( /Store$/, '' )
-								};
+								if ( store instanceof Ext.ux.OfflineSyncStatusStore ){
+									// It's the StoreStatusStore, we'll wait for 'load' again
+									return {
+										fn: Ext.empty,
+										complete: {
+											object: store,
+											event: 'synccheck',
+											fn: function(){
+												if ( this.getStoresToUpdate().length ){
+													return {
+														fn: Ext.emptyFn,
+														complete: {
+															object: this,
+															event: 'syncdecision',
+															fn: function( doupdate ){
+																if ( doupdate ){
+																	return {
+																		fn: Ext.emptyFn,
+																		complete: {
+																			object: this,
+																			event: 'sync_complete'
+																		},
+																		text: WP.__( 'Performing Updates' )
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										},
+										text: WP.__( 'Checking for Updates' )
+									}
+								}
+								else{
+									// This is true the first time the app runs when a store attempts to 
+									// load from persistent storage but nothing exists - a server load will
+									// be triggered immediately and store.isLoading() will be true by the time we're here
+									return {
+										fn: Ext.emptyFn,
+										complete: {
+											object: store,
+											event: 'sync_complete'
+										},
+										text: WP.__( 'Synchronizing %1' ).replace( /%1/, store.getStoreId().replace( /Store$/, '' ) )
+									}
+								}
 							}
 						}
 					},
-					text: 'Loading ' + store.getStoreId().replace( /Store$/, '' )
-				}); 
+					text: WP.__( 'Loading %1' ).replace( /%1/, store.getStoreId().replace( /Store$/, '' ) )
+				})
 			}
 		}, this);
 
 		this.processQueue();
 	},
-	
+
 	enqueue: function( options, uuid ){
 		var me = this, queueMethod = 'add';
 		

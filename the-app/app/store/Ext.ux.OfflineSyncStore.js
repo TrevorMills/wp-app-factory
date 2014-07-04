@@ -40,8 +40,32 @@ Ext.define('Ext.ux.OfflineSyncStore', {
 		 * @cfg {Object} serverProxy A Proxy instance that will be used when syncing the store's contents to the server. Generally a Ajax proxy.
 		 * @accessor
 		 */
-		serverProxy: null
+		serverProxy: null,
 
+		localExists: false,
+		listeners: {
+			beforeload: function( store, operation, eOpts ){
+				// There seems to be an issue on the actual devices when this proxy is used in conjunction with the Cordova SQLite Native plugin
+				// If we set the dbConn to SqliteDemo.util.InitSQLite.getConnection() during configuration, the Codrova SQLite Native plugin
+				// hasn't necessarily had a chance to load (seems to occur when there is data in it).  So, we hold off setting the connection 
+				// until the first time it is needed.
+				if ( this.getLocalProxy().config.type == 'sqlitestorage' && this.getLocalProxy().getDbConfig().dbConn == null ){
+					var dbConfig = {
+						tablename: this.getTableName(),
+						dbConn: SqliteDemo.util.InitSQLite.getConnection()
+					}
+					this.getLocalProxy().setDbConfig( dbConfig );
+					this.getLocalProxy().setTable();
+					if ( this.getProxy().config.type == 'sqlitestorage' ){
+						this.getProxy().setDbConfig( dbConfig );
+						this.getProxy().setTable();
+					}
+				}
+			},
+			load: function(){
+				this.maybeDoInitialSync.apply( this, arguments );
+			}
+		}
 	},
 
 	statics: {
@@ -54,6 +78,26 @@ Ext.define('Ext.ux.OfflineSyncStore', {
 		config = config || {};
 
 		this.callParent([config]);
+	},
+	
+	maybeDoInitialSync: function(store, records, successful, operation, eOpts){
+		if (this.getProxy().config.type == this.getStorageEngine() && !(successful && records.length)){
+			// Tried to load from localstorage, but there's nothing there.  Try and load from the server
+			if (typeof PACKAGED_APP != 'undefined'){
+				// We are packaging for native, we're going to update the URL for the proxy to
+				// load from the initial data in the resources/data directory 
+				var trueServerProxy = Ext.Object.merge( {}, this.getServerProxy().config );
+				this.setServerProxy( this.getAjaxProxy() );
+				this.loadServer();
+				
+				// Reset the Proxy
+				this.setServerProxy(trueServerProxy);
+			}
+			else{
+				this.loadServer();
+			}
+		}
+		
 	},
 
 	/**
