@@ -40,6 +40,14 @@ Ext.define('the_app.controller.Search', {
 	addSearchField: function ( panel ){
 		// Doing this greatly improves performance. 
 		//store.data.setAutoSort(false);
+		var searchListeners = {
+			scope: this,
+			clearicontap: this.onSearchClearIconTap,
+			clearcache: this.clearSearchCache
+		}
+		
+		searchListeners[ Ext.os.deviceType == 'Phone' ? 'change' : 'keyup' ] = this.doSearch;
+		searchListeners[ (Ext.os.deviceType == 'Phone' ? 'change' : 'keyup') + 'nomask' ] = this.doSearchNoMask;
 		var searchfield = panel.down('list').add([{
 			xtype: 'toolbar',
 			docked: 'top',
@@ -54,12 +62,7 @@ Ext.define('the_app.controller.Search', {
 				placeHolder: WP.__('Search...'),
 				id: panel.getItemId()+'-search',
 				searchableFields: this.getSearchableFields( panel ),
-				listeners: {
-					scope: this,
-					clearicontap: this.onSearchClearIconTap,
-					keyup: this.onSearchKeyUp,
-					clearcache: this.clearSearchCache
-				}
+				listeners: searchListeners
 			}]
 		}]);
 		panel.down('list').getScrollable().getScroller().on('scroll',function(scroller,x,y,eOpts){
@@ -98,7 +101,14 @@ Ext.define('the_app.controller.Search', {
 		}
 	},
 	
-	onSearchKeyUp: function(field){
+	doSearchNoMask: function( field ){
+		this.doSearch( field, false );
+	},
+	
+	doSearch: function(field, useMask ){
+		if ( typeof useMask == 'undefined' ){
+			useMask = true;
+		}
         //get the store and the value of the field
         var value = field.getValue(),
 			panel = field.up('itemlist'),
@@ -114,71 +124,89 @@ Ext.define('the_app.controller.Search', {
 
         //check if a value is set first, as if it isnt we dont have to do anything
 		store.suspendEvents();
+		panel.suspendEvents();
 		panel.down('list').suspendEvents();
 		
-        if (!value) {
-			this.onSearchClearIconTap( field );
-		}
-		else{
-			// Only clear the filter if the current value is not simply an extension of the last value (as will be true)
-			// when they're typing.  This is a performance optimization.  
-			var stillTyping = !( this._lastSearch[panel.getItemId()] == '' || !value.match(new RegExp('^'+this._lastSearch[panel.getItemId()])) );
-			if ( !stillTyping ){
-		        store.clearFilter(true);
-			}
-            //the user could have entered spaces, so we must split them so we can loop through them all
-            var searches = value.split(' '),
-                regexps = [],
-                i;
-
-            //loop them all
-            for (i = 0; i < searches.length; i++) {
-                //if it is nothing, continue
-                if (!searches[i]) continue;
-
-                //if found, create a new regular expression which is case insenstive
-                regexps.push(new RegExp(searches[i], 'i'));
-            }
-
-            //now filter the store by passing a method
-            //the passed method will be called for each record in the store
-            store.filter(function(record) {
-                var matched = [];
-
-                //loop through each of the regular expressions
-                for (i = 0; i < regexps.length; i++) {
-                    var search = regexps[i],
-						didMatch = false;
-					
-					Ext.each( field.config.searchableFields, function( searchable ){
-						var recordValue = record.get( searchable );
-						if ( recordValue && recordValue.match( search ) ){
-							didMatch = true;
-						}
-					});
-
-                    //if it matched the title, push it into the matches array
-                    matched.push(didMatch);
-                }
-
-                //if nothing was found, return false (dont so in the store)
-                if (matched.length > 1 && matched.indexOf(false) != -1) {
-                    return false;
-                } else {
-                    //else true true (show in the store)
-                    return matched[0];
-                }
-            });
-						
-			store.fireAction( 'searchFilter', [ panel, stillTyping ] , function(){
-				store.sort();
+		if ( useMask ){
+			panel.mask( {
+				xtype: 'loadmask',
+				indicator: true,
+				message: null
 			});
-			
 		}
-		this._lastSearch[panel.getItemId()] = value;
-		store.resumeEvents(true);
-		panel.down('list').resumeEvents(true);
-		store.fireEvent('refresh');
+		
+		Ext.defer( function(){
+	        if (!value) {
+				panel.resumeEvents( true );
+				this.onSearchClearIconTap( field );
+				store.resumeEvents(true);
+			}
+			else{
+				// Only clear the filter if the current value is not simply an extension of the last value (as will be true)
+				// when they're typing.  This is a performance optimization.  
+				var stillTyping = !( this._lastSearch[panel.getItemId()] == '' || !value.match(new RegExp('^'+this._lastSearch[panel.getItemId()])) );
+				if ( !stillTyping ){
+			        store.clearFilter(true);
+				}
+	            //the user could have entered spaces, so we must split them so we can loop through them all
+	            var searches = value.split(' '),
+	                regexps = [],
+	                i;
+
+	            //loop them all
+	            for (i = 0; i < searches.length; i++) {
+	                //if it is nothing, continue
+	                if (!searches[i]) continue;
+
+	                //if found, create a new regular expression which is case insenstive
+	                regexps.push(new RegExp(searches[i], 'i'));
+	            }
+
+	            //now filter the store by passing a method
+	            //the passed method will be called for each record in the store
+	            store.filter(function(record) {
+	                var matched = [];
+
+	                //loop through each of the regular expressions
+	                for (i = 0; i < regexps.length; i++) {
+	                    var search = regexps[i],
+							didMatch = false;
+					
+						Ext.each( field.config.searchableFields, function( searchable ){
+							var recordValue = record.get( searchable );
+							if ( recordValue && recordValue.match( search ) ){
+								didMatch = true;
+							}
+						});
+
+	                    //if it matched the title, push it into the matches array
+	                    matched.push(didMatch);
+	                }
+
+	                //if nothing was found, return false (dont so in the store)
+	                if (matched.length > 1 && matched.indexOf(false) != -1) {
+	                    return false;
+	                } else {
+	                    //else true true (show in the store)
+	                    return matched[0];
+	                }
+	            });
+						
+				store.resumeEvents(true);
+				store.fireAction( 'searchFilter', [ panel, stillTyping ] , function(){
+					store.sort();
+				});
+			}
+			this._lastSearch[panel.getItemId()] = value;
+		
+			if ( useMask ){
+				panel.unmask();
+			}
+			panel.resumeEvents( true );
+			panel.down('list').resumeEvents(true);
+			store.fireEvent('refresh');
+		}, useMask ? 50 : 0, this );
+
 	},
 	
 	onSearchClearIconTap: function(field){
@@ -188,9 +216,9 @@ Ext.define('the_app.controller.Search', {
 		this.clearSearchCache( panel.getItemId() );
 	
 		// @DEBUG
-		panel.fireAction( 'searchClear', [], function(){
-			store.clearFilter(true);
-			store.fireEvent('refresh');
+		panel.fireAction( 'searchClear', [store], function(s){
+			s.clearFilter(true);
+			s.fireEvent('refresh');
 		});
 	},
 	
