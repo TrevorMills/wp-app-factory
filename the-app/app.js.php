@@ -245,7 +245,8 @@ else{
 						}
 					},
 				},
-				items: []
+				items: [],
+				zIndex: 10000
 			};
 			if ( options.id ){
 				config.cls += ' ' + options.id;
@@ -297,10 +298,7 @@ else{
 		},
 		
 		hidePopup: function( id ){
-			var cmp;
-			if ( cmp = Ext.getCmp( id ) ){
-				cmp.hide();
-			}
+			this.removePopup( id );
 		},
 		
 		removePopup: function( cmp ){
