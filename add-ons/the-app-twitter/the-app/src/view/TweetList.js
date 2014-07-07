@@ -19,6 +19,8 @@ Ext.define('the_app.view.TweetList',{
 				xtype: 'list',
 				title: '',
 	            itemCls: 'tweet',
+				styleHtmlContent: true,
+				loadingText: null,
 				itemTpl: new Ext.XTemplate('<div class="avatar"<tpl if="profile_image_url"> style="background-image: url({profile_image_url})"</tpl>><a href="http://twitter.com/{from_user}" target="_blank">&nbsp;</a></div> <div class="tweet"><strong><a href="http://twitter.com/{from_user}" target="_blank" class="from_user_link">{from_user}</a></strong><br />{text:this.linkify}</div><div class="tweet-disclosure '+(Ext.version.version >= '2.2.1' ? '' : 'no-pictos')+'"><div class="created_ago">{created_at:this.created_ago}</div><a href="http://twitter.com/{from_user}/status/{id_str}" target="_blank"></a></div>',
 	                {
 	                    linkify: function(value) {
@@ -72,7 +74,7 @@ Ext.define('the_app.view.TweetList',{
 			}
 		],
 		listeners: {
-			initialize: function(){
+			activate: function(){
 				var store = Ext.create('Ext.data.Store',
 					{
 						model: 'the_app.model.Tweet',
