@@ -15,20 +15,13 @@ Ext.define("the_app.view.Launcher", {
 				xtype: 'carousel',
 				layout: 'card',
 				defaults: {
-			        styleHtmlContent: true
+			        //styleHtmlContent: true
 			    },
 				indicator: false,
-				items: [
-					{
-						html: 'Hello World'
-					},
-					{
-						html: 'What a nice world'
-					},
-					{
-						html: 'Goodbye World'
-					}
-				]
+				top:0,
+				style:"height:100%;width:100%",
+				fullscreen:true,
+				items: []
 	        },
 			{
 				xtype: 'panel',

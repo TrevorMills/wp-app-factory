@@ -85,9 +85,12 @@ class TheAppFactory {
 		add_shortcode('app_posts',array(&$this,'shortcodes'));
 		add_shortcode('loading_spinner',array(&$this,'shortcodes'));
 		add_shortcode('unacceptable_browser',array(&$this,'shortcodes'));
+		add_shortcode('launch',array(&$this,'shortcodes'));
+		add_shortcode('launch_item',array(&$this,'shortcodes'));
 		
 		add_filter('TheAppFactory_models',array(&$this,'addRegisteredModels'),10,2);
 		add_filter('TheAppFactory_stores',array(&$this,'addRegisteredStores'),10,2);	
+		add_filter('TheAppFactory_helpers',array(&$this,'addLaunchHelper'),10,2);
 		
 		add_action('TheAppFactory_setupStores',array(&$this, 'setupStoreStatusStore'),500); // Make sure the Store Status is setup last so as to allow the other stores to instantiate first
 		add_action('TheAppFactory_setupStores',array(&$this, 'massageStoreConfigs'),600);
@@ -246,20 +249,19 @@ class TheAppFactory {
 							// in the index file.  So, we're going to save the filepath instead
 							if ($type == 'splash'){
 								add_filter('the_app_factory_body_style',array(&$this,'addSplashImage'));
-								$type = 'splash_file';
-								$guid = get_attached_file($attachment->ID);
+								$splash_file = get_attached_file($attachment->ID);
 							}
-							else{
-								$guid = $attachment->guid;
-							}
+							$guid = $attachment->guid;
 						}
 					}
 				}
 				$guid = apply_filters('TheAppFactory_attachment_guid',$guid,$type,array(&$this));
 				if ($guid){
 					$this->set($type,$guid);
-					if ($type == 'splash_file'){
+					if ( isset( $splash_file ) ){
 						$this->set('has_splash',true);
+						$this->set( 'splash_file', $splash_file );
+						unset( $splash_file );
 					}
 				}
 			}
@@ -400,6 +402,22 @@ class TheAppFactory {
 			$defaults = $this->get_default_atts( $code );
 			$this->set( 'sdk', $defaults['sdk'] );
 			break;
+		case 'launch':
+			$atts['slide_pause'] = intval( $atts['slide_pause'] );
+			$this->set( 'launchConfig', $atts );
+			do_shortcode( $content );
+			break;
+		case 'launch_item':
+			$launch_items = $this->get( 'launchItems' );
+			if ( !is_array( $launch_items ) ){
+				$launch_items = array();
+			}
+			if ( isset( $atts['slide_pause'] ) ){
+				$atts['slide_pause'] = intval( $atts['slide_pause'] );
+			}
+			$launch_items[] = array_filter($atts);
+			$this->set( 'launchItems', $launch_items );
+			break;
 		case 'loading_spinner':
 			foreach ($atts as $key => $att){
 				$this->set('spinner-'.$key,$att);
@@ -496,6 +514,32 @@ class TheAppFactory {
 				'ios_install_popup' => false, // True to enable the Install App popup on iOS devices,
 				'sdk' => '2.3.1',				// the Sencha Touch SDK to use - only valid value currently is 2.3.1
 				'theme' => 'sencha-touch',		// valid values are base, bb10, sencha-touch (default).  The blank SDK also have wp-app-factory
+			);
+			break;
+		case 'launch':
+			$meta_defaults = array(
+				'show_all' => true, 		// Whether to show all slides before launching app, ( false to just launch when ready )
+				'slide_pause' => 2000, 		// Millisecond delay between slides
+				'text_color' => '#000',		// The color for the user-defined text messages
+				'text_top' => '10%',		// The top of the user-defined texts
+				'text_background' => 'none',// The background of the user-defined text box
+				'message_color' => '#000',	// The color of the app-defined messages
+				'message_top' => '80%',		// The top of the app-defined messages
+				'message_background' => 'none',// The background of the app-defined messages
+			);
+			break;
+		case 'launch_item':
+			$meta_defaults = array(
+				'text' => null,	 			// The text to display for this slide
+				'image' => null,	 		// The image to display for this slide
+				// If any of these are null, then the defaults for the 'launch' config are used instead
+				'slide_pause' => null, 		// Millisecond delay for this slide
+				'text_color' => null,		// The color for the text and the loading message for this slide
+				'text_top' => null,			// The top of the user-defined text
+				'text_background' => null,	// The background of the text box
+				'message_color' => null,	// The color of the app-defined message
+				'message_top' => null,		// The top of the app-defined message
+				'message_background' => null,// The background of the app-defined message
 			);
 			break;
 		case 'app_item':
@@ -1027,6 +1071,32 @@ class TheAppFactory {
 		}
 		return $stores;
 	}
+	
+	function addLaunchHelper( $helpers, $args ){
+		$launch_config = $this->get( 'launchConfig' );
+		if ( empty( $launch_config ) ){
+			$launch_config = $this->get_default_atts( 'launch' );
+		}
+		$launch_items = $this->get( 'launchItems' );
+		if ( !is_array( $launch_items ) ){
+			$launch_items = array();
+		}
+		if ( empty( $launch_items ) && $this->get( 'has_splash' ) ){
+			$launch_items = array(
+				array(
+					'image' => $this->get( 'splash' )
+				)
+			);
+		}
+		foreach ( $launch_items as $key => $item ){
+			if ( isset( $item['image'] ) ){
+				$launch_items[$key]['image'] = do_shortcode( "[app_package_image]{$item['image']}[/app_package_image]" );
+			}
+		}
+		$launch_config['items'] = $launch_items;
+		$helpers['LAUNCHER'] = $launch_config;
+		return $helpers;
+	}
 
 	private function setupSencha(){
 		$this->register('controller','Main');
@@ -1067,6 +1137,7 @@ class TheAppFactory {
 		$this->enqueue('view','UnsupportedBrowser');
 		$this->enqueue('view','LazyPanel');
 		$this->enqueue('require','the_app.helper.WP');
+		$this->enqueue('require','the_app.helper.LAUNCHER');
 		
 		do_action_ref_array('TheAppFactory_setupSencha',array(&$this));
 	}

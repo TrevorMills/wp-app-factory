@@ -3,6 +3,8 @@ Ext.define('the_app.controller.Launcher', {
 
 	config: {
 		queue: new Ext.util.MixedCollection(),
+		shownAll: false,
+		readyToLaunch: false,
 		pauseForHumans: 100,
 		text: null,
 	    refs: {
@@ -25,7 +27,7 @@ Ext.define('the_app.controller.Launcher', {
 	init: function(){
 		var me = this;
 		this.getQueue().on( 'remove', this.processQueue, this );
-
+		
 		// Start off on the home screen
 		// @TODO - eventually it would be good to reinstate deeplinking, but it's not
 		// working properly right now.  
@@ -159,6 +161,11 @@ Ext.define('the_app.controller.Launcher', {
 	
 	launchApp: function(){
 		this.setText( 'Launching App' );
+		this.setReadyToLaunch( true );
+		if ( LAUNCHER.getShowAll() && !this.getShownAll() ){
+			this.on( 'shownall', this.launchApp, this, { single: true } );
+			return;
+		}
 		Ext.defer( function(){
 	        this.getLauncher().add({
 				xtype: 'mainpanel',
@@ -177,9 +184,36 @@ Ext.define('the_app.controller.Launcher', {
 		}
 	},
 	
-	onLauncherInitialize: function( carousel ){
+	onLauncherInitialize: function( view ){
+		var carousel = this.getCarousel();
+		Ext.each( LAUNCHER.getItems(), function( item ){
+			carousel.add({
+				xtype: 'panel',
+				height:'100%',
+				width:'100%',
+				tpl: [
+					'<div style="position:relative;width:100%;height:100%;<tpl if="image">background-image:url({image});background-size:contain;background-repeat:no-repeat;background-position:center center;</tpl>">',
+						'<tpl if="text">',
+							'<div class="launch-text" style="top:{text_top};color:{text_color};background:{text_background}">{text}</div>',
+						'</tpl>',
+					'</div>'
+				].join( '' ), 
+				data: Ext.Object.mergeIf( {}, item, {
+					text_top: LAUNCHER.getTextTop(),
+					text_color: LAUNCHER.getTextColor(),
+					message_top: LAUNCHER.getMessageTop(),
+					message_color: LAUNCHER.getMessageColor(),
+					slide_pause: LAUNCHER.getSlidePause(),
+					text_background: LAUNCHER.getTextBackground(),
+				}),
+			});
+		}, this );
 		// setup the autoplay
-		Ext.defer( this.switchLaunchImage, 3000, this );
+		var settings = carousel.getInnerItems()[ 0 ].getData();
+		
+		this.getTextPanel().setStyle( "color:" + settings.message_color );
+		this.getTextPanel().setTop( settings.message_top );
+		Ext.defer( this.switchLaunchImage, settings.slide_pause, this );
 	},
 	
 	onMainPanelInitialize: function( panel ){
@@ -202,16 +236,31 @@ Ext.define('the_app.controller.Launcher', {
 		var cards = carousel.getItems();
 			
 		if ( cards.length <= 1 ){
+			this.setShownAll( true );
+			this.fireEvent( 'shownall' );
 			return;
 		}
-		if ( carousel.getActiveIndex() === carousel.getMaxItemIndex() ){
-			// at the end, return to the beginning
-			carousel.animateActiveItem( 0, { type: 'fade' } );
+		var current = carousel.getActiveIndex(),
+			next = ( current === carousel.getMaxItemIndex() && this.setShownAll( true ) ) ? 0 : current + 1,
+			current_settings = carousel.getInnerItems()[ current ].getData(),
+			settings = carousel.getInnerItems()[ next ].getData(),
+			transition = { type: 'fade', duration: 250  };
+			
+		if ( Ext.isDefined( current_settings.image ) && Ext.isDefined( settings.image ) && current_settings.image == settings.image ){
+			// No image change, so no transition
+			transition = { type: false }
 		}
+		
+		if ( this.getShownAll() && this.getReadyToLaunch() ){
+			this.fireEvent( 'shownall' );
+		}	
 		else{
-			carousel.next();
+			carousel.animateActiveItem( next, transition ); 
+			this.getTextPanel().setTop( settings.message_top );
+			this.getTextPanel().setStyle( "color:" + settings.message_color );
 		}
-		Ext.defer( this.switchLaunchImage, 3000, this );
+		
+		Ext.defer( this.switchLaunchImage, settings.slide_pause, this );
 	},
 	
 });
