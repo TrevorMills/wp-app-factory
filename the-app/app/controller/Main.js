@@ -400,6 +400,9 @@ Ext.define('the_app.controller.Main', {
 					l.resumeEvents(false);
 					l.setGrouped(false);
 					s.setGrouped(false);
+					s.sort([
+						{property: panel.getMeta().orderby,direction: panel.getMeta().order}
+					]);
 				}
 			}
 		
