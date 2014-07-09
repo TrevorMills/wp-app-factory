@@ -87,8 +87,9 @@ Ext.define('Ext.ux.OfflineSyncStatusStore', {
 					sync_complete: {
 						fn: function(){
 							stores_to_update = me.getStoresToUpdate();
-							stores_to_update.splice(index,1);
+							stores_to_update.splice( stores_to_update.indexOf( storeId ),1);
 							me.setStoresToUpdate( stores_to_update );
+							me.maybeTriggerAllComplete();
 						},
 						single: true
 					}
@@ -99,6 +100,7 @@ Ext.define('Ext.ux.OfflineSyncStatusStore', {
 				stores_to_update = me.getStoresToUpdate();
 				stores_to_update.splice(index,1);
 				me.setStoresToUpdate( stores_to_update );
+				me.maybeTriggerAllComplete();
 			}
 		});
 	
@@ -109,5 +111,11 @@ Ext.define('Ext.ux.OfflineSyncStatusStore', {
 			}
 		},500);
 	},
+	
+	maybeTriggerAllComplete: function(){
+		if ( !this.getStoresToUpdate().length ){
+			this.fireEvent( 'all_syncs_complete' );
+		}
+	}
 	
 });

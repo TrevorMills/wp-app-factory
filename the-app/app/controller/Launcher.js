@@ -79,7 +79,7 @@ Ext.define('the_app.controller.Launcher', {
 																		text: WP.__( 'Performing Updates' ),
 																		complete: {
 																			object: this,
-																			event: 'sync_complete'
+																			event: 'all_syncs_complete'
 																		},
 																	}
 																}
