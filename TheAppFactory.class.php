@@ -1088,6 +1088,11 @@ class TheAppFactory {
 				)
 			);
 		}
+		if ( empty( $launch_items ) ){
+			$launch_items = array(
+				array( 'text' => '' )
+			);
+		}
 		foreach ( $launch_items as $key => $item ){
 			if ( isset( $item['image'] ) ){
 				$launch_items[$key]['image'] = do_shortcode( "[app_package_image]{$item['image']}[/app_package_image]" );
