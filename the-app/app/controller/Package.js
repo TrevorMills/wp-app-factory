@@ -78,7 +78,8 @@ Ext.define('the_app.controller.Package', {
 					title: 'Packaging....',
 					html: commands[which].message,
 					spinner: 'black x48',
-					hideOnMaskTap: false
+					hideOnMaskTap: false,
+					showAnimation: false,
 				}
 			);
 

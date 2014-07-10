@@ -257,6 +257,10 @@ else{
 				}
 			}
 			
+			if ( typeof options.showAnimation != 'undefined' ){
+				config.showAnimation = options.showAnimation;
+			}
+			
 			if ( this.last_popup ){
 				this.last_popup.hide();
 				config.showAnimation = false;
