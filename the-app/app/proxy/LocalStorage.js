@@ -1,4 +1,5 @@
 Ext.define('My.data.proxy.LocalStorage', {
+	requires: [ 'Ext.data.proxy.LocalStorage', 'Ext.data.identifier.Uuid' ],
     override: 'Ext.data.proxy.LocalStorage',
 
 	constructor: function(){
