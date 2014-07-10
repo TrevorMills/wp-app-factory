@@ -755,7 +755,9 @@ class TheAppFactory {
 			$this->set('items',$items);
 		}
 
-		$this->enqueue('view',$atts['xtype']);
+		if ( $this->is_registered( 'view', $atts['xtype'] ) ){
+			$this->enqueue('view',$atts['xtype']);
+		}
 		if ($atts['xtype'] == 'itemlist'){
 			$this->enqueue('view','ItemDetail');
 		}
