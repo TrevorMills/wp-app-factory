@@ -526,7 +526,7 @@ Ext.define('the_app.controller.Main', {
 			listeners: {
 				painted: {
 					fn: function(){
-						Ext.factory( Ext.apply( {}, panel.getOriginalItem(), {
+						Ext.factory( Ext.Object.merge( {}, panel.getOriginalItem(), {
 							listeners: {
 								initialize: {
 									fn: function(){
