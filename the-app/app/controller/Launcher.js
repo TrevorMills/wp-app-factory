@@ -205,13 +205,14 @@ Ext.define('the_app.controller.Launcher', {
 					message_color: LAUNCHER.getMessageColor(),
 					slide_pause: LAUNCHER.getSlidePause(),
 					text_background: LAUNCHER.getTextBackground(),
+					message_background: LAUNCHER.getMessageBackground()
 				}),
 			});
 		}, this );
 		// setup the autoplay
 		var settings = carousel.getInnerItems()[ 0 ].getData();
 		
-		this.getTextPanel().setStyle( "color:" + settings.message_color );
+		this.getTextPanel().setStyle( "color:" + settings.message_color + ";background:" + settings.message_background );
 		this.getTextPanel().setTop( settings.message_top );
 		Ext.defer( this.switchLaunchImage, settings.slide_pause, this );
 	},
