@@ -74,7 +74,8 @@ Ext.define('the_app.controller.Build', {
 					title: 'Building....',
 					html: commands[which].message,
 					spinner: 'black x48',
-					hideOnMaskTap: false
+					hideOnMaskTap: false,
+					showAnimation: false
 				}
 			);
 
@@ -108,7 +109,7 @@ Ext.define('the_app.controller.Build', {
 									id: 'build', 
 									title: 'Build Failed....',
 									html: 'The build processed failed.  Please review messages in the console and retry',
-									hideOnMaskTap: false
+									hideOnMaskTap: false,
 								}
 							);
 							console.log(response.message);

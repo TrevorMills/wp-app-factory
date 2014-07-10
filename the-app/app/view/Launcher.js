@@ -10,6 +10,7 @@ Ext.define("the_app.view.Launcher", {
 		},
 		title: '',
 		mainItems: [],
+		installApp: false,
         items: [
 			{
 				xtype: 'carousel',

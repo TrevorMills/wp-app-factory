@@ -160,13 +160,14 @@ else{
 		},
 		
 		launch: function(){
-			if ( typeof navigator.splashscreen != 'undefined' ){
-				navigator.splashscreen.hide();
-			}
 	        Ext.Viewport.add({
 				xtype: 'launcher',
 				title: <?php echo json_encode($the_app->get('title')); ?>,
+				fullscreen: true,
 				mainItems: <?php echo TheAppFactory::anti_escape(json_encode( $items )); ?>,
+				<?php if ($the_app->get('ios_install_popup')) : ?>
+				installApp: true,
+				<?php endif; ?>				
 			});
 		},
 		

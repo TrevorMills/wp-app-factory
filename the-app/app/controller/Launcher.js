@@ -173,6 +173,11 @@ Ext.define('the_app.controller.Launcher', {
 				items: this.getLauncher().getMainItems(),
 				showAnimation: {type: 'fade'},
 			});
+
+			if( this.getLauncher().getInstallApp() ){
+				Ext.ux.InstallApp.init();
+			}
+			
 		}, this.getPauseForHumans() * 2, this );
 	},
 	
@@ -215,6 +220,10 @@ Ext.define('the_app.controller.Launcher', {
 		this.getTextPanel().setStyle( "color:" + settings.message_color + ";background:" + settings.message_background );
 		this.getTextPanel().setTop( settings.message_top );
 		Ext.defer( this.switchLaunchImage, settings.slide_pause, this );
+		
+		if ( typeof navigator.splashscreen != 'undefined' ){
+			navigator.splashscreen.hide();
+		}
 	},
 	
 	onMainPanelInitialize: function( panel ){
