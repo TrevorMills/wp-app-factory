@@ -7,13 +7,6 @@
 	<?php do_action('the_app_factory_print_stylesheets'); ?>
 	<?php do_action('the_app_factory_print_scripts'); ?>
 	
-	<style type="text/css">
-	#app-loading{
-		<?php echo apply_filters('the_app_factory_body_style',''); ?>
-	}
-	<?php echo apply_filters('the_app_factory_spinner_style',$the_app->getSpinnerStyle()); ?>
-	</style>
-	
 <?php if ($the_app->is('doing_package_command') || $the_app->is('doing_build_command')) : ?>
 <script type="text/javascript">
 	// When building or packaging, clear the localStorage off the top. 
