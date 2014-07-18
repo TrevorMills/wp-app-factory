@@ -160,7 +160,7 @@ Ext.define('the_app.controller.Launcher', {
 	},
 	
 	launchApp: function(){
-		this.setText( 'Launching App' );
+		this.setText( WP.__('Launching App') );
 		this.setReadyToLaunch( true );
 		if ( LAUNCHER.getShowAll() && !this.getShownAll() ){
 			this.on( 'shownall', this.launchApp, this, { single: true } );

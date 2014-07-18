@@ -12,6 +12,7 @@ Ext.define('the_app.view.ItemList',{
 		title: 'Item List',
 		iconCls: 'star',
 		items: [],
+		defaultBackButtonText: WP.__( 'Back' ),
 		initialItem: {
 			xtype: 'list',
 			title: '',
