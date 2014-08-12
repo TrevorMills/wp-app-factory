@@ -433,6 +433,7 @@ class PushPluginApi{
 			return array(
 				'status' => 400,
 				'count' => count( $registration_ids ) - count( $aErrorQueue ),
+				'error_count' => count( $aErrorQueue )
 			);
 		}
 		else{
