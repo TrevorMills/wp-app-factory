@@ -379,6 +379,7 @@ abstract class ApnsPHP_Abstract
 		 * @see http://php.net/manual/en/context.ssl.php
 		 */
 		$streamContext = stream_context_create(array('ssl' => array(
+			// The peer verification seems to be broken, and very hard to fix.  So, I'm going to disable the Entrust Peer Notifcation piece. 
 			//'verify_peer' => isset($this->_sRootCertificationAuthorityFile),
 			//'cafile' => $this->_sRootCertificationAuthorityFile,
 			'local_cert' => $this->_sProviderCertificateFile

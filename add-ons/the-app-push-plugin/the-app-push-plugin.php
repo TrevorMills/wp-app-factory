@@ -37,7 +37,7 @@ class TheAppPushPlugin{
 			$pushplugin_atts['pem'] = array(
 				'sandbox' => '',
 				'production' => '',
-				'entrust' => ''
+				//'entrust' => ''
 			);
 		}
 		

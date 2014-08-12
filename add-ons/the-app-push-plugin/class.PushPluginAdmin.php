@@ -116,10 +116,10 @@ jQuery(function($){
 		$pushplugin_atts = $the_app->get( 'pushplugin_atts' );
 		?>
 		
-		<div class="description"><?php printf( __( 'In order to setup Push Notifications for the Apple Push Notification Service, you must (carefully) follow the instructions at %s to create the necessary .pem files.  Then, use the links below to upload and associate those files to this app.  You need to create three .pem files  %s (used in development environment) %s (used in production apps) %s (used for peer verification) %s  The first two are specific to this app.  For the last one, the same file can be used for multiple apps.', 'app-factory' ), '<a href="https://code.google.com/p/apns-php/wiki/CertificateCreation" target="_blank">https://code.google.com/p/apns-php/wiki/CertificateCreation</a>', '<ol><li>server_certificates_bundle_sandbox.pem', '</li><li>server_certificates_bundle_production.pem', '</li><li>entrust_root_certification_authority.pem', '</li></ol>' )?></div>
+		<div class="description"><?php printf( __( 'In order to setup Push Notifications for the Apple Push Notification Service, you must (carefully) follow the instructions at %s to create the necessary .pem files.  Then, use the links below to upload and associate those files to this app.  You need to create two .pem files:  %s (used in development environment) and %s (used in production apps) %s  Note, we do not currently make use of the peer verification file - %s, so you do not need to create it.', 'app-factory' ), '<a href="https://code.google.com/p/apns-php/wiki/CertificateCreation" target="_blank">https://code.google.com/p/apns-php/wiki/CertificateCreation</a>', '<ol><li>server_certificates_bundle_sandbox.pem', '</li><li>server_certificates_bundle_production.pem', '</li></ol>', 'entrust_root_certification_authority.pem' )?></div>
 			
 		<div id="pem-uploaders">
-		<?php foreach ( array( 'sandbox' => 'Sandbox .pem', 'production' => 'Production .pem', 'entrust' => 'Entrust .pem' ) as $slug => $file ) : 
+		<?php foreach ( array( 'sandbox' => 'Sandbox .pem', 'production' => 'Production .pem' /*, 'entrust' => 'Entrust .pem' */ ) as $slug => $file ) : 
 			$upload_iframe_src = esc_url( get_upload_iframe_src('image', $post->ID ) );
 			$filename = empty( $pushplugin_atts['pem'][$slug] ) ? '' : basename( wp_get_attachment_url( $pushplugin_atts['pem'][$slug] ) );
 			?>

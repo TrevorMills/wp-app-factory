@@ -326,21 +326,21 @@ class PushPluginApi{
 				'message' => 'Missing Server Certificate Bundle' 
 			);
 		}
-		if ( empty( $pushplugin_atts['pem'][ 'entrust' ] ) ){
+		if ( false && empty( $pushplugin_atts['pem'][ 'entrust' ] ) ){
 			return array(
 				'status' => 400,
 				'message' => 'Missing Entrust Peer Verification Certificate' 
 			);
 		}
 		$server_certificates_bundle = get_attached_file( $pushplugin_atts['pem'][ $environment ] );
-		$entrust_certification = get_attached_file( $pushplugin_atts['pem']['entrust'] );
+		//$entrust_certification = get_attached_file( $pushplugin_atts['pem']['entrust'] );
 		if ( !$server_certificates_bundle ){
 			return array(
 				'status' => 400,
 				'message' => 'Missing Server Certificate Bundle' 
 			);
 		}
-		if ( !$entrust_certification ){
+		if ( false && !$entrust_certification ){
 			return array(
 				'status' => 400,
 				'message' => 'Missing Entrust Peer Verification Certificate' 
@@ -363,7 +363,7 @@ class PushPluginApi{
 		);
 
 		// Set the Root Certificate Autority to verify the Apple remote peer
-		$push->setRootCertificationAuthority( $entrust_certification );
+		// $push->setRootCertificationAuthority( $entrust_certification );
 
 		// Increase write interval to 100ms (default value is 10ms).
 		// This is an example value, the 10ms default value is OK in most cases.
