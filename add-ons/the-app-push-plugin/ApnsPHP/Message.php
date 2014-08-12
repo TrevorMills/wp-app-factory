@@ -372,7 +372,8 @@ class ApnsPHP_Message
 	 */
 	public function getPayload()
 	{
-		$sJSON = json_encode($this->_getPayload(), defined('JSON_UNESCAPED_UNICODE') ? JSON_UNESCAPED_UNICODE : 0);
+		// the second parameter was introduced in PHP 5.3.  Before that, if you include the second param, then json_encode returns NULL.
+		$sJSON = ( phpversion() < '5.3' ? json_encode( $this->_getPayload() ) : json_encode($this->_getPayload(), defined('JSON_UNESCAPED_UNICODE') ? JSON_UNESCAPED_UNICODE : 0) );
 		if (!defined('JSON_UNESCAPED_UNICODE') && function_exists('mb_convert_encoding')) {
 			$sJSON = preg_replace_callback(
 				'~\\\\u([0-9a-f]{4})~i',
