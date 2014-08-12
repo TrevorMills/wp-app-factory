@@ -398,6 +398,12 @@ class TheAppPackager extends TheAppBuilder {
 			120 => 'icon-60@2x.png',
 			76 => 'icon-76.png',
 			152 => 'icon-76@2x.png',
+			29 => 'icon-small.png',
+			58 => 'icon-small@2x.png',
+			40 => 'icon-40.png',
+			80 => 'icon-40@2x.png',
+			50 => 'icon-50.png',
+			100 => 'icon-50@2x.png',
 		);
 
 		self::create_images( $url, $path, $sizes );
