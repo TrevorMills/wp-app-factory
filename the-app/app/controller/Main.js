@@ -65,31 +65,26 @@ Ext.define('the_app.controller.Main', {
 	onMainPanelInitialize: function(panel){	
 		// If this is a native APP, open any target="_blank" links in the native browser
 		if (typeof PACKAGED_APP != 'undefined'){
-			Ext.Viewport.onBefore(
-				'tap',
-				function(e){
-					e.preventDefault();
-					the_app.app.confirm(
-						{
-							id: 'update', 
-							title: WP.__("Leaving App"),
-							html: WP.__("You have requested to view a web page outside of this app.  Continue to your default browser?"),
-							hideOnMaskTap: false,
-							handler: function(){
-								// sometimes it's a lower down element that is the target (i.e. an <img> tag).  If that's the case, then we need to
-								// go up the DOM until we find the A.  
-								window.open( e.target.href || Ext.fly( e.target ).parent( 'a', true ).href, "_system");
-							}
-						}
-					);
-					return false;
-				},
-				this,
-				{
-					delegate: 'a[target="_blank"]',
-					element: 'element'
+			// The solution to http://www.sencha.com/forum/showthread.php?284954-Links-in-HTML-Page-in-Native-App
+			// Need to make sure we're only responding to a tap, not a drag.  
+			Ext.getBody().dom.addEventListener( 'mousedown', function(e){
+				var el = Ext.fly( e.target );
+				if ( el.is( 'a[target="_blank"]' ) || el.parent( 'a[target="_blank"]' ) ){
+					this.startPoint = { x : e.screenX, y: e.screenY }
 				}
-			);
+			});
+			Ext.getBody().dom.addEventListener( 'click', function(e){
+				var el = Ext.fly( e.target );
+				if ( this.startPoint ){
+					e.preventDefault();
+					if ( ( Math.abs( this.startPoint.x - e.screenX ) < 8 )
+					&&   ( Math.abs( this.startPoint.y - e.screenY ) < 8 ) ){
+					  	window.open( el.dom.href || el.parent().dom.href, "_system" );
+					}
+					delete this.startPoint;
+					return false;
+				}
+			});
 		}
 		else{
 			// Only for non-packaged apps

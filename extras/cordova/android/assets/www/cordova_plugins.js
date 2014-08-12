@@ -18,7 +18,7 @@ module.exports = [
 module.exports.metadata = 
 // TOP OF METADATA
 {
-    "org.apache.cordova.inappbrowser": "0.4.1-dev",
+    "org.apache.cordova.inappbrowser": "0.5.0",
     "org.apache.cordova.splashscreen": "0.3.2-dev"
 }
 // BOTTOM OF METADATA
