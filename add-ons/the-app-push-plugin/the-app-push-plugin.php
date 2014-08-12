@@ -1,6 +1,13 @@
 <?php
 /*
 Plugin Name: The App Push Plugin
+*
+*
+* Steps for iOS
+* 
+* 1. Create App Identifier within Apple Developer Console or iTunes Connect
+* 2. Follow steps at https://code.google.com/p/apns-php/wiki/CertificateCreation to create Development and/or Distribution .pem files
+* 3. Create and install onto device a Provisioning Profile.  Note, the certificate that you include with the profile MUST BE installed on the computer (including the private key)
 */
 
 class TheAppPushPlugin{
