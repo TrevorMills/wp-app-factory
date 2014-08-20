@@ -169,7 +169,7 @@ static void sqlite_regexp(sqlite3_context* context, int argc, sqlite3_value** va
         [openDBs retain];
 #endif
 
-        NSString *docs = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex: 0];
+        NSString *docs = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex: 0];
         NSLog(@"Detected docs path: %@", docs);
         [self setAppDocsPath:docs];
     }
