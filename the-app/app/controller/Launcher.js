@@ -33,7 +33,7 @@ Ext.define('the_app.controller.Launcher', {
 		// working properly right now.  
 		this.redirectTo( 'tab/1' );
 		
-		if ( typeof FORCE_CLEAR_LOCALSTORAGE != 'undefined' && FORCE_CLEAR_LOCALSTORAGE ){
+		if ( typeof FORCE_CLEAR_LOCALSTORAGE != 'undefined' && FORCE_CLEAR_LOCALSTORAGE && Ext.isDefined( Ext.ux ) ){
 			Ext.each( Ext.data.StoreManager.getRange(), function( store ){
 				if ( store instanceof Ext.ux.OfflineSyncStore ){
 					var proxy = Ext.factory( store.getLocalProxy() );					
