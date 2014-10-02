@@ -59,7 +59,7 @@
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleVersion</key>
-    <string>1.0</string>
+    <string>0.0.1</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSMainNibFile</key>
@@ -79,9 +79,9 @@
     </array>
     <key>CFBundleShortVersionString</key>
     <string>0.0.1</string>
-	<key>UIStatusBarHidden</key>
-	<true/>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false/>
+    <key>UIStatusBarHidden</key>
+    <true/>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
   </dict>
 </plist>
