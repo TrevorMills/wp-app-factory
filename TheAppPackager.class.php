@@ -233,7 +233,7 @@ class TheAppPackager extends TheAppBuilder {
 			// Now, we have to go through some files and replace occurrences of MyApp with $name
 			$files = array(
 				'AndroidManifest.xml',
-				'build.xml',
+				//'build.xml',
 				//'res/layout/main.xml',
 				//'res/xml/config.xml',
 				'res/values/strings.xml',
