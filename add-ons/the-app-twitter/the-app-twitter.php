@@ -119,7 +119,7 @@ function app_twitter_tweets(){
 	}
 	
 	// Get search from app NOW
-	if ( $att['use_app_search'] ){
+	if ( $atts['use_app_search'] ){
 		foreach( $the_app->get( 'items' ) as $item ){
 			if ( $item['item']['xtype'] == 'tweetlist' ){
 				$atts['q'] = $item['item']['search'];
