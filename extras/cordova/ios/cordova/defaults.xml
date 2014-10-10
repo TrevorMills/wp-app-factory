@@ -24,7 +24,7 @@
     <!-- Preferences for iOS -->
     <preference name="AllowInlineMediaPlayback" value="false" />
     <preference name="AutoHideSplashScreen" value="true" />
-    <preference name="BackupWebStorage" value="cloud" />
+    <preference name="BackupWebStorage" value="none" />
     <preference name="DisallowOverscroll" value="false" />
     <preference name="EnableViewportScale" value="false" />
     <preference name="FadeSplashScreen" value="true" />
