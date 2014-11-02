@@ -132,7 +132,15 @@ Ext.define('the_app.controller.PushPluginController', {
 				}
 				if ( e.payload.route && e.payload.route != '' ){
 					nextActions.push( function(){
-						the_app.app.redirectTo( e.payload.route.replace( /^#/, '' ) );
+						e.payload.route = e.payload.route.replace( /^#/, '' );
+						if ( e.payload.route.match( /^tab/ ) ){
+							// It's a tab/ route
+							the_app.app.redirectTo( e.payload.route );
+						}
+						else{
+							// It's an {id}/ route
+							the_app.app.getController( 'Main' ).redirectById( e.payload.route );
+						}
 					});
 				}
 

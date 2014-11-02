@@ -61,6 +61,45 @@ Ext.define('the_app.controller.Main', {
 			the_app.controller.Main.superclass.redirectTo.call(this,place);
 		});
 	},
+	
+	redirectById: function( path ){
+		var parts = path.split( '/' ),
+			id = parts[0],
+			record_id = Ext.isDefined( parts[1] ) ? parts[1] : undefined
+		;
+		
+		var mainpanel = this.getMainPanel();
+		mainpanel.getItems().each( function( item, index ){
+			if ( Ext.isFunction( item.getOriginalItem ) ){
+				if ( item.getOriginalItem().id == id ){
+					var redirect = 'tab/' + index;
+					if ( !Ext.isDefined( record_id ) ){
+						this.redirectTo( redirect );
+					}
+					else{
+						if ( Ext.get( id ) ){
+							// Component already exists
+							redirect+= '/record/' + record_id;
+							this.redirectTo( redirect );
+						}
+						else{
+							mainpanel.on( 'activeitemchange', function( mainpanel, panel ){
+								panel.on( 'add', function( paenl ){
+									panel.down( 'list' ).on( 'painted', function( list ){
+										redirect+= '/record/' + record_id;
+										this.redirectTo( redirect );
+									}, this );
+								}, this );
+							}, this );
+							this.redirectTo( redirect );
+						}
+					}
+				}
+			}
+		}, this );
+		
+		
+	},
 
 	onMainPanelInitialize: function(panel){	
 		// If this is a native APP, open any target="_blank" links in the native browser
