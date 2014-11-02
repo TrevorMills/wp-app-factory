@@ -183,7 +183,7 @@ Ext.define('the_app.controller.Main', {
 		this.goToTab(id);
 		this.setCardJustSwitched(true); // Set to true so that tapping on the tabbar tab will return to the proper page
 		var wrapper = this.getMainPanel().getInnerItems()[parseInt(id)-1],
-			store = Ext.getStore('WrapperStore'),
+			store = Ext.getStore('WrapperPageStore'),
 			list = wrapper.down('list'),
 			doit = function(){
 				var record = list.getStore().getAt(index);
@@ -286,7 +286,7 @@ Ext.define('the_app.controller.Main', {
 		l.setItemTpl(wrapper.getMeta().list_template);
 		l.setUi(wrapper.getMeta().ui);
 
-		var store = Ext.getStore('WrapperStore'),
+		var store = Ext.getStore('WrapperPageStore'),
 			doit = function(){
 				var record = store.queryBy(function(rec){
 						return rec.get('key') == wrapper.getItemId();
@@ -310,10 +310,10 @@ Ext.define('the_app.controller.Main', {
 	},
 	
 	onItemWrapperShow: function(wrapper){
-		// This resets the global WrapperStore to only contain the items on this
+		// This resets the global WrapperPageStore to only contain the items on this
 		// particular wrapper page.  Useful if there are more than one wrapper pages.
-		// Ext.getStore('WrapperStore').removeAll();
-		// Ext.getStore('WrapperStore').add(wrapper.config.pages);
+		// Ext.getStore('WrapperPageStore').removeAll();
+		// Ext.getStore('WrapperPageStore').add(wrapper.config.pages);
 		wrapper.getNavigationBar().setTitle(wrapper.getTitle());
 	},
 	

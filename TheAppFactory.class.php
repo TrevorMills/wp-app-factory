@@ -910,7 +910,7 @@ class TheAppFactory {
 			$stores['WrapperPageStore'] = array(
 				'fields' => array('id','title','content')
 			);
-			$stores['WrapperStore'] = array(
+			$stores['WrapperPageStore'] = array(
 				'model' => 'WrapperPage',
 				'autoLoad' => true, 
 				'proxy' => array(
@@ -920,7 +920,7 @@ class TheAppFactory {
 				)
 			);
 			if ($this->is('using_manifest')){
-				$stores['WrapperStore']['useLocalStorage'] = true;
+				$stores['WrapperPageStore']['useLocalStorage'] = true;
 			}
 		}
 		

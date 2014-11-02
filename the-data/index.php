@@ -38,7 +38,7 @@
 			$latest['HtmlPages'] = strtotime($the_app->get('post')->post_modified);
 		}
 		if ($the_app->get('wrapper_store_contents')){
-			$latest['Wrapper'] = strtotime($the_app->get('post')->post_modified);
+			$latest['WrapperPage'] = strtotime($the_app->get('post')->post_modified);
 		}
 		
 		$latest = apply_filters( 'the_app_storemeta', $latest );
