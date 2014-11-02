@@ -16,7 +16,8 @@ Ext.define('the_app.proxy.TwitterProxy',{
 		nextResults: {},
         
         extraParams: {
-            suppress_response_codes: true
+            suppress_response_codes: true,
+			use_app_seach: true
         },
 
         reader: {
@@ -43,14 +44,18 @@ Ext.define('the_app.proxy.TwitterProxy',{
 			next_results: (operation.getPage() == 1 ? '' : this.getNextResults())
         });
 
-		if (operation.getFilters()){
-			filter = operation.getFilters()[0];
+		var filters = operation.getFilters();
+		if (filters ){
+			filter = filters[0];
 		}
-        if (filter) {
+        if (filters) {
             delete params.filter;
-            Ext.apply(params, {
-                q: filter.getValue() // pass in the query string to the search api
-            });
+			
+			Ext.each( filters, function( filter, index ){
+				var param = {};
+				param[ filter.getProperty() ] = filter.getValue();
+	            Ext.apply(params, param );
+			});
 
             request.setParams(params);
             request.setUrl(this.getUrl());

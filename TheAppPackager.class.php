@@ -8,7 +8,7 @@ class TheAppPackager extends TheAppBuilder {
 		self::setup_environment();
 	}
 	
-	public function setup_environment(){
+	public static function setup_environment(){
 		$the_app = & TheAppFactory::getInstance();
 		
 		global $post;
@@ -39,11 +39,16 @@ class TheAppPackager extends TheAppBuilder {
 			$relative[$target] = trailingslashit( "wp-app-factory/build/native/$target/$post->post_name" );
 			$the_app->set("package_native_root_$target",$the_app->get('package_root') . $relative[$target] );
 			$the_app->set("package_native_root_url_$target", $the_app->get('package_root_url') . $relative[$target] );
-			if ($target == 'android'){
+			switch( $target ){
+			case 'android':
 				$the_app->set("package_native_www_relative_$target", 'assets/www/' );
-			}
-			else{
+				break;
+			case 'ios':
 				$the_app->set("package_native_www_relative_$target", 'www/' );
+				break;
+			case 'pb':
+				$the_app->set("package_native_www_relative_$target", '/' );
+				break;
 			}
 			$the_app->set("package_native_www_$target", $the_app->get("package_native_root_$target") . $the_app->get("package_native_www_relative_$target") );
 		}
@@ -71,7 +76,7 @@ class TheAppPackager extends TheAppBuilder {
 					)
 				));
 				$the_app->enqueue('controller','Package');
-				add_filter('TheAppFactory_helpers',array(&$this,'target_helper'),10,2);
+				add_filter('TheAppFactory_helpers',array( __CLASS__,'target_helper'),10,2);
 			}
 		}
 
@@ -102,9 +107,8 @@ class TheAppPackager extends TheAppBuilder {
 	}
 	
 	public function package_app(){
-
 		global $post;
-		$post = get_post($_POST['id']);
+		$post = get_post($_REQUEST['id']);
 
 		ob_start();
 
@@ -115,7 +119,7 @@ class TheAppPackager extends TheAppBuilder {
 		//include_once('extras/class.JavaScriptPacker.php');  // Packer Code
 
 		$the_app = & TheAppFactory::getInstance();
-		switch($_POST['command']){
+		switch($_REQUEST['command']){
 		case 'cordova':
 			self::package_cordova();
 			break;
@@ -163,6 +167,7 @@ class TheAppPackager extends TheAppBuilder {
 		else{
 			parent::build_cp_deep( APP_FACTORY_PATH.'extras/cordova/'.$the_app->get('package_target'), $the_app->get( 'package_native_root' ), null, true );
 		}
+		
 		// There are a handful of places that we need to insert the actual name of our App
 		// Here is where we do that.
 
@@ -218,7 +223,7 @@ class TheAppPackager extends TheAppBuilder {
 			file_put_contents( "{$native_root}www/config.xml", $contents );
 			*/
 			self::config_xml( "$name/config.xml" );
-			self::config_xml( "www/config.xml" );
+			//self::config_xml( "www/config.xml" );
 			
 			break;
 		case 'android':
@@ -228,7 +233,7 @@ class TheAppPackager extends TheAppBuilder {
 			// Now, we have to go through some files and replace occurrences of MyApp with $name
 			$files = array(
 				'AndroidManifest.xml',
-				'build.xml',
+				//'build.xml',
 				//'res/layout/main.xml',
 				//'res/xml/config.xml',
 				'res/values/strings.xml',
@@ -250,14 +255,16 @@ class TheAppPackager extends TheAppBuilder {
 			rename( $native_root.'src/'.$name.'.java',$target_dest.'/'.$name.'.java');
 			
 			self::config_xml( 'res/xml/config.xml' );
-			self::config_xml( 'assets/www/config.xml' );
+			//self::config_xml( 'assets/www/config.xml' );
 			
 			break;
 		case 'pb':
-			self::config_xml( 'www/config.xml' );
+			self::config_xml( 'config.xml' );
 			break;
 		}
 		
+		do_action_ref_array( 'the_app_package_cordova', array( &$the_app ) );
+
 		echo "[SETUP] A shell CORDOVA project has been setup";
 	}
 
@@ -355,18 +362,33 @@ class TheAppPackager extends TheAppBuilder {
 			if ($the_app->get('icon')){
 				self::deploy_android_icons($the_app->get('icon'));
 			}
+			if ($the_app->get('startup_phone')){
+				self::deploy_android_splash( $the_app->get('startup_phone'));
+			}
 			break;
 		case 'pb':
 			if ($the_app->get('icon')){
 				// Store both, let the user decide if they're going to upload them.
-				self::deploy_ios_icons($the_app->get('icon'));
-				self::deploy_android_icons($the_app->get('icon'));
+				self::deploy_ios_icons( $the_app->get('icon'), 'icons/ios' );
+				self::deploy_android_icons( $the_app->get('icon'), 'icons/android' );
+				self::create_images( $the_app->get('icon'), '', array( 96 => 'icon.png' ) );
+			}
+			if ($the_app->get('startup_phone')){
+				self::deploy_ios_startup_phone($the_app->get('startup_phone'), 'splash/ios' );
+				self::deploy_android_splash( $the_app->get('startup_phone'), 'splash/android' );
+				self::create_images( $the_app->get('startup_phone'), '', array( '720x960' => 'splash.png' ) );
+			}
+			if ($the_app->get('startup_tablet')){
+				self::deploy_ios_startup_tablet($the_app->get('startup_tablet'), 'splash/ios' );
+			}
+			if ($the_app->get('startup_landscape_tablet')){
+				self::deploy_ios_startup_landscape_tablet($the_app->get('startup_landscape_tablet'), 'splash/ios' );
 			}
 			break;
 		}
 	}
 
-	public function deploy_ios_icons( $url ){
+	public function deploy_ios_icons( $url, $path = 'icons' ){
 		$sizes = array(
 			72 => 'icon-72.png',
 			144 => 'icon-72@2x.png',
@@ -376,12 +398,18 @@ class TheAppPackager extends TheAppBuilder {
 			120 => 'icon-60@2x.png',
 			76 => 'icon-76.png',
 			152 => 'icon-76@2x.png',
+			29 => 'icon-small.png',
+			58 => 'icon-small@2x.png',
+			40 => 'icon-40.png',
+			80 => 'icon-40@2x.png',
+			50 => 'icon-50.png',
+			100 => 'icon-50@2x.png',
 		);
 
-		self::create_images( $url, 'icons', $sizes );
+		self::create_images( $url, $path, $sizes );
 	}
 
-	public function deploy_android_icons( $url ){
+	public function deploy_android_icons( $url, $path = 'icons' ){
 		$sizes = array(
 			96 => array('drawable/icon.png','drawable-xhdpi/icon.png'),
 			72 => 'drawable-hdpi/icon.png',
@@ -390,10 +418,49 @@ class TheAppPackager extends TheAppBuilder {
 
 		);
 
-		self::create_images( $url, 'icons', $sizes );
+		self::create_images( $url, $path, $sizes );
 	}
 
-	public function create_images( $url, $type, $sizes ){
+	public function deploy_android_splash( $url, $path = 'splash' ){
+		$sizes = array(
+			'240x320' => 'drawable-ldpi/splash.png',
+			'320x480' => 'drawable-mdpi/splash.png',
+			'480x800' => 'drawable-hdpi/splash.png',
+			'640x960' => 'drawable-xhdpi/splash.png',
+		);
+
+		self::create_images( $url, $path, $sizes );
+	}
+
+	public function deploy_ios_startup_phone( $url, $path = 'splash' ){
+		$sizes = array(
+			'320x480' => 'Default~iphone.png',
+			'640x960' => 'Default@2x~iphone.png',
+			'640x1136' => 'Default-568h@2x~iphone.png'
+		);
+
+		self::create_images( $url, $path, $sizes );
+	}
+
+	public function deploy_ios_startup_tablet( $url, $path = 'splash' ){
+		$sizes = array(
+			'736x1004' => 'Default-Portrait~ipad.png',
+			'1536x2008' => 'Default-Portrait@2x~ipad.png',
+		);
+
+		self::create_images( $url, $path, $sizes );
+	}
+
+	public function deploy_ios_startup_landscape_tablet( $url, $path = 'splash' ){
+		$sizes = array(
+			'1024x748' => 'Default-Landscape~ipad.png',
+			'2048x1496' => 'Default-Landscape@2x~ipad.png',
+		);
+
+		self::create_images( $url, $path, $sizes );
+	}
+
+	public function create_images( $url, $path, $sizes ){
 		// Returns an object with:
 		//	->image = image resource
 		//  ->size = the result from getimagesize()
@@ -403,14 +470,13 @@ class TheAppPackager extends TheAppBuilder {
 
 		if ($image){
 			foreach ($sizes as $pixels => $filename){
-				switch ($type){
-				case 'icons':
-					$width = $pixels;
-					$height = $pixels;
-					break;
-				case 'splash':
+				if ( strpos( $pixels, 'x' ) ){
 					list($width,$height) = explode('x',$pixels);
-					break;
+					$type = 'splash';
+				}
+				else{
+					$type = 'icon';
+					$width = $height = $pixels;
 				}
 				if ($width != $image->width or $height != $image->height){
 					$dest = imagecreatetruecolor( $width, $height );
@@ -428,14 +494,14 @@ class TheAppPackager extends TheAppBuilder {
 				
 				switch( $the_app->get('package_target') ){
 				case 'ios':
-					$relative_path = $the_app->get('package_name') . "/Resources/$type/";
+					$relative_path = $the_app->get('package_name') . "/Resources/$path/";
 					break;
 				case 'android':
 					$relative_path = "res/";
 					break;
 				case 'pb':
 				default:
-					$relative_path = "$type/";
+					$relative_path = "$path/";
 					break;
 				}
 				
@@ -452,40 +518,48 @@ class TheAppPackager extends TheAppBuilder {
 					imagepng( $dest, $the_app->get('package_native_root') . "$relative_path/$filename" );
 					echo "[CREATED] $filename\n";
 				}
-
-
+				
 				imagedestroy( $dest );
+				
+				switch( $the_app->get('package_target') ){
+				case 'pb':
+					if ( !isset( $config ) ){
+						$config_path = $the_app->get('package_native_root') . 'config.xml';
+						$config = simplexml_load_file( $config_path );
+					}
+					foreach ( (array)$filename as $name ){
+						if ( $type == 'icon' ){
+							$child = $config->addChild( 'icon' );
+						}
+						else{
+							$child = $config->addChild( 'gap:splash', null, 'http://phonegap.com/ns/1.0' );
+						}
+						if ( empty( $path ) ){
+							$child->addAttribute( 'src', $name );
+						}
+						else{
+							$child->addAttribute( 'src', "{$relative_path}{$name}" );
+							if ( strpos( $name, 'drawable' ) !== false ){
+								// Android
+								$child->addAttribute( 'gap:platform', 'android', 'http://phonegap.com/ns/1.0' );
+								preg_match( '/drawable-([a-z]+)/', $name, $matches );
+								$child->addAttribute( 'gap:density', $matches[1], 'http://phonegap.com/ns/1.0' );
+							}
+							else{
+								// iOS
+								$child->addAttribute( 'gap:platform', 'ios', 'http://phonegap.com/ns/1.0' );
+								$child->addAttribute( 'width', $width );
+								$child->addAttribute( 'height', $height );							
+							}
+						}
+					}
+				}
+			}
+			
+			if ( isset( $config ) ){
+				file_put_contents( $config_path, $the_app->prettify_xml( $config->asXML() ) );		
 			}
 		}
-	}
-
-	public function deploy_ios_startup_phone( $url ){
-		$sizes = array(
-			'320x480' => 'Default~iphone.png',
-			'640x960' => 'Default@2x~iphone.png',
-			'640x1136' => 'Default-568h@2x~iphone.png'
-		);
-
-		self::create_images( $url, 'splash', $sizes );
-
-	}
-
-	public function deploy_ios_startup_tablet( $url ){
-		$sizes = array(
-			'736x1004' => 'Default-Portrait~ipad.png',
-			'1536x2008' => 'Default-Portrait@2x~ipad.png',
-		);
-
-		self::create_images( $url, 'splash', $sizes );
-	}
-
-	public function deploy_ios_startup_landscape_tablet( $url ){
-		$sizes = array(
-			'1024x748' => 'Default-Landscape~ipad.png',
-			'2048x1496' => 'Default-Landscape@2x~ipad.png',
-		);
-
-		self::create_images( $url, 'splash', $sizes );
 	}
 
 	public function curl_image( $url ){
@@ -694,20 +768,23 @@ class TheAppPackager extends TheAppBuilder {
 	                continue;
 
 	            $file = realpath($file);
-
+				
+				$localname = str_replace( DIRECTORY_SEPARATOR, '/', str_replace( $source . DIRECTORY_SEPARATOR, '', $file ) );
+				
 	            if (is_dir($file) === true)
 	            {
-	                $zip->addEmptyDir(str_replace($source . DIRECTORY_SEPARATOR, '', $file . DIRECTORY_SEPARATOR));
+					//var_dump( "DIR: " . str_replace($source . DIRECTORY_SEPARATOR, '', $file . DIRECTORY_SEPARATOR) );
+	                $zip->addEmptyDir( $localname . '/' );
 	            }
 	            else if (is_file($file) === true)
 	            {
-	                $zip->addFromString(str_replace($source . DIRECTORY_SEPARATOR, '', $file), file_get_contents($file));
+	                $zip->addFile( $file, $localname );
 	            }
 	        }
 	    }
 	    else if (is_file($source) === true)
 	    {
-	        $zip->addFromString(basename($source), file_get_contents($source));
+	        $zip->addFile( $source, basename($source) );
 	    }
 	    return $zip->close();
 	}
@@ -717,9 +794,19 @@ class TheAppPackager extends TheAppBuilder {
 		$image_url = $content;
 		if ( $the_app->is('packaging') ){ 
 			$relative_dest = 'resources/images/'.basename($image_url);
+			if ( strpos( $relative_dest, '?' ) !== false ){
+				$relative_dest = 'resources/images/' . md5( basename( $image_url ) ); 
+			}
 			$dest = $the_app->get( 'package_native_www' ) . $relative_dest;
-			parent::build_mkdir(dirname($dest));
-			parent::build_cp( $image_url, $dest, false, true ); // no minify, silent
+			static $packaged;
+			if ( !isset( $packaged ) ){
+				$packaged = array();
+			}
+			if ( !in_array( $image_url, $packaged ) ){
+				$packaged[] = $image_url;
+				parent::build_mkdir(dirname($dest));
+				parent::build_cp( $image_url, $dest, false, true ); // no minify, silent
+			}
 			return $relative_dest;
 		}
 		return $image_url;
@@ -751,7 +838,7 @@ class TheAppPackager extends TheAppBuilder {
 		return $path;
 	}
 	
-	public function target_helper( $helpers, $args ){
+	public static function target_helper( $helpers, $args ){
 		$the_app = & $args[0];
 		$helpers['WP']['packageTarget'] = $the_app->get('package_target');
 		$helpers['WP']['isMinifying'] = $the_app->is('minifying');
@@ -835,9 +922,26 @@ class TheAppPackager extends TheAppBuilder {
 			}
 		}
 		
+		if ( $the_app->get( 'package_target' ) == 'pb' ){
+			// For Phonegap Build, just build Android & iOS
+			$platform = $xml->addChild( 'gap:platform', null, 'http://phonegap.com/ns/1.0' );
+			$platform->addAttribute( 'name', 'android' );
+			$platform = $xml->addChild( 'gap:platform', null, 'http://phonegap.com/ns/1.0' );
+			$platform->addAttribute( 'name', 'ios' );
+		}
+		
 		do_action_ref_array( 'the_app_config_xml', array( & $xml, $path ) );
 		
-		file_put_contents( $path, $xml->asXML() );		
+		file_put_contents( $path, $the_app->prettify_xml($xml->asXML() ) );		
+	}
+	
+	public function prettify_xml( $xml ){
+		// Prettify it.
+		$dom = new DOMDocument("1.0");
+		$dom->preserveWhiteSpace = false;
+		$dom->formatOutput = true;
+		$dom->loadXML( $xml );
+		return $dom->saveXML();
 	}
 	
 }

@@ -16,7 +16,7 @@
 				if (isset($registered_query['useLocalStorage']) and !$registered_query['useLocalStorage']){
 					continue;
 				}
-				if (isset($registered_query['query_vars']['timestamp_callback']) and function_exists($registered_query['query_vars']['timestamp_callback'])){
+				if (isset($registered_query['query_vars']['timestamp_callback']) and is_callable($registered_query['query_vars']['timestamp_callback'])){
 					// There is a timestamp_callback.  Call it to retreive the latest timestamp for the registered query
 					$latest[$type] = call_user_func($registered_query['query_vars']['timestamp_callback'],$registered_query);
 				}
@@ -40,6 +40,8 @@
 		if ($the_app->get('wrapper_store_contents')){
 			$latest['Wrapper'] = strtotime($the_app->get('post')->post_modified);
 		}
+		
+		$latest = apply_filters( 'the_app_storemeta', $latest );
 		
 		$s = 1;
 		foreach ($latest as $type => $time){

@@ -85,11 +85,15 @@ class TheAppFactory {
 		add_shortcode('app_posts',array(&$this,'shortcodes'));
 		add_shortcode('loading_spinner',array(&$this,'shortcodes'));
 		add_shortcode('unacceptable_browser',array(&$this,'shortcodes'));
+		add_shortcode('launch',array(&$this,'shortcodes'));
+		add_shortcode('launch_item',array(&$this,'shortcodes'));
 		
 		add_filter('TheAppFactory_models',array(&$this,'addRegisteredModels'),10,2);
 		add_filter('TheAppFactory_stores',array(&$this,'addRegisteredStores'),10,2);	
+		add_filter('TheAppFactory_helpers',array(&$this,'addLaunchHelper'),10,2);
 		
-		add_action('TheAppFactory_setupStores',array(&$this, 'setupStoreStatusStore'),999); // Make sure the Store Status is setup last so as to allow the other stores to instantiate first
+		add_action('TheAppFactory_setupStores',array(&$this, 'setupStoreStatusStore'),500); // Make sure the Store Status is setup last so as to allow the other stores to instantiate first
+		add_action('TheAppFactory_setupStores',array(&$this, 'massageStoreConfigs'),600);
 		
 		do_action_ref_array('TheAppFactory_init',array(& $this));
 	}
@@ -100,7 +104,7 @@ class TheAppFactory {
 	}
 	
 	// Override in subclasses
-	public function setup_environment(){
+	public static function setup_environment(){
 
 	}
 	
@@ -245,20 +249,19 @@ class TheAppFactory {
 							// in the index file.  So, we're going to save the filepath instead
 							if ($type == 'splash'){
 								add_filter('the_app_factory_body_style',array(&$this,'addSplashImage'));
-								$type = 'splash_file';
-								$guid = get_attached_file($attachment->ID);
+								$splash_file = get_attached_file($attachment->ID);
 							}
-							else{
-								$guid = $attachment->guid;
-							}
+							$guid = $attachment->guid;
 						}
 					}
 				}
 				$guid = apply_filters('TheAppFactory_attachment_guid',$guid,$type,array(&$this));
 				if ($guid){
 					$this->set($type,$guid);
-					if ($type == 'splash_file'){
+					if ( isset( $splash_file ) ){
 						$this->set('has_splash',true);
+						$this->set( 'splash_file', $splash_file );
+						unset( $splash_file );
 					}
 				}
 			}
@@ -378,12 +381,42 @@ class TheAppFactory {
 		case 'the_app':
 			foreach ($atts as $key => $att){
 				if (substr($key,0,4) == '_is_'){
-					$this->set($key,($att == 'true' ? true : false));
+					$this->set($key,($att ? true : false));
 				}
 				else{
 					$this->set($key,$att);
 				}
 			}
+			
+			if ( $this->is( 'using_manifest' ) ){
+				switch( $this->get( 'storage_engine' ) ){
+				case 'localstorage':
+					// No need to do anything, 
+					break;
+				case 'sqlitestorage':
+					$this->enqueue( 'require', 'SqliteDemo.util.InitSQLite' );
+					break;
+				}				
+			}
+			// Make sure we're always working with the latest Sencha Touch SDK
+			$defaults = $this->get_default_atts( $code );
+			$this->set( 'sdk', $defaults['sdk'] );
+			break;
+		case 'launch':
+			$atts['slide_pause'] = intval( $atts['slide_pause'] );
+			$this->set( 'launchConfig', $atts );
+			do_shortcode( $content );
+			break;
+		case 'launch_item':
+			$launch_items = $this->get( 'launchItems' );
+			if ( !is_array( $launch_items ) ){
+				$launch_items = array();
+			}
+			if ( isset( $atts['slide_pause'] ) ){
+				$atts['slide_pause'] = intval( $atts['slide_pause'] );
+			}
+			$launch_items[] = array_filter($atts);
+			$this->set( 'launchItems', $launch_items );
 			break;
 		case 'loading_spinner':
 			foreach ($atts as $key => $att){
@@ -393,9 +426,9 @@ class TheAppFactory {
 		case 'unacceptable_browser':
 			$unacceptable_browser = array();
 			foreach ($atts as $key => $att){
-				$unacceptable_browser[$key] = ($att == 'true' ? true : ($att == 'false' ? false : $att));
+				$unacceptable_browser[$key] = $att;
 			}	
-			$unacceptable_browser['content'] = $content;
+			$unacceptable_browser['content'] = isset( $content ) ? $content : __('Your browser is not supported.  Please use a Webkit Browser (i.e. Chrome, Safari, iPhone, Android).','app-factory');
 			$meta = $this->get('meta');
 			$meta['unacceptable_browser'] = $unacceptable_browser;
 			$this->set('meta',$meta);
@@ -410,7 +443,7 @@ class TheAppFactory {
 			break;
 		case 'app_item':
 			switch(true){
-			case (isset($atts['callback']) and function_exists($atts['callback'])):
+			case (isset($atts['callback']) and is_callable($atts['callback'])):
 				$callback = $atts['callback'];
 				call_user_func_array($atts['callback'],array($original_atts)); // pass the original, so there's no filtering.
 				break;
@@ -441,9 +474,23 @@ class TheAppFactory {
 		}
 	}
 	
-	function sanitize_atts($atts = array(),$shortcode){
-		$defaults = $this->get_default_atts($shortcode);
-		if (!empty($defaults)){
+	function sanitize_atts($atts = array(),$shortcode = null){
+		// Sanitize boolean strings to actual booleans
+		if ( !is_array( $atts ) ){
+			$atts = array();
+		}
+		foreach ( $atts as $key => $value ){
+			if ( $value === 'false' ){
+				$atts[ $key ] = false;
+			}
+			elseif ( $value === 'true' ){
+				$atts[ $key ] = true;
+			}
+		}
+		if ( isset($shortcode) ){
+			$defaults = $this->get_default_atts($shortcode);
+		}
+		if ( isset( $defaults ) && !empty( $defaults ) ){
 			$return = shortcode_atts($defaults,$atts);
 		}
 		else{
@@ -452,73 +499,138 @@ class TheAppFactory {
 		return $return;
 	}
 		
-	function get_default_atts($shortcode){
-		$defaults = array();
+	function get_default_atts($shortcode, $filter = false ){
+		$item_defaults = $meta_defaults = array();
 		switch($shortcode){
 		case 'the_app':
-			$defaults = array(
-				'_is_debug_on' => 'false',	// sends Javascript messages to console.log() via a maybelog() call. Loads debug version of Sencha library.
-				'_is_using_manifest' => 'false',	// saves data to the user's device. An app gets 5MB for free without having to ask the user for permission.
+			$meta_defaults = array(
+				'_is_debug_on' => false,	// sends Javascript messages to console.log() via a maybelog() call. Loads debug version of Sencha library.
+				'_is_using_manifest' => false,	// saves data to the user's device. An app gets 5MB for free without having to ask the user for permission.
+				'storage_engine' => 'localstorage', // (experimental) - could be localstorage (default) or sqlitestorage
 				'transition' => 'slide',	// slide (default), fade, pop, flip, cube, wipe (buggy) --+ the CSS3 transition to use between pages
 				'manifest_version' => '',	// a version number for the manifest file.  Useful for forcing new manifest load. 
 				'maxtabbaritems' => '',		// If you want to enable a slide-up menu panel to appear when there are more than N tabs, enter N for maxtabbaritems
 				'splash_pause' => 2,		// If you have a splashscreen, you can force it to display for N seconds by setting splash_pause=N
-				'ios_install_popup' => 'false', // True to enable the Install App popup on iOS devices,
-				'sdk' => '2.1',					// the Sencha Touch SDK to use - valid values are 2.1 (default) or 2.2.1
-				'theme' => 'sencha-touch'		// valid values are base, bb10, sencha-touch (default).  The blank SDK also have wp-app-factory
+				'ios_install_popup' => false, // True to enable the Install App popup on iOS devices,
+				'sdk' => '2.3.1',				// the Sencha Touch SDK to use - only valid value currently is 2.3.1
+				'theme' => 'sencha-touch',		// valid values are base, bb10, sencha-touch (default).  The blank SDK also have wp-app-factory
+			);
+			break;
+		case 'launch':
+			$meta_defaults = array(
+				'show_all' => true, 		// Whether to show all slides before launching app, ( false to just launch when ready )
+				'slide_pause' => 2000, 		// Millisecond delay between slides
+				'text_color' => '#000',		// The color for the user-defined text messages
+				'text_top' => '10%',		// The top of the user-defined texts
+				'text_background' => 'none',// The background of the user-defined text box
+				'message_color' => '#000',	// The color of the app-defined messages
+				'message_top' => '80%',		// The top of the app-defined messages
+				'message_background' => 'none',// The background of the app-defined messages
+			);
+			break;
+		case 'launch_item':
+			$meta_defaults = array(
+				'text' => null,	 			// The text to display for this slide
+				'image' => null,	 		// The image to display for this slide
+				// If any of these are null, then the defaults for the 'launch' config are used instead
+				'slide_pause' => null, 		// Millisecond delay for this slide
+				'text_color' => null,		// The color for the text and the loading message for this slide
+				'text_top' => null,			// The top of the user-defined text
+				'text_background' => null,	// The background of the text box
+				'message_color' => null,	// The color of the app-defined message
+				'message_top' => null,		// The top of the app-defined message
+				'message_background' => null,// The background of the app-defined message
 			);
 			break;
 		case 'app_item':
-			$defaults = array(
-				'_is_default' => 'false',	// makes this item the first one that appears.
-				'title' => '', 				// the title of page. Also the title on the bottom toolbar icon.
+			$item_defaults = array(
+				'xtype' => 'htmlpage',		// the xtype for the container
 				'id' => '', 				// the id for the container.
 				'icon' => 'star',			// action, add, arrow_down, arrow_left, arrow_right, arrow_up, compose, delete, organize, refresh, reply, search, settings, star (default), trash, maps, locate, home
-				'post' => null,				// $post->ID of any WordPress post (optional)
-				'callback' => null,			// a function to call to setup the page. Gives developers finer control
-				'template' => '{content}',	// the XTemplate to use to display the content
+				'title' => '', 				// the title of page. Also the title on the bottom toolbar icon.
+				'content' => '',
+				'destroyOnDeactivate' => true,	// For LazyPanels, whether or not to destroy the panel when deactivating
 			);
+			$meta_defaults = array(
+				'_is_default' => false,		// makes this item the first one that appears.
+				'template' => '{content}',	// the XTemplate to use to display the content
+				'callback' => null,			// a function to call to setup the page. Gives developers finer control
+			);
+			
 			break;
 		case 'app_item_wrapper':
-			$defaults = array(
-				'_is_default' => 'false',	// makes this item the first one that appears.
-				'title' => '', 				// the title of page. Also the title on the bottom toolbar icon.
-				'id' => '', 				// the id for the container.
+			$item_defaults = array(
+				'xtype' => 'itemwrapper',	// the xtype for the container
+				'id' => '',					// the id for the container.
 				'icon' => 'star',			// action, add, arrow_down, arrow_left, arrow_right, arrow_up, compose, delete, organize, refresh, reply, search, settings, star (default), trash, maps, locate, home
+				'title' => '', 				// the title of page. Also the title on the bottom toolbar icon.
+				'pages' => array(),			// data for the list, should be array of values with keys 'item' & 'meta'
+				'destroyOnDeactivate' => true,	// For LazyPanels, whether or not to destroy the panel when deactivating
+			);
+			$meta_defaults = array(
+				'_is_default' => false,		// makes this item the first one that appears.
 				'ui' => 'round',			// could be round or normal
 				'list_template' => '{item.title}' // the Sencha tpl for the list item
 			);
 			break;
 		case 'app_posts':
-			$defaults = array(
-				'_is_default' => 'false',	// makes this item the first one that appears.
-				'title' => '', 				// the title of page. Also the title on the bottom toolbar icon.
-				'id' => '', 				// the id for the container.
+			$item_defaults = array(
+				'xtype' => 'itemlist',		// the xtype for the container
+				'store' => 'postStore',		// The store
+				'id' => '',					// the id for the container.
 				'icon' => 'star',			// action, add, arrow_down, arrow_left, arrow_right, arrow_up, compose, delete, organize, refresh, reply, search, settings, star (default), trash, maps, locate, home
-				'post_type' => 'post',		// any post_type, including custom.  If you're debugging and getting 404's read the FAQ at http://wordpress.org/extend/plugins/wp-app-factory
-				'grouped' => 'true',		// whether to create group headers
+				'title' => 'Posts', 		// the title of page. Also the title on the bottom toolbar icon.
+				'destroyOnDeactivate' => true,	// For LazyPanels, whether or not to destroy the panel when deactivating
+				'infinite' => true			// infinite scrolling
+			);
+			$meta_defaults = array(
+				'_is_default' => false,		// makes this item the first one that appears.
+				'store' => 'postStore',		// The store
+				'title' => 'Posts',
+				'query_vars' => $this->simplify_atts( $this->get( 'query_defaults' ) ),
+				'grouped' => true,		// whether to create group headers
 				'group_by' => 'first_letter', 	// first_letter, category, month
 				'group_order' => 'ASC',		// the order for the group headers
-				'indexbar' => 'true',		// whether to create index bar
 				'orderby' => 'title',		// what to sort the posts on
 				'order' => 'ASC',			// the direction
+				'indexbar' => true,			// whether to create index bar
 				'numberposts' => -1,		// the maximum number of posts to show
+				'searchable' => false,		// Include a search field at the top of the list
+				'searchableFields' => 'title',	// which fields are searchable - accepts a comma separated list
 				// the Sencha tpl for the list item
-				'list_template' => 	'<div class="avatar"<tpl if="thumbnail"> style="background-image: url({thumbnail})"</tpl>></div><span class="name">{title}</span>',
+				'storage_engine' => 'localstorage', // if there is a lot of data, try using 'sqlitestorage'
+				'list_template' => '<div class="avatar"<tpl if="thumbnail"> style="background-image: url({thumbnail})"</tpl>></div><span class="name">{title}</span>',
 				// the Sencha tpl for the detail page
 				'detail_template' => '<tpl if="thumbnail"><img class="thumbnail" src="{thumbnail}"></tpl></div><h3>{title}</h3> {content}'
 			);
 			
 			// Add in anything allowed by @get_posts();
-			$get_post_defaults = WP_Query::fill_query_vars($atts);
-			$defaults = array_merge($get_post_defaults,$defaults,$this->get('query_defaults'));
+			$get_post_defaults = WP_Query::fill_query_vars(array());
+			$meta_defaults = array_merge($get_post_defaults,$meta_defaults,$this->get('query_defaults'));
 			break;
 		case 'unacceptable_browser':
-			$defaults = array(
-				'not_webkit' => 'true', 	// this should ALWAYS be true.  Displays Unacceptable Browser message if browser is not webkit
-				'desktop'	 => 'false'		// display the Unacceptable Browser message if it's a desktop browser
+			$meta_defaults = array(
+				'not_webkit' => true, 	// this should ALWAYS be true.  Displays Unacceptable Browser message if browser is not webkit
+				'desktop'	 => false		// display the Unacceptable Browser message if it's a desktop browser
 			);
 			break;
+		}
+		
+		if ( !$filter ){
+			$defaults = array_merge( $item_defaults, $meta_defaults );
+		}
+		else{
+			switch( $filter ){
+			case 'item':
+				$defaults = $item_defaults;
+				break;
+			case 'meta':
+				$defaults = $meta_defaults;
+				break;
+			}
+		}
+		if ( !is_array( $defaults ) ){
+			$defaults = array();
 		}
 		
 		return apply_filters('the_app_shortcode_defaults',$defaults,$shortcode);
@@ -526,21 +638,10 @@ class TheAppFactory {
 	
 	function addHTMLItem($atts){
 		// HTML pages are easy
-		$item_defaults = array(
-			'xtype' => 'htmlpage',
-			'id' => '',
-			'icon' => 'star',
-			'title' => '',
-			'content' => '',
-			'destroyOnDeactivate' => true,
-		);
-		$meta_defaults = array(
-			'_is_default' => 'false',
-			'template' => '{content}'
-		);
-		
-		$item_atts = shortcode_atts($item_defaults,$atts);
-		$meta_atts = shortcode_atts($meta_defaults,$atts);
+		$shortcode = 'app_item';
+		$atts = $this->sanitize_atts( $atts, $shortcode );
+		$item_atts = shortcode_atts( $this->get_default_atts( $shortcode, 'item' ), $atts );
+		$meta_atts = shortcode_atts( $this->get_default_atts( $shortcode, 'meta' ), $atts );
 		
 		static $html_page_counter;
 		if (!isset($html_page_counter)){
@@ -567,22 +668,10 @@ class TheAppFactory {
 	}
 	
 	function addWrapperItem($atts){
-		$item_defaults = array(
-			'xtype' => 'itemwrapper',
-			'id' => '',
-			'icon' => 'info',
-			'title' => '',
-			'pages' => array(),
-			'destroyOnDeactivate' => true,
-		);
-		$meta_defaults = array(
-			'_is_default' => 'false',
-			'ui' => 'round',
-			'list_template' => '{title}'
-		);
-
-		$item_atts = shortcode_atts($item_defaults,$atts);
-		$meta_atts = shortcode_atts($meta_defaults,$atts);
+		$shortcode = 'app_item_wrapper';
+		$atts = $this->sanitize_atts( $atts, $shortcode );
+		$item_atts = shortcode_atts( $this->get_default_atts( $shortcode, 'item' ), $atts );
+		$meta_atts = shortcode_atts( $this->get_default_atts( $shortcode, 'meta' ), $atts );
 
 		static $wrapper_counter;
 		if (!isset($wrapper_counter)){
@@ -609,38 +698,30 @@ class TheAppFactory {
 	}
 	
 	function addPostListItem($atts){
+		$shortcode = 'app_posts';
+		$atts = $this->sanitize_atts( $atts, $shortcode );
+
+		$meta_defaults = $this->get_default_atts( $shortcode, 'meta' );
 		$query_defaults = $this->get('query_defaults'); 
 		$query_atts = $this->simplify_atts(shortcode_atts($query_defaults,$atts));
-		
-		$item_defaults = array(
-			'id' => '',
-			'icon' => 'star',
-			'title' => 'Posts',
-			'destroyOnDeactivate' => true,
-			'infinite' => true
-		);
-		$meta_defaults = array(
-			'_is_default' => 'false',
-			'store' => $query_atts['post_type'],
-			'title' => 'Posts',
-			'query_vars' => $query_atts,
-			'grouped' => 'true',
-			'group_by' => 'first_letter',
-			'group_order' => 'ASC',
-			'orderby' => 'title',
-			'order' => 'ASC',
-			'indexbar' => 'true',
-			'list_template' => '<div class="avatar"<tpl if="thumbnail"> style="background-image: url({thumbnail})"</tpl>></div><span class="name">{title}</span>',
-			'detail_template' => '<tpl if="thumbnail"><img class="thumbnail" src="{thumbnail}"></tpl></div><h3>{title}</h3> {content}'
-		);
-		$item_defaults['xtype'] = 'itemlist';
-		$item_defaults['store'] = $meta_defaults['store'] = $query_atts['post_type'].'Store';
-		
-		$item_atts = shortcode_atts($item_defaults,$atts);
-		$meta_atts = shortcode_atts($meta_defaults,$atts);
+
+		$atts[ 'store' ] = $query_atts[ 'post_type' ] . 'Store';
+		$atts[ 'query_vars' ] = $query_atts;
+
+		$item_atts = shortcode_atts( $this->get_default_atts( $shortcode, 'item' ), $atts );		
+		$meta_atts = shortcode_atts( $meta_defaults, $atts );
 		
 		$index = $this->registerPostQuery($meta_atts);
 		$item_atts['queryInstance'] = $index;
+		
+		if ( $this->get( 'sdk' ) >= '2.3.1' && !$meta_atts['grouped'] ){
+			// There's a bug in Sencha Touch 2.3.1 where if a list is not grouped, but is infinite, it throws an error
+			$item_atts['infinite'] = false;
+		}
+		
+		if ( isset( $meta_atts['searchable'] ) && $meta_atts['searchable'] ){
+			$this->enqueue('controller','Search');
+		}
 		
 		$this->addItem($item_atts,$meta_atts);
 	}
@@ -658,7 +739,7 @@ class TheAppFactory {
 			$new_item['meta'] = $meta;
 		}
 
-		if ($new_item['meta']['_is_default'] == 'true'){
+		if ($new_item['meta']['_is_default']){
 			$items = $this->get('items');
 			array_unshift($items,$new_item);
 			$this->set('items',$items);
@@ -674,7 +755,9 @@ class TheAppFactory {
 			$this->set('items',$items);
 		}
 
-		$this->enqueue('view',$atts['xtype']);
+		if ( $this->is_registered( 'view', $atts['xtype'] ) ){
+			$this->enqueue('view',$atts['xtype']);
+		}
 		if ($atts['xtype'] == 'itemlist'){
 			$this->enqueue('view','ItemDetail');
 		}
@@ -690,7 +773,7 @@ class TheAppFactory {
 			$models['WrapperPage'] = array('fields' => array('id','title','pages','key'));
 		}
 		if ($this->get('html_store_contents')){
-			$models['HtmlPage'] = array('fields' => array('id','title','content','key'));
+			$models['HtmlPages'] = array('fields' => array('id','title','content','key'));
 		}
 		
 		$this->set('models',apply_filters('TheAppFactory_models',$models,array(&$this)));
@@ -829,7 +912,7 @@ class TheAppFactory {
 			);
 			$stores['WrapperStore'] = array(
 				'model' => 'WrapperPage',
-				'autoLoad' => $this->do_not_escape('true'),
+				'autoLoad' => true, 
 				'proxy' => array(
 					'type' => 'scripttag',
 					'url' => $this->get('mothership').'data/wrapperpages',
@@ -843,8 +926,8 @@ class TheAppFactory {
 		
 		if ($this->get('html_store_contents')){
 			$stores['HtmlPagesStore'] = array(
-				'model' => 'HtmlPage',
-				'autoLoad' => $this->do_not_escape('true'),
+				'model' => 'HtmlPages',
+				'autoLoad' => true, 
 				'proxy' => array(
 					'type' => 'scripttag',
 					'url' => $this->get('mothership').'data/htmlpages',
@@ -867,7 +950,7 @@ class TheAppFactory {
 			$stores['StoreStatusStore'] = array();
 			$stores['StoreStatusStore']['model'] = 'StoreStatus';
 			$stores['StoreStatusStore']['useLocalStorage'] = true;
-			$stores['StoreStatusStore']['autoLoad'] = $this->do_not_escape('true');  // Note camelCase...
+			$stores['StoreStatusStore']['autoLoad'] = true; // Note camelCase...
 			$stores['StoreStatusStore']['proxy'] = array(
 				'type' => 'scripttag',
 				'url' => $this->get('mothership').'data/storemeta',
@@ -875,6 +958,96 @@ class TheAppFactory {
 			);
 			$stores = $this->set('stores',$stores);
 		}		
+	}
+	
+	public function massageStoreConfigs( & $the_app ){
+		$stores = $this->get( 'stores' );
+		
+		foreach( $stores as $key => $store ){
+
+			if (!isset($store['storeId'])){
+				$store['storeId'] = $key;
+			}
+			/*
+			// because of other functionality, I'm going to hold off on this and only do it in the actual store factory
+			if( isset( $store['model'] ) and strpos( $store['model'], 'the_app.model' ) === false){
+				$store['model'] = 'the_app.model.' . $store['model'];
+			}
+			*/
+	
+			// Setup offline versino of the store
+			if ( $store[ 'useLocalStorage' ] ){
+				$store[ 'serverProxy' ] = $store[ 'proxy' ];
+				if ( !isset( $store[ 'storage_engine'] ) ){
+					$store[ 'storage_engine'] = $the_app->get( 'storage_engine' );
+				}
+				switch( $store[ 'storage_engine' ] ){
+				case 'localstorage':
+					$store['localProxy'] = /* $store['proxy'] = */ array(
+						'type' => 'localstorage',
+						'id' => apply_filters('the_app_factory_localstorage_id',"{$store['storeId']}_{$the_app->get('app_id')}",$store)
+						/*	 Come back to it.  This is the way to catch that allowed storage has been exhausted.
+						'listeners' => array(
+							'exception' => $the_app->do_not_escape('function(proxy,e){console.log([\'error\',e]);}')
+						)
+						*/
+					);
+					break;
+				case 'sqlitestorage':
+					$tablename = preg_replace( '/[^A-Za-z0-9_]/', '_', str_replace( 'the_app.model.', '', $store['model'] ) );
+					$store['localProxy'] = /* $store['proxy'] = */ array(
+						'type' => 'sqlitestorage',
+						'dbConfig' => array(
+							'tablename' => $tablename,
+							'dbConn' => $the_app->do_not_escape( 'null' )
+						)
+					);
+					$store['tableName'] = $tablename;
+					break;
+				}
+				$store['storageEngine'] = $store['storage_engine']; // for happy Sencha configuration
+				if ( $key == 'StoreStatusStore' ){
+					$store['extend'] = 'Ext.ux.OfflineSyncStatusStore';
+				}
+				else{
+					$store['extend'] = 'Ext.ux.OfflineSyncStore';
+				}
+			}
+			else{
+				$store['extend'] = 'Ext.data.Store';
+			}
+			
+			// Going to try lazy loading all stores, unless we're building (even StoreStatusStore)
+			//if ( $the_app->is( 'building' ) || in_array($store['storeId'],apply_filters('the_app_factory_autoload_stores',array( 'HtmlPagesStore' ) ) ) ){
+			//	$store[ 'autoLoad' ] = true;
+			//}
+			//else{
+			//	$store[ 'autoLoad' ] = false;
+			//}
+			
+			$store['launchLoad'] = false;
+			if ( $the_app->is( 'building' ) ){
+				$store['autoLoad'] = true;
+			}
+			elseif ( isset($store['autoLoad']) && $store['autoLoad'] ){
+				$store['launchLoad'] = true;
+				$store['autoLoad'] = false;
+			}
+			
+			if ( $the_app->is( 'packaging' ) ){
+				$store['ajaxProxy'] = $store['serverProxy'];
+				$store['ajaxProxy']['type'] = 'ajax';
+				$store['ajaxProxy']['url'] = 'resources/data/'.preg_replace( '/Store$/', '', $key ).'.json';
+			}
+			
+			if ( !isset( $store['prettyLabel'] ) ){
+				$store['prettyLabel'] = preg_replace( '/Store$/', '', $key );
+			}
+			
+			$stores[ $key ] = $store;
+		}
+		$this->set( 'stores', $stores );
+		
 	}
 	
 	function addRegisteredStores($stores,$_this){
@@ -892,22 +1065,72 @@ class TheAppFactory {
 					'url' => $this->get('mothership').'data/'.$post_type.'/', // Note trailing slash, necesasry to avoid Status: 301 calls (which merely add a slash)
 					'reader' => array('type' => 'json', 'rootProperty' => $post_type)
 				);
-				$stores[$store_name]['autoLoad'] = $this->do_not_escape('true');  // Note camelCase...
+				$stores[$store_name]['autoLoad'] = isset( $registered_meta[0][ 'autoLoad' ] ) ? $registered_meta[0][ 'autoLoad' ] : true; // Note camelCase...
+				if ( isset( $registered_meta[0][ 'storage_engine' ] ) ){
+					$stores[$store_name]['storage_engine'] = $registered_meta[0][ 'storage_engine' ];
+				}
 			}
 		}
 		return $stores;
 	}
+	
+	function addLaunchHelper( $helpers, $args ){
+		$launch_config = $this->get( 'launchConfig' );
+		if ( empty( $launch_config ) ){
+			$launch_config = $this->get_default_atts( 'launch' );
+		}
+		$launch_items = $this->get( 'launchItems' );
+		if ( !is_array( $launch_items ) ){
+			$launch_items = array();
+		}
+		if ( empty( $launch_items ) && $this->get( 'has_splash' ) ){
+			$launch_items = array(
+				array(
+					'image' => $this->get( 'splash' )
+				)
+			);
+		}
+		if ( empty( $launch_items ) ){
+			$launch_items = array(
+				array( 'text' => '' )
+			);
+		}
+		foreach ( $launch_items as $key => $item ){
+			if ( isset( $item['image'] ) ){
+				$launch_items[$key]['image'] = do_shortcode( "[app_package_image]{$item['image']}[/app_package_image]" );
+			}
+		}
+		$launch_config['items'] = $launch_items;
+		$helpers['LAUNCHER'] = $launch_config;
+		return $helpers;
+	}
 
 	private function setupSencha(){
 		$this->register('controller','Main');
+		$this->register('controller','Launcher');
+		$this->register('controller','Search');
 		$this->register('controller','ExpandedTabBar');
 		$this->register('view','HtmlPage');
 		$this->register('view','Main');
+		$this->register('view','Launcher');
 		$this->register('view','ItemWrapper');
 		$this->register('view','ItemList');
 		$this->register('view','UnsupportedBrowser');
 		$this->register('view','LazyPanel');
+
+		// This is a way to set the path for components that are not in the normal path tree
+		// The third argument is the path and it is relative the wp-app-factory/the-app directory
+		// It can be a full URL
+		$this->register('path','Ext.ux.OfflineSyncStore','app/store/Ext.ux.OfflineSyncStore.js');
+		$this->register('path','Ext.ux.OfflineSyncStatusStore','app/store/Ext.ux.OfflineSyncStatusStore.js');
+		$this->register('path','Ext.ux.InstallApp','app/helper/Ext.ux.InstallApp.js');
+		$this->register('path','Sqlite.Connection','app/proxy/SqliteConnection.js');
+		$this->register('path','Sqlite.data.proxy.SqliteStorage','app/proxy/SqliteStorage.js');
+		$this->register('path','SqliteDemo.util.InitSQLite','app/proxy/SqliteInit.js');
+		$this->register('path','My.data.proxy.LocalStorage','app/proxy/LocalStorage.js');
+		$this->register('path','Ext.data.ModelFaster','app/model/Ext.data.ModelFaster.js');
 		
+		$this->enqueue('controller','Launcher');
 		$this->enqueue('controller','Main');
 		$this->enqueue('controller','ExpandedTabBar');
 		$this->enqueue('require','Ext.MessageBox');
@@ -917,9 +1140,11 @@ class TheAppFactory {
 		$this->enqueue('require','Ext.layout.VBox'); // This seems to be necessary in Sencha Touch 2.1.1 - not sure why.
 		$this->enqueue('require','Ext.layout.HBox'); // This seems to be necessary in Sencha Touch 2.1.1 - not sure why.
 		$this->enqueue('view','Main');
+		$this->enqueue('view','Launcher');
 		$this->enqueue('view','UnsupportedBrowser');
 		$this->enqueue('view','LazyPanel');
 		$this->enqueue('require','the_app.helper.WP');
+		$this->enqueue('require','the_app.helper.LAUNCHER');
 		
 		do_action_ref_array('TheAppFactory_setupSencha',array(&$this));
 	}
@@ -1281,11 +1506,11 @@ class TheAppFactory {
 	}
 	
 	public function sanitize_json( $json = null ){
+		if ($json){
+			$json = json_decode( $json );
+		}
 		if (!$json){
 			$json = new stdClass;
-		}
-		else{
-			$json = json_decode( $json );
 		}
 
 		if (!is_array($json->js)){

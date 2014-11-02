@@ -65,31 +65,26 @@ Ext.define('the_app.controller.Main', {
 	onMainPanelInitialize: function(panel){	
 		// If this is a native APP, open any target="_blank" links in the native browser
 		if (typeof PACKAGED_APP != 'undefined'){
-			Ext.Viewport.onBefore(
-				'tap',
-				function(e){
-					e.preventDefault();
-					the_app.app.confirm(
-						{
-							id: 'update', 
-							title: WP.__("Leaving App"),
-							html: WP.__("You have requested to view a web page outside of this app.  Continue to your default browser?"),
-							hideOnMaskTap: false,
-							handler: function(){
-								// sometimes it's a lower down element that is the target (i.e. an <img> tag).  If that's the case, then we need to
-								// go up the DOM until we find the A.  
-								window.open( e.target.href || Ext.fly( e.target ).parent( 'a', true ).href, "_system");
-							}
-						}
-					);
-					return false;
-				},
-				this,
-				{
-					delegate: 'a[target="_blank"]',
-					element: 'element'
+			// The solution to http://www.sencha.com/forum/showthread.php?284954-Links-in-HTML-Page-in-Native-App
+			// Need to make sure we're only responding to a tap, not a drag.  
+			Ext.getBody().dom.addEventListener( 'mousedown', function(e){
+				var el = Ext.fly( e.target );
+				if ( el.is( 'a[target="_blank"]' ) || el.parent( 'a[target="_blank"]' ) ){
+					this.startPoint = { x : e.screenX, y: e.screenY }
 				}
-			);
+			});
+			Ext.getBody().dom.addEventListener( 'click', function(e){
+				var el = Ext.fly( e.target );
+				if ( this.startPoint ){
+					e.preventDefault();
+					if ( ( Math.abs( this.startPoint.x - e.screenX ) < 8 )
+					&&   ( Math.abs( this.startPoint.y - e.screenY ) < 8 ) ){
+					  	window.open( el.dom.href || el.parent().dom.href, "_system" );
+					}
+					delete this.startPoint;
+					return false;
+				}
+			});
 		}
 		else{
 			// Only for non-packaged apps
@@ -175,24 +170,26 @@ Ext.define('the_app.controller.Main', {
 		this.goToTab(id);
 		this.setCardJustSwitched(true); // Set to true so that tapping on the tabbar tab will return to the proper page
 		var wrapper = this.getMainPanel().getInnerItems()[parseInt(id)-1];
-		var list = wrapper.down('list');
-		doit = function(){
-			var record = list.getStore().getById(record_id);
+		var list = wrapper.down('list'), store = list.getStore();
+		doit = function(store){
+			var record = store.getById(record_id);
 			if (record){
+				store.suspendEvents();
 				list.up('itemlist').push({
 					xtype: 'itemdetail',
 					title: record.get('title'),
 					tpl: list.up('itemlist').getMeta().detail_template,
 					data: record.getData()
 				});
+				store.resumeEvents( true );
 			}
 		}
 		// Store is loaded asynchronously, so wait until it's loaded
-		if (list.getStore().isLoaded()){
-			doit();
+		if (store.isLoaded()){
+			doit(store);
 		}
 		else{
-			list.getStore().on('load',doit);
+			store.on('load',doit);
 		}
 	},
 	
@@ -290,6 +287,13 @@ Ext.define('the_app.controller.Main', {
 	},
 	
 	onItemListInitialize: function (panel){
+		// Since we can't set Infinite after the fact, I need to set it NOW
+		var list_config = Ext.apply( {}, panel.getInitialItem() );
+		if ( Ext.isDefined( panel.initialConfig.infinite ) ){
+			list_config.infinite = panel.initialConfig.infinite;
+		}
+		panel.push( list_config );
+
 		var l = panel.getComponent('list'); // The List
 		//console.log(['Main',panel,panel.getQueryInstance()]); // @dev
 		l.setStore(panel.getMeta().store);
@@ -332,7 +336,7 @@ Ext.define('the_app.controller.Main', {
 				s.filter(queryFilter);
 				s.setQueryInstance( panel.getQueryInstance() );
 				
-				if (panel.getMeta().grouped == 'true'){
+				if (panel.getMeta().grouped){
 					var field = panel.getMeta().group_by;
 					s.setGrouped(true);
 					var sortProperty;
@@ -391,6 +395,9 @@ Ext.define('the_app.controller.Main', {
 					l.resumeEvents(false);
 					l.setGrouped(false);
 					s.setGrouped(false);
+					s.sort([
+						{property: panel.getMeta().orderby,direction: panel.getMeta().order}
+					]);
 				}
 			}
 		
@@ -407,7 +414,7 @@ Ext.define('the_app.controller.Main', {
 				l.resumeEvents();
 			}
 			
-			if (panel.getMeta().indexbar == 'true'){
+			if (panel.getMeta().indexbar){
 				l.setIndexBar(true);
 			}			
 		}
@@ -494,12 +501,50 @@ Ext.define('the_app.controller.Main', {
     },
 
     handleLazyPanelActivate: function( panel ) {
-//		console.log(['handleLazyPanelActivate',panel,panel.getLazyItem(),panel.getDestroyOnDeactivate()]); // @dev
-        panel.add( panel.getOriginalItem() );
+		//	console.log(['handleLazyPanelActivate',panel,panel.getLazyItem(),panel.getDestroyOnDeactivate()]); // @dev
+		panel.add( {
+			xtype: 'panel',
+			masked: true,
+			layout: {
+				type: 'vbox',
+				align: 'center',
+				pack: 'center'
+			},
+			items: [
+				{
+					styleHtmlContent: true,
+					centered: true,
+					style: 'text-align:center',
+					html: WP.__( 'Preparing Content' ) + '<br/>' + WP.__( 'Please Stand By' )
+				}
+			],
+			listeners: {
+				painted: {
+					fn: function(){
+						Ext.factory( Ext.Object.merge( {}, panel.getOriginalItem(), {
+							listeners: {
+								initialize: {
+									fn: function(){
+										// A slight pause to make sure that the stand by message is painted.
+										Ext.defer( function(){
+											panel.removeAll(true);
+											panel.add( this );
+										}, 50, this );
+									},
+									single: true
+								}
+							}
+						}));
+					},
+					single: true,
+					order: 'after'
+				}
+			}
+		});
 	    panel.on('deactivate', this.handleLazyPanelDeactivate, this, { single : true });
     },
     handleLazyPanelDeactivate: function( panel ) {
-//		console.log(['handleLazyPanelDeactivate',panel]); // @dev
+		//	console.log(['handleLazyPanelDeactivate',panel]); // @dev
 
 		if (panel.getDestroyOnDeactivate()){
 	        panel.removeAll(true);

@@ -37,7 +37,7 @@ CACHE MANIFEST
 	$post_ids = array();
 	foreach ($all_registered_queries as $type => $registered_queries){
 		foreach ($registered_queries as $queryInstance => $registered_query){
-			if (isset($registered_query['query_vars']['data_callback']) and function_exists($registered_query['query_vars']['data_callback'])){
+			if (isset($registered_query['query_vars']['data_callback']) and is_callable($registered_query['query_vars']['data_callback'])){
 				// This is an outside query, so no need to get post images
 				continue;
 			}

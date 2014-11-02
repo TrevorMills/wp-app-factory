@@ -6,12 +6,13 @@
 	$helpers = $the_app->get('helpers'); 
 	$key = basename(get_query_var(APP_APP_VAR),'.js');
 	$helper = $helpers[$key];
+	$lambda = create_function( '$matches', 'return strtoupper( $matches[1] ); '); // turns an_attribute into anAttribute
 	header('Content-type: text/javascript');
 ?>
 Ext.define('the_app.helper.<?php echo $key; ?>', {
     config: {
 		<?php foreach ($helper as $what => $details) : ?>
-		<?php echo $what; ?>: <?php echo TheAppFactory::anti_escape(json_encode($details)); ?>,
+		<?php echo preg_replace_callback( '/_(.)/', $lambda, $what); ?>: <?php echo TheAppFactory::anti_escape(json_encode($details)); ?>,
 		<?php endforeach; ?>
     },
 

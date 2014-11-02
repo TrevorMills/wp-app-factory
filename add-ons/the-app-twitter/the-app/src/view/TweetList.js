@@ -13,11 +13,14 @@ Ext.define('the_app.view.TweetList',{
 	config: {
 		title: 'Twitter Page',
 		search: '',
+		useAppSearch: true,
 		items: [
 			{
 				xtype: 'list',
 				title: '',
 	            itemCls: 'tweet',
+				styleHtmlContent: true,
+				loadingText: null,
 				itemTpl: new Ext.XTemplate('<div class="avatar"<tpl if="profile_image_url"> style="background-image: url({profile_image_url})"</tpl>><a href="http://twitter.com/{from_user}" target="_blank">&nbsp;</a></div> <div class="tweet"><strong><a href="http://twitter.com/{from_user}" target="_blank" class="from_user_link">{from_user}</a></strong><br />{text:this.linkify}</div><div class="tweet-disclosure '+(Ext.version.version >= '2.2.1' ? '' : 'no-pictos')+'"><div class="created_ago">{created_at:this.created_ago}</div><a href="http://twitter.com/{from_user}/status/{id_str}" target="_blank"></a></div>',
 	                {
 	                    linkify: function(value) {
@@ -71,20 +74,29 @@ Ext.define('the_app.view.TweetList',{
 			}
 		],
 		listeners: {
-			initialize: function(){
+			activate: function(){
 				var store = Ext.create('Ext.data.Store',
 					{
 						model: 'the_app.model.Tweet',
 		                pageSize       : 25,
 		                remoteFilter   : true,
 		                clearOnPageLoad: false,
-						filters: [new Ext.util.Filter({
-						    property: 'q',
-						    value   : this.getSearch()
-						})],
+						filters: [
+							new Ext.util.Filter({property: 'q',value   : this.getSearch()}),
+							new Ext.util.Filter({property: 'use_app_search',value   : this.getUseAppSearch()})
+						],
 						autoLoad: false
 					}
 				);
+				this.setMasked( {
+					xtype: 'loadmask',
+					message: WP.__('Loading')
+				} );
+				store.on( 'load', function(){
+					this.setMasked( false );
+				}, this, {
+					single: true,
+				});
 				store.load();
 				this.down('list').setStore(store);
 				this.down('list').add({

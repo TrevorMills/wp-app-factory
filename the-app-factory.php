@@ -82,9 +82,8 @@ function the_app_factory_install() {
 			'RewriteEngine On',
 			'RewriteBase '.$site_root,
 			// Note, the blog part at the beginning is to handle the root site on Multisite installations.  This should be 
-			'RewriteRule ^('.$root_site_prefix.')?([^\/]*)/?apps/[^\/]+/sdk2.1/(.*)$ '.$site_root.'$2/wp-content/plugins/wp-app-factory/the-app/sdk2.1/$3 [L]',
 			'RewriteRule ^('.$root_site_prefix.')?([^\/]*)/?apps/[^\/]+/resources/(.*)$ '.$site_root.'$2/wp-content/plugins/wp-app-factory/the-app/resources/$3 [L]',
-			'RewriteRule ^('.$root_site_prefix.')?([^\/]*)/?apps/[^\/]+/sdk2.2.1/(.*)$ '.$site_root.'$2/wp-content/plugins/wp-app-factory/the-app/sdk2.2.1/$3 [L]',
+			'RewriteRule ^('.$root_site_prefix.')?([^\/]*)/?apps/[^\/]+/sdk2.3.1/(.*)$ '.$site_root.'$2/wp-content/plugins/wp-app-factory/the-app/sdk2.3.1/$3 [L]',
 			'</IfModule>'
 		);
 	}
@@ -93,8 +92,7 @@ function the_app_factory_install() {
 			'<IfModule mod_rewrite.c>',
 			'RewriteEngine On',
 			'RewriteBase '.$home_root,
-			'RewriteRule ^apps/[^\/]+/sdk2.1/(.*)$ '.$site_root.'wp-content/plugins/wp-app-factory/the-app/sdk2.1/$1 [L]',
-			'RewriteRule ^apps/[^\/]+/sdk2.2.1/(.*)$ '.$site_root.'wp-content/plugins/wp-app-factory/the-app/sdk2.2.1/$1 [L]',
+			'RewriteRule ^apps/[^\/]+/sdk2.3.1/(.*)$ '.$site_root.'wp-content/plugins/wp-app-factory/the-app/sdk2.3.1/$1 [L]',
 			'RewriteRule ^apps/[^\/]+/resources/(.*)$ '.$site_root.'wp-content/plugins/wp-app-factory/the-app/resources/$1 [L]',
 			'</IfModule>'
 		);
@@ -212,6 +210,9 @@ function the_app_factory_init()
 	include_once('add-ons/the-app-twitter/the-app-twitter.php');
 	include_once('add-ons/the-app-maps/the-app-maps.php');
 	include_once('add-ons/the-app-banner-ads/the-app-banner-ads.php');
+	include_once('add-ons/the-app-push-woosh/the-app-push-woosh.php');
+	include_once('add-ons/the-app-push-plugin/the-app-push-plugin.php');
+	include_once('add-ons/sqlite-storage/sqlite-storage.php');
 	do_action('TheAppFactory_load_plugins');
 }
 
@@ -376,6 +377,8 @@ function the_app_factory_redirect(){
 			$the_app->is( 'building', true );
 			break;
 		}
+		
+		do_action_ref_array( 'the_app_factory_redirect', array( &$the_app ) );
 		
 		switch(true){
 		case get_query_var(APP_JSON_VAR) != '': 
@@ -577,5 +580,13 @@ function the_app_whitelist_options($whitelist_options){
 	return $whitelist_options;
 }
 
+/* Prevent unauthorized users from being able to see the source code for the app */
+add_filter( 'the_content', 'the_app_the_content' );
+function the_app_the_content( $content ){
+	if ( APP_POST_TYPE == get_post_type() && !is_single() && !current_user_can( 'edit_post' ) && '' == get_query_var( APP_DATA_VAR ) ){
+		$content = '<a href="' . get_permalink() . '">' . sprintf( __( 'View "%s" app here', 'app-factory' ), get_the_title() ) . '</a>'; 
+	}
+	return $content;
+}
 
 ?>

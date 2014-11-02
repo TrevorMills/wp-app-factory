@@ -6,7 +6,9 @@ Ext.define('the_app.view.ItemDetail',{
 		title: 'Item Wrapper',
 		scrollable: true,
 		styleHtmlContent: true,
-		tpl: '{content}',
-		data: null
+		items: [{
+			tpl: '{content}',
+			data: null
+		}]
 	}
 });

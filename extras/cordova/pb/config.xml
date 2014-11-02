@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    <widget xmlns   = "http://www.w3.org/ns/widgets"
+        xmlns:gap   = "http://phonegap.com/ns/1.0"
+        id          = "com.example.MyApp"
+        version     = "1.0.0" >
+
+    <!-- versionCode is optional and Android only -->
+
+    <name>MyApp</name>
+
+    <description>
+        Built using WP App Factory
+    </description>
+
+    <author href="https://github.com/TrevorMills/wp-app-factory" email="support@topquark.com">
+        WP App Factory 
+    </author>
+
+    <!-- Include InAppBrowser -->
+    <gap:plugin name="org.apache.cordova.inappbrowser" />
+    <!-- Include SplashScreen -->
+	<gap:plugin name="org.apache.cordova.splashscreen" />
+	
+    <access origin="*" />
+	
+    <preference name="splashscreen" value="splash" />
+    <preference name="splashScreenDelay" value="10000" />
+	
+</widget>

@@ -78,11 +78,15 @@ Ext.define('the_app.controller.Package', {
 					title: 'Packaging....',
 					html: commands[which].message,
 					spinner: 'black x48',
-					hideOnMaskTap: false
+					hideOnMaskTap: false,
+					showAnimation: false,
 				}
 			);
 
+			var the_callback = commands[which].callback;
 			delete commands[which].message; // don't sent to the server
+			delete commands[which].callback;
+			
 			Ext.apply( commands[which], {
 				action: 'package_app',
 				id: WP.getID(),
@@ -99,8 +103,8 @@ Ext.define('the_app.controller.Package', {
 					try{
 						var response = JSON.parse(data.responseText);
 						if (response.success){
-							if (typeof commands[which].callback == 'function'){
-								commands[which].callback(data);
+							if (typeof the_callback == 'function'){
+								the_callback(data);
 							}
 							else{
 								console.log(response.message);
@@ -197,6 +201,7 @@ Ext.define('the_app.controller.Package', {
 				message: 'Zipping up the archive',
 				callback: function( data ){
 					var response = JSON.parse(data.responseText);
+					the_app.app.hidePopup('build');
 					
 					the_app.app.confirm({
 						id: 'download-zip', 

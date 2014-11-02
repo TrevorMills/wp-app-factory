@@ -11,7 +11,7 @@ class TheAppBuilder extends TheAppFactory {
 		return void;
 	}
 	
-	public function setup_environment(){
+	public static function setup_environment(){
 		$the_app = & TheAppFactory::getInstance();
 
 		global $post;
@@ -36,7 +36,7 @@ class TheAppBuilder extends TheAppFactory {
 			));
 			$the_app->enqueue('controller','Build');
 			$the_app->is('minifying',strpos(get_query_var(APP_COMMAND_VAR),'no_minify') === false);
-			add_filter('TheAppFactory_helpers',array(&$this,'build_helper'),10,2);
+			add_filter('TheAppFactory_helpers',array( __CLASS__,'build_helper'),10,2);
 		}
 		elseif( isset($_REQUEST['building']) && 'true' === $_REQUEST['building'] ){
 			$the_app->is('building',true);
@@ -554,7 +554,7 @@ class TheAppBuilder extends TheAppFactory {
 		echo "[PREPARED] app.json file with file versions";
 	}
 	
-	public function build_helper( $helpers, $args ){
+	public static function build_helper( $helpers, $args ){
 		$the_app = & $args[0];
 		$helpers['WP']['isMinifying'] = $the_app->is('minifying');
 		return $helpers;

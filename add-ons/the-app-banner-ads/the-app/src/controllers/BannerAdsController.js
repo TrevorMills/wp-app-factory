@@ -69,7 +69,7 @@ Ext.define('the_app.controller.BannerAdsController', {
 			xtype: 'panel',
 			docked: BANNER_ADS.getDocked(),
 			id: 'banner_ads_ad',
-			tpl: '<a href="{href}" target="_blank"><img style="max-width:{width};max-height:{height}" src="{src}"/></a>',
+			tpl: '<tpl if="href"><a href="{href}" target="_blank"></tpl><img style="max-width:{width};max-height:{height}" src="{src}"/><tpl if="href"></a></tpl>',
 			width: BANNER_ADS.width,
 			height: BANNER_ADS.height,
 			data: this.randomAd(),
