@@ -27,6 +27,7 @@ Ext.define('the_app.store.<?php echo $key; ?>',
 			queryInstance: undefined,
 			grouped: undefined,
 			storeTimestamp: 0,
+
 		}
 		
 	}
