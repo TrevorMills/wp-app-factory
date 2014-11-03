@@ -19,6 +19,21 @@ Ext.define('the_app.controller.Search', {
 		if ( panel.getMeta().searchable ){
 			this.addSearchField( panel );
 		}
+		var list = panel.down( 'list' ),
+			store = list.getStore();
+		if ( !store.getCount() ){
+			panel.getInnerItems()[0].add({
+				xtype: 'component',
+				styleHtmlContent: true,
+				html: WP.__( "There is currently no information for %s.  Please check back later for updates." ).replace(/\%s/,panel.getNavigationBar().getTitle()),
+				docked: 'top',
+				//cls: 'my_schedule_no_results',
+				ui: 'plain'
+			});
+			if ( list.getIndexBar() ){
+				list.getIndexBar().hide();
+			}
+		}
 	},
 	
 	getSearchableFields: function( panel ){
