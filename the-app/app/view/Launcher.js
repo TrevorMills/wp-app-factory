@@ -10,6 +10,7 @@ Ext.define("the_app.view.Launcher", {
 		},
 		title: '',
 		mainItems: [],
+		sheetMenuItems: false,
 		installApp: false,
         items: [
 			{

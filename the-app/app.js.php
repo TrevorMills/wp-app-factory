@@ -127,44 +127,15 @@ else{
 			// autoMaximize: false
 	    },
 
-		launchold: function(){
-	        // Initialize the main view
-			Ext.Viewport.mask({
-				xtype: 'loadmask',
-				message: '',
-				cls: 'splash'
-			});
-			<?php if ($the_app->get('has_splash') and $the_app->get('splash_pause')) : ?>
-			setTimeout(function(){
-			<?php endif; ?>
-			Ext.Viewport.unmask();
-	        Ext.Viewport.add({
-				xtype: 'mainpanel',
-				title: <?php echo json_encode($the_app->get('title')); ?>,
-				items: <?php echo TheAppFactory::anti_escape(json_encode( $items )); ?>,
-				hidden: true,
-				showAnimation: {type: 'fade'},
-				maxTabBarItems: <?php echo ($the_app->get('maxtabbaritems') ? $the_app->get('maxtabbaritems') : 'null');  ?>
-			});
-			if (Ext.get('app-loading')){
-				Ext.get('app-loading').destroy();
-			}
-			<?php if ($the_app->get('ios_install_popup')) : ?>
-			Ext.ux.InstallApp.init();
-			<?php endif; ?>
-		 
-			<?php if ($the_app->get('has_splash') and $the_app->get('splash_pause')) : ?>
-			},<?php echo $the_app->get('splash_pause')*1000; ?>);
-			<?php endif; ?>
-			
-		},
-		
 		launch: function(){
 	        Ext.Viewport.add({
 				xtype: 'launcher',
 				title: <?php echo json_encode($the_app->get('title')); ?>,
 				fullscreen: true,
 				mainItems: <?php echo TheAppFactory::anti_escape(json_encode( $items )); ?>,
+				<?php if ( 'sheet' == $the_app->get('menu_style') ) : ?>
+				sheetMenuItems: <?php echo TheAppFactory::anti_escape( json_encode( $the_app->get( 'sheet_menu_items' ) ) );  ?>,
+				<?php endif; ?>				
 				<?php if ($the_app->get('ios_install_popup')) : ?>
 				installApp: true,
 				<?php endif; ?>				

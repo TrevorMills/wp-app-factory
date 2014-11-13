@@ -36,6 +36,10 @@ Ext.define('the_app.controller.Main', {
 				activate: 'onItemListActivate',
 				back: 'onItemListBack'
 			},
+			'navigationview':{
+				push: 'onNavigationViewActiveItemChange',
+				pop: 'onNavigationViewActiveItemChange',
+			},
 			'itemlist list': {
 				itemtap: 'onItemListListItemTap'
 			},
@@ -69,10 +73,10 @@ Ext.define('the_app.controller.Main', {
 		;
 		
 		var mainpanel = this.getMainPanel();
-		mainpanel.getItems().each( function( item, index ){
+		Ext.each( mainpanel.getInnerItems(), ( function( item, index ){
 			if ( Ext.isFunction( item.getOriginalItem ) ){
-				if ( item.getOriginalItem().id == id ){
-					var redirect = 'tab/' + index;
+				if ( [item.getOriginalItem().id,item.getItemId()].indexOf( id ) != -1 ){
+					var redirect = 'tab/' + ( index + 1 );
 					if ( !Ext.isDefined( record_id ) ){
 						this.redirectTo( redirect );
 					}
@@ -96,7 +100,7 @@ Ext.define('the_app.controller.Main', {
 					}
 				}
 			}
-		}, this );
+		}), this );
 		
 		
 	},
@@ -130,6 +134,11 @@ Ext.define('the_app.controller.Main', {
 			if (Ext.os.name == 'iOS' && Ext.os.version.major >= 7){
 				Ext.Viewport.addCls('ios7');
 			}
+		}
+		
+		var tabBar = panel.getTabBar();
+		if ( panel.getSheetMenuItems() ){
+			panel.getTabBar().hide();
 		}
 	},
 	
@@ -486,6 +495,7 @@ Ext.define('the_app.controller.Main', {
 	
 	onHtmlPageInitialize: function(panel){
 		var store = Ext.getStore('HtmlPagesStore'),
+			me = this,
 			doit = function(){
 				if (typeof panel.getMeta != 'undefined' && typeof panel.getMeta().template != 'undefined'){
 					panel.setTpl(panel.meta.template);
@@ -509,6 +519,8 @@ Ext.define('the_app.controller.Main', {
 						docked: 'top',
 						title: panel.getTitle()
 					});
+					
+					me.maybeSetupMenuSheet( panel );
 				}
 			}
 		;
@@ -603,6 +615,187 @@ Ext.define('the_app.controller.Main', {
 			return this.getMainPanel().getTabBar().getInnerItems()[matched];
 		}
 		return null;
-	}	
+	},
 	
+	onNavigationViewActiveItemChange: function( panel, item ){
+		if ( panel.getInnerItems().length == 1 ){
+			// We're on an index page
+			this.maybeSetupMenuSheet( panel );
+		}
+		else{
+			var button = panel.query( '#' + this.makeMenuButtonId( panel ) );
+			if ( button.length ){
+				button[0].hide();
+			}
+		}
+	},
+	
+	makeMenuButtonId: function( panel ){
+		return panel.getItemId() + '-menu-button';
+	},
+	
+	maybeSetupMenuSheet: function( panel ){
+		if ( !this.getMainPanel().getSheetMenuItems() ){
+			return;
+		}
+		
+		var buttonId = this.makeMenuButtonId( panel ),
+			button = panel.query( '#' + buttonId ),
+			items = [],
+			toolbar;
+		
+		switch( true ){
+		case panel.isXType( 'navigationview' ):
+			toolbar = panel.getNavigationBar();
+			break;
+		default:
+			toolbar = panel.down( 'toolbar' );
+			break;
+		}
+		
+		if ( button.length ){
+			// already exists, nothing to do but show it
+			button[0].show();
+			return;
+		}
+		
+		var sheetItems = this.getMainPanel().getSheetMenuItems();
+		Ext.each( sheetItems, function( item, index ){
+			if ( item.xtype == 'list' ){
+				Ext.apply( item, {
+		            scrollable: { disabled: true },
+					listeners: {
+						initialize: function (list, eOpts){
+							// Okay, crazy.  In Sencha Touch 2.1, lists added to a panel do not have
+							// a height, so they render unseen.  It can be seen by giving the parent
+							// panel a layout: 'vbox' and the list a flex: 1, but that adds other issues. 
+							// It took me a couple of hours to figure out how, but I finally fell upon
+							// something that seems to work.  ST2.1 added list.getItemMap(), which is a 
+							// getter for a private collection of the actual elements.  In it is a handy
+							// function getTotalHeight().  It works in tandem with the `refresh` event
+							// on the scroller, which seems to keep firing until the scroller is completely
+							// rendered (which you think might have been when the list was `painted`, but
+							// oh no, you'd be wrong).
+							var me = this;
+							if (typeof me.getItemMap == 'function'){
+								me.getScrollable().getScroller().on('refresh',function(scroller,eOpts){
+									switch(Ext.version.version){
+									case '2.1.0':
+										me.setHeight(me.getItemMap().getTotalHeight());
+										break;
+									case '2.2.1':
+									default:
+										me.setHeight(scroller.getSize().y); // And this is what seems to work for 2.2.1, and 2.3.1
+										break;
+									}
+								});
+							}
+						},
+						itemtap: function(list, index, target, record){
+							list.fireAction('sheetmenuitemtap',[record,list.up('sheet')],function(){
+								the_app.app.getController('Main').redirectById( record.get( 'id' ) );
+								var sheet = list.up( 'sheet' );
+								if ( sheet ){
+									sheet.destroy(); // it will get recreated
+								}
+								else{
+									// Happens if going from a lazy panel that destroys on deactivate
+									list.destroy();
+								}
+							});
+							return false; // Prevents the item from becoming "selected"
+						},
+						order: 'before'
+					}
+				});
+			}
+		});
+		
+		toolbar.add( {
+			xtype: 'button',
+			align: 'left',
+			iconCls: 'menu-button list',
+			ui: 'plain',
+			zIndex: 5,
+			itemId: buttonId, 
+			handler: function(){
+				var menu = panel.down( 'sheet' );
+				if ( menu ){
+					if ( menu.getHidden() == true ){
+						menu.show();
+					}
+					else{
+						menu.hide();
+					}
+				}
+				else{
+					panel.add({
+						xtype: 'sheet',
+				        stretchY: true,
+				        stretchX: true,
+				        enter: 'left',
+				        exit: 'left',
+						scrollable: 'vertical',
+						items: sheetItems,
+						zIndex: 1000,
+						hidden: true,
+						style: 'padding:0'
+					}).show();
+				}
+			}
+		});
+	},	
+	
+	checkForUpdates: function(){
+		var store = Ext.getStore( 'StoreStatusStore' );
+		if ( store ){
+			the_app.app.showPopup({
+				id: 'updating-popup', 
+				html: WP.__( 'Checking for Updates' ),
+				spinner: 'black x48',
+				hideOnMaskTap: false
+			});
+			store.on( 'load', function(store, records, successful, operation, eOpts){
+				if ( !successful ){
+					the_app.app.alert({
+						html: WP.__( 'Unable to communicate with the server.  Please check your internet connection.' )
+					});
+					return;
+				}
+				var updates = false;
+				// This is from the server load triggered above
+				Ext.each(records,function(record){
+					var the_store = Ext.getStore(record.get('store'));
+					if (!updates && the_store && the_store.getStoreTimestamp() != record.get('timestamp')){
+						updates = true; 
+					}
+				});
+				the_app.app.hidePopup( 'updating-popup' );
+				if ( updates ){
+					store.on( 'syncdecision', function( updating ){
+						if ( updating ){
+							the_app.app.showPopup({
+								id: 'updating-popup', 
+								html: WP.__( 'Performing Updates' ),
+								spinner: 'black x48',
+								hideOnMaskTap: false
+							});
+							this.on( 'all_syncs_complete', function(){
+								console.log( 'all syncs complete' );
+								the_app.app.hidePopup( 'updating-popup' );
+							}, this, { single: true });
+						}
+					}, store, { single: true } );
+				}
+				else {
+					the_app.app.alert({
+						html: WP.__( 'There are no updates available' )
+					});
+				}
+			}, this, {
+				single: true
+			});
+			store.loadServer();
+		}
+	}
 });

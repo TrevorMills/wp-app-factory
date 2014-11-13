@@ -21,6 +21,7 @@ Ext.define("the_app.view.Main", {
 	
 		title: 'The App',
 
-        items: []  // These get added in a run time via app.js.php
+        items: [],  // These get added in a run time via app.js.php
+		sheetMenuItems: false
     }
 });

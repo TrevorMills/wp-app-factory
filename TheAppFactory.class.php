@@ -94,6 +94,8 @@ class TheAppFactory {
 		
 		add_action('TheAppFactory_setupStores',array(&$this, 'setupStoreStatusStore'),500); // Make sure the Store Status is setup last so as to allow the other stores to instantiate first
 		add_action('TheAppFactory_setupStores',array(&$this, 'massageStoreConfigs'),600);
+		add_action('TheAppFactory_parsePost', array(&$this, 'maybeSetupSheetMenuItems' ), 100 );
+		
 		
 		do_action_ref_array('TheAppFactory_init',array(& $this));
 	}
@@ -514,6 +516,7 @@ class TheAppFactory {
 				'ios_install_popup' => false, // True to enable the Install App popup on iOS devices,
 				'sdk' => '2.3.1',				// the Sencha Touch SDK to use - only valid value currently is 2.3.1
 				'theme' => 'sencha-touch',		// valid values are base, bb10, sencha-touch (default).  The blank SDK also have wp-app-factory
+				'menu_style' => 'tabbar',		// could be 'tabbar' or 'sheet',
 			);
 			break;
 		case 'launch':
@@ -1579,6 +1582,31 @@ class TheAppFactory {
 			}
 		}
 		return $available_versions;		
+	}
+	
+	public function maybeSetupSheetMenuItems(){
+		if ( 'sheet' == $this->get( 'menu_style' ) ){
+			$menu_list = array(
+				'xtype' => 'list',
+				'data' => array(),
+			);
+			
+			$items = $this->get( 'items' );
+			foreach ( $items as & $item ){
+				if ( !isset( $item['item']['id'] ) ){
+					$item['item']['id'] = 'an-id-for-' . sanitize_title( $item['item']['title'] );
+				}
+				$menu_list['data'][] = array(
+					'id' => $item['item']['id'],
+					'text' => $item['item']['title'],
+					'iconCls' => $item['item']['iconCls']
+				);
+			}
+			unset( $item ); // unsetting a reference just removes the reference
+			$this->set( 'items', $items );
+			
+			$this->set( 'sheet_menu_items', apply_filters( 'the_app_sheet_menu_items', array( $menu_list ) ) );
+		}
 	}
 }
 ?>

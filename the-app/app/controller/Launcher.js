@@ -171,6 +171,7 @@ Ext.define('the_app.controller.Launcher', {
 				xtype: 'mainpanel',
 				title: this.getLauncher().getTitle(),
 				items: this.getLauncher().getMainItems(),
+				sheetMenuItems: this.getLauncher().getSheetMenuItems(),
 				showAnimation: {type: 'fade'},
 			});
 
