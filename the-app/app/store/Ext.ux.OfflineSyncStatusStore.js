@@ -90,6 +90,11 @@ Ext.define('Ext.ux.OfflineSyncStatusStore', {
 							stores_to_update.splice( stores_to_update.indexOf( storeId ),1);
 							me.setStoresToUpdate( stores_to_update );
 							me.maybeTriggerAllComplete();
+							Ext.each( records, function( record ){
+								if ( record.get( 'store' ) == storeId && Ext.isFunction( store.setStoreTimestamp ) ){
+									store.setStoreTimestamp( record.get( 'timestamp' ) );
+								}
+							});
 						},
 						single: true
 					}
