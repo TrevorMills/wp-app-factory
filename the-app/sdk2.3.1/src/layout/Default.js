@@ -141,7 +141,10 @@ Ext.define('Ext.layout.Default', {
             item.setZIndex((container.indexOf(item) + 1) * 2);
         }
 
-        bodyDom.insertBefore(item.element.dom, bodyDom.firstChild);
+		// TMILLS - maybe there's not an item.element.  Let's make sure.  
+		if ( item.element ){
+			bodyDom.insertBefore(item.element.dom, bodyDom.firstChild);
+		}
 
         return this;
     },
