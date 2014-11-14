@@ -61,7 +61,8 @@ class TheAppBannerAds{
 			}
 			$this->ads[] = array(
 				'src' => $atts['src'],
-				'href' => $atts['href']
+				'href' => $atts['href'],
+				'route' => empty( $atts['route'] ) ? false : $atts['route']
 			);
 			break;
 		}
@@ -80,15 +81,17 @@ class TheAppBannerAds{
 			// Setup the Banner Ad Helper.  
 			add_filter('TheAppFactory_helpers', array( &$this, 'helper' ), 10, 2);
 			$the_app->set( 'banner_ads', $this->ads );
-			$registered_post_queries = $the_app->get('registered_post_queries');
-			$registered_post_queries['banner_ads'] = array(
-				array(
-					'query_vars' => array(
-						'data_callback' => array( &$this, 'ads_callback' ),
+			if ( 'banner_ads' == get_query_var( APP_DATA_VAR ) ){
+				$registered_post_queries = $the_app->get('registered_post_queries');
+				$registered_post_queries['banner_ads'] = array(
+					array(
+						'query_vars' => array(
+							'data_callback' => array( &$this, 'ads_callback' ),
+						)
 					)
-				)
-			);
-			$the_app->set('registered_post_queries',$registered_post_queries);
+				);
+				$the_app->set('registered_post_queries',$registered_post_queries);
+			}
 			$this->reset_ads();
 		}
 	}
