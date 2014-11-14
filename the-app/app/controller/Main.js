@@ -92,7 +92,7 @@ Ext.define('the_app.controller.Main', {
 									panel.down( 'list' ).on( 'painted', function( list ){
 										redirect+= '/record/' + record_id;
 										this.redirectTo( redirect );
-									}, this );
+									}, this, { single: true } );
 								}, this );
 							}, this );
 							this.redirectTo( redirect );
@@ -219,7 +219,7 @@ Ext.define('the_app.controller.Main', {
 		this.setCardJustSwitched(true); // Set to true so that tapping on the tabbar tab will return to the proper page
 		var wrapper = this.getMainPanel().getInnerItems()[parseInt(id)-1];
 		var list = wrapper.down('list'), store = list.getStore();
-		doit = function(store){
+		doit = function(){
 			var record = store.getById(record_id);
 			if (record){
 				store.suspendEvents();
@@ -234,7 +234,7 @@ Ext.define('the_app.controller.Main', {
 		}
 		// Store is loaded asynchronously, so wait until it's loaded
 		if (store.isLoaded()){
-			doit(store);
+			doit();
 		}
 		else{
 			store.on('load',doit);
@@ -626,6 +626,10 @@ Ext.define('the_app.controller.Main', {
 			var button = panel.query( '#' + this.makeMenuButtonId( panel ) );
 			if ( button.length ){
 				button[0].hide();
+				var menu = panel.query( '#' + this.makeMenuSheetId( panel ) );
+				if ( menu.length && !menu[0].getHidden() ){
+					menu[0].hide();
+				}
 			}
 		}
 	},
@@ -634,12 +638,17 @@ Ext.define('the_app.controller.Main', {
 		return panel.getItemId() + '-menu-button';
 	},
 	
+	makeMenuSheetId: function( panel ){
+		return panel.getItemId() + '-menu-sheet';
+	},
+	
 	maybeSetupMenuSheet: function( panel ){
 		if ( !this.getMainPanel().getSheetMenuItems() ){
 			return;
 		}
 		
 		var buttonId = this.makeMenuButtonId( panel ),
+			menuId = this.makeMenuSheetId( panel ),
 			button = panel.query( '#' + buttonId ),
 			items = [],
 			toolbar;
@@ -719,18 +728,19 @@ Ext.define('the_app.controller.Main', {
 			zIndex: 5,
 			itemId: buttonId, 
 			handler: function(){
-				var menu = panel.down( 'sheet' );
-				if ( menu ){
-					if ( menu.getHidden() == true ){
-						menu.show();
+				var menu = panel.query( '#' + menuId ); 
+				if ( menu.length ){
+					if ( menu[0].getHidden() == true ){
+						menu[0].show();
 					}
 					else{
-						menu.hide();
+						menu[0].hide();
 					}
 				}
 				else{
 					panel.add({
 						xtype: 'sheet',
+						itemId: menuId,
 				        stretchY: true,
 				        stretchX: true,
 				        enter: 'left',
@@ -753,12 +763,16 @@ Ext.define('the_app.controller.Main', {
 				id: 'updating-popup', 
 				html: WP.__( 'Checking for Updates' ),
 				spinner: 'black x48',
-				hideOnMaskTap: false
+				hideOnMaskTap: false,
+				width:'auto',
+				height:'auto'
 			});
 			store.on( 'load', function(store, records, successful, operation, eOpts){
 				if ( !successful ){
 					the_app.app.alert({
-						html: WP.__( 'Unable to communicate with the server.  Please check your internet connection.' )
+						html: WP.__( 'Unable to communicate with the server.  Please check your internet connection.' ),
+						width:'auto',
+						height:'auto'
 					});
 					return;
 				}
@@ -778,10 +792,11 @@ Ext.define('the_app.controller.Main', {
 								id: 'updating-popup', 
 								html: WP.__( 'Performing Updates' ),
 								spinner: 'black x48',
-								hideOnMaskTap: false
+								hideOnMaskTap: false,
+								width:'auto',
+								height:'auto'
 							});
 							this.on( 'all_syncs_complete', function(){
-								console.log( 'all syncs complete' );
 								the_app.app.hidePopup( 'updating-popup' );
 							}, this, { single: true });
 						}
@@ -789,7 +804,9 @@ Ext.define('the_app.controller.Main', {
 				}
 				else {
 					the_app.app.alert({
-						html: WP.__( 'There are no updates available' )
+						html: WP.__( 'There are no updates available' ),
+						width:'auto',
+						height:'auto'
 					});
 				}
 			}, this, {

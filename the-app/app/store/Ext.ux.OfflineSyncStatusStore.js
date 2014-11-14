@@ -3,7 +3,8 @@ Ext.define('Ext.ux.OfflineSyncStatusStore', {
 	extend: 'Ext.ux.OfflineSyncStore',
 	
 	config: {
-		storesToUpdate: []
+		storesToUpdate: [],
+		askBeforeUpdating: true
 	},
 
 	maybeDoInitialSync: function(store, records, successful, operation, eOpts){
@@ -56,19 +57,24 @@ Ext.define('Ext.ux.OfflineSyncStatusStore', {
 			
 			var me = this;
 			if ( this.getStoresToUpdate().length ){
-				the_app.app.confirm({
-					id: 'download-zip', 
-					title: WP.__("Updates Available"),
-					html: WP.__("There are data updates available from the server.  Load them now?"),
-					hideOnMaskTap: false,
-					handler: function(){
-						me.fireEvent( 'syncdecision', true );
-						me.performUpdates(records,successful);
-					},
-					handlerNo: function(){
-						me.fireEvent( 'syncdecision', false );
-					}
-				});
+				if ( this.getAskBeforeUpdating() ){
+					the_app.app.confirm({
+						id: 'download-zip', 
+						title: WP.__("Updates Available"),
+						html: WP.__("There are data updates available from the server.  Load them now?"),
+						hideOnMaskTap: false,
+						handler: function(){
+							me.fireEvent( 'syncdecision', true );
+							me.performUpdates(records,successful);
+						},
+						handlerNo: function(){
+							me.fireEvent( 'syncdecision', false );
+						}
+					});
+				}
+				else{
+					me.performUpdates( records, successful );
+				}
 			}
 		}
 		

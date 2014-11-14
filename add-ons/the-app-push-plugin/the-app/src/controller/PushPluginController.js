@@ -132,14 +132,46 @@ Ext.define('the_app.controller.PushPluginController', {
 				}
 				if ( e.payload.route && e.payload.route != '' ){
 					nextActions.push( function(){
-						e.payload.route = e.payload.route.replace( /^#/, '' );
-						if ( e.payload.route.match( /^tab/ ) ){
-							// It's a tab/ route
-							the_app.app.redirectTo( e.payload.route );
+						var store = Ext.getStore( 'StoreStatusStore' ),
+							route = function(){
+								if ( store ){
+									the_app.app.hidePopup( 'updating-popup' );
+								}
+								e.payload.route = e.payload.route.replace( /^#/, '' );
+								if ( e.payload.route.match( /^tab/ ) ){
+									// It's a tab/ route
+									the_app.app.redirectTo( e.payload.route );
+								}
+								else{
+									// It's an {id}/ route
+									the_app.app.getController( 'Main' ).redirectById( e.payload.route );
+								}
+							}
+						
+						if ( store ){
+							store.setAskBeforeUpdating( false );
+							store.on( 'synccheck', function(){
+								if ( this.getStoresToUpdate().length ){
+									this.on( 'all_syncs_complete', function(){
+										route();
+									}, this, { single: true });
+								}
+								else{
+									route();
+								}
+							}, store, { single: true });
+							the_app.app.showPopup({
+								id: 'updating-popup', 
+								html: WP.__( 'Checking server for updates.' ),
+								spinner: 'black x48',
+								hideOnMaskTap: false,
+								width:'auto',
+								height:'auto'
+							})
+							store.loadServer();
 						}
 						else{
-							// It's an {id}/ route
-							the_app.app.getController( 'Main' ).redirectById( e.payload.route );
+							route();
 						}
 					});
 				}
