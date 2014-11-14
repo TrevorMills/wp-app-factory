@@ -25244,7 +25244,10 @@ Ext.define('Ext.layout.Default', {
 
     removeBodyItem: function(item) {
         item.setZIndex(null);
-        item.element.detach();
+		// TMILLS - maybe there's not an item.element.  Let's make sure.  
+		if ( item.element ){
+			item.element.detach();
+		}
     },
 
     onItemRemove: function(item, index, destroying) {
