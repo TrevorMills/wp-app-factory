@@ -112,20 +112,32 @@ Ext.define('the_app.controller.Main', {
 			// Need to make sure we're only responding to a tap, not a drag.  
 			Ext.getBody().dom.addEventListener( 'mousedown', function(e){
 				var el = Ext.fly( e.target );
-				if ( el.is( 'a[target="_blank"]' ) || el.parent( 'a[target="_blank"]' ) ){
+				if ( el.is( 'a' ) || el.parent( 'a' ) ) { 
 					this.startPoint = { x : e.screenX, y: e.screenY }
 				}
 			});
 			Ext.getBody().dom.addEventListener( 'click', function(e){
 				var el = Ext.fly( e.target );
 				if ( this.startPoint ){
-					e.preventDefault();
+					var handled = false;
 					if ( ( Math.abs( this.startPoint.x - e.screenX ) < 8 )
 					&&   ( Math.abs( this.startPoint.y - e.screenY ) < 8 ) ){
-					  	window.open( el.dom.href || el.parent().dom.href, "_system" );
+						var a = el.is( 'a' ) ? el.dom : el.parent().dom;
+						if ( a.href.match( /:\/\// ) ){
+							// It's a link with a protocol ( i.e. http://, https:// )
+							// We do NOT want to open it within the app.  If there is no 
+							// target, then open in _blank ( in app browser ), otherwise, 
+							// open it in _system ( native browser );
+							var target = a.target == '' ? '_blank' : '_system';
+							handled = true;
+						  	window.open( a.href, target );
+						}
 					}
 					delete this.startPoint;
-					return false;
+					if ( handled ){
+						e.preventDefault();
+						return false;
+					}
 				}
 			});
 		}

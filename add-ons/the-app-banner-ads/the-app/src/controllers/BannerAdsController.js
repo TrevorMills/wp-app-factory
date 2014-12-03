@@ -64,7 +64,9 @@ Ext.define('the_app.controller.BannerAdsController', {
 		}
 		else{
 			var data = panel.getActiveItem().getData();
-			this.setupBannerAdsForPage( panel.getItemId() + '/' + data.id, data );
+			if ( data ) {
+				this.setupBannerAdsForPage( panel.getItemId() + '/' + data.id, data );
+			}
 		}
 	},
 	

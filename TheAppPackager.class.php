@@ -792,7 +792,7 @@ class TheAppPackager extends TheAppBuilder {
 	public function package_image( $atts=array(), $content=null, $code='' ){
 		$the_app = & TheAppFactory::getInstance();
 		$image_url = $content;
-		if ( $the_app->is('packaging') ){ 
+		if ( $the_app->is('packaging') && !empty( $image_url ) ){ 
 			$relative_dest = 'resources/images/'.basename($image_url);
 			if ( strpos( $relative_dest, '?' ) !== false ){
 				$relative_dest = 'resources/images/' . md5( basename( $image_url ) ); 
