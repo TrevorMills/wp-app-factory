@@ -198,3 +198,7 @@ body .x-list.x-list-indexed .x-list-item.x-list-item-tpl.x-list-header-wrap .x-i
 	border-box;
 	text-align:center;
 }
+.sheet-menu .x-list-item-body{
+	background:white;
+	position:relative;
+}

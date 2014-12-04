@@ -778,6 +778,9 @@ class TheAppFactory {
 		if ($this->get('html_store_contents')){
 			$models['HtmlPages'] = array('fields' => array('id','title','content','key'));
 		}
+		if ( 'sheet' == $this->get( 'menu_style' ) ){
+			$models['SheetMenuItems'] = array( 'fields' => array( 'id', 'leaf', 'text', 'items', 'iconCls' ) ); 
+		}
 		
 		$this->set('models',apply_filters('TheAppFactory_models',$models,array(&$this)));
 		do_action_ref_array('TheAppFactory_setupModels',array(&$this));
@@ -1588,7 +1591,10 @@ class TheAppFactory {
 		if ( 'sheet' == $this->get( 'menu_style' ) ){
 			$menu_list = array(
 				'xtype' => 'list',
-				'data' => array(),
+				'store' => array(
+					'data' => array(),
+					'model' => 'the_app.model.SheetMenuItems'
+				)
 			);
 			
 			$items = $this->get( 'items' );
@@ -1596,7 +1602,7 @@ class TheAppFactory {
 				if ( !isset( $item['item']['id'] ) ){
 					$item['item']['id'] = 'an-id-for-' . sanitize_title( $item['item']['title'] );
 				}
-				$menu_list['data'][] = array(
+				$menu_list['store']['data'][] = array(
 					'id' => $item['item']['id'],
 					'text' => $item['item']['title'],
 					'iconCls' => $item['item']['iconCls']

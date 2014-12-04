@@ -50,7 +50,11 @@ Ext.define('the_app.controller.Main', {
 				initialize: 'onLazyPanelInitialize',
 				//activate: 'onLazyPanelActivate',
 				order: 'before'
-			},			
+			},	
+			'list': {
+				initialize: 'onListInitialize',
+				order: 'before'
+			}		
         },
 		routes: {
 			'tab/:id': 'goToTabAndReset',
@@ -548,6 +552,39 @@ Ext.define('the_app.controller.Main', {
 		
 	},
 	
+	onListInitialize: function( list, eOpts ) {
+		try{
+			if( list.getScrollable().getScroller().getDisabled() ){
+				// Okay, crazy.  In Sencha Touch 2.1, lists added to a panel do not have
+				// a height, so they render unseen.  It can be seen by giving the parent
+				// panel a layout: 'vbox' and the list a flex: 1, but that adds other issues. 
+				// It took me a couple of hours to figure out how, but I finally fell upon
+				// something that seems to work.  ST2.1 added list.getItemMap(), which is a 
+				// getter for a private collection of the actual elements.  In it is a handy
+				// function getTotalHeight().  It works in tandem with the `refresh` event
+				// on the scroller, which seems to keep firing until the scroller is completely
+				// rendered (which you think might have been when the list was `painted`, but
+				// oh no, you'd be wrong).
+				if (typeof list.getItemMap == 'function'){
+					list.getScrollable().getScroller().on('refresh',function(scroller,eOpts){
+						switch(Ext.version.version){
+						case '2.1.0':
+							list.setHeight(list.getItemMap().getTotalHeight());
+							break;
+						case '2.2.1':
+						default:
+							list.setHeight(scroller.getSize().y); // And this is what seems to work for 2.2.1, and 2.3.1
+							break;
+						}
+					});
+				}
+			}
+		}
+		catch(e){
+			
+		}
+	},
+	
     onLazyPanelInitialize : function( panel ) { // @dev
 //		console.log( ['onLazyPanelInitialize',panel.getOriginalItem(),panel.getOriginalItem().id] );
 		
@@ -685,34 +722,56 @@ Ext.define('the_app.controller.Main', {
 			if ( item.xtype == 'list' ){
 				Ext.apply( item, {
 		            scrollable: { disabled: true },
+					useSimpleItems: false,
 					listeners: {
-						initialize: function (list, eOpts){
-							// Okay, crazy.  In Sencha Touch 2.1, lists added to a panel do not have
-							// a height, so they render unseen.  It can be seen by giving the parent
-							// panel a layout: 'vbox' and the list a flex: 1, but that adds other issues. 
-							// It took me a couple of hours to figure out how, but I finally fell upon
-							// something that seems to work.  ST2.1 added list.getItemMap(), which is a 
-							// getter for a private collection of the actual elements.  In it is a handy
-							// function getTotalHeight().  It works in tandem with the `refresh` event
-							// on the scroller, which seems to keep firing until the scroller is completely
-							// rendered (which you think might have been when the list was `painted`, but
-							// oh no, you'd be wrong).
-							var me = this;
-							if (typeof me.getItemMap == 'function'){
-								me.getScrollable().getScroller().on('refresh',function(scroller,eOpts){
-									switch(Ext.version.version){
-									case '2.1.0':
-										me.setHeight(me.getItemMap().getTotalHeight());
-										break;
-									case '2.2.1':
-									default:
-										me.setHeight(scroller.getSize().y); // And this is what seems to work for 2.2.1, and 2.3.1
-										break;
-									}
-								});
-							}
-						},
 						itemtap: function(list, index, target, record){
+							console.log( ['target',target, arguments] );
+							var items = record.get( 'items' );
+							if ( items && items.length ) {
+								var sublist = target.down( 'list' );
+								
+								target.getBody().setZIndex( 10 );
+								
+								if ( !sublist ) {
+									sublist = target.add({
+										xtype: 'list',
+										scrollable: { disabled: true },
+										useSimpleItems: false,
+										style: 'position:relative',
+										hidden: true,
+										zIndex: 5, // behind the "body" above
+										showAnimation: {
+											type: 'slide', 
+											direction: 'down', 
+										},
+										hideAnimation: {
+											type: 'slideOut', 
+											direction: 'up', 
+										},
+										store: {
+											data: items,
+											model: "the_app.model.SheetMenuItems",
+										},
+										listeners: {
+											itemtap: function( list, index, target, record ){
+												console.log( 'asdf' );
+												return false;
+											},
+											order: 'before'
+										}
+									});
+									sublist.addBeforeListener( 'itemtap', function(){
+										console.log( 'wtf' );
+										return false;
+									});
+								}
+								if ( sublist.isHidden() ){
+									sublist.show();
+								} else {
+									sublist.hide();
+								}
+								return false;
+							}
 							list.fireAction('sheetmenuitemtap',[record,list.up('sheet')],function(){
 								the_app.app.getController('Main').redirectById( record.get( 'id' ) );
 								var sheet = list.up( 'sheet' );
@@ -761,7 +820,8 @@ Ext.define('the_app.controller.Main', {
 						items: sheetItems,
 						zIndex: 1000,
 						hidden: true,
-						style: 'padding:0'
+						style: 'padding:0',
+						cls: 'sheet-menu'
 					}).show();
 				}
 			}
