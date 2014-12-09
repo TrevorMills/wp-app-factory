@@ -202,3 +202,7 @@ body .x-list.x-list-indexed .x-list-item.x-list-item-tpl.x-list-header-wrap .x-i
 	background:white;
 	position:relative;
 }
+.sheet-menu .dropdown-list{
+	position:relative;
+	padding-left:2em;
+}

@@ -779,7 +779,7 @@ class TheAppFactory {
 			$models['HtmlPages'] = array('fields' => array('id','title','content','key'));
 		}
 		if ( 'sheet' == $this->get( 'menu_style' ) ){
-			$models['SheetMenuItems'] = array( 'fields' => array( 'id', 'leaf', 'text', 'items', 'iconCls' ) ); 
+			$models['SheetMenuItems'] = array( 'fields' => array( 'id', 'text', 'items', 'iconCls' ) ); 
 		}
 		
 		$this->set('models',apply_filters('TheAppFactory_models',$models,array(&$this)));

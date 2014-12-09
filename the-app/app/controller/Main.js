@@ -724,10 +724,14 @@ Ext.define('the_app.controller.Main', {
 		            scrollable: { disabled: true },
 					useSimpleItems: false,
 					listeners: {
-						itemtap: function(list, index, target, record){
-							console.log( ['target',target, arguments] );
-							var items = record.get( 'items' );
+						itemtap: function(list, index, target ){
+							var record = target.getRecord(),
+								items = record.get( 'items' );
+							
 							if ( items && items.length ) {
+								// There's a thing in here that if you fast-click on a submenu item, there is an uncaught error 
+								// in dataview.doAddPressedCls.  But, it seems to be benign, so I'm not going to spend time fixing it
+								// right now.  But, note to future me - it's when you do a fast click on the item
 								var sublist = target.down( 'list' );
 								
 								target.getBody().setZIndex( 10 );
@@ -737,9 +741,10 @@ Ext.define('the_app.controller.Main', {
 										xtype: 'list',
 										scrollable: { disabled: true },
 										useSimpleItems: false,
-										style: 'position:relative',
+										cls: 'dropdown-list',
 										hidden: true,
 										zIndex: 5, // behind the "body" above
+										itemTpl: list.getItemTpl(),
 										showAnimation: {
 											type: 'slide', 
 											direction: 'down', 
@@ -747,28 +752,33 @@ Ext.define('the_app.controller.Main', {
 										hideAnimation: {
 											type: 'slideOut', 
 											direction: 'up', 
+											listeners: {
+												animationend: function(){
+													var list = Ext.getCmp( this.getElement().getId() );
+													while ( list = list.up( 'list' ) ){
+														list.setHeight( list.getStore().getCount() * list.getItemHeight() );
+													}
+												},
+											}
 										},
 										store: {
 											data: items,
 											model: "the_app.model.SheetMenuItems",
 										},
 										listeners: {
-											itemtap: function( list, index, target, record ){
-												console.log( 'asdf' );
+											itemtap: function( list, index, target, record, e ){
+												e.stopPropagation();
 												return false;
 											},
 											order: 'before'
 										}
-									});
-									sublist.addBeforeListener( 'itemtap', function(){
-										console.log( 'wtf' );
-										return false;
 									});
 								}
 								if ( sublist.isHidden() ){
 									sublist.show();
 								} else {
 									sublist.hide();
+									
 								}
 								return false;
 							}
