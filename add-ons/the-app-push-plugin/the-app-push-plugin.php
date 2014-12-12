@@ -211,7 +211,7 @@ class TheAppPushPlugin{
     }
 ];', $in);
 		$in = preg_replace( '/(module.exports.metadata[^}]*)/s', '$1
-	,"com.phonegap.plugins.PushPlugin": "' . ( $the_app->get( 'target' ) == 'pb' ? '2.1.1' : '2.2.0' ) . '"
+	,"com.phonegap.plugins.PushPlugin": "' . ( $the_app->get( 'target' ) == 'pb' ? '2.4.0' : '2.4.0' ) . '"
 ', $in);
 		file_put_contents( $source, $in );
 	}
