@@ -57,7 +57,7 @@ Ext.define('Ext.ux.OfflineSyncStatusStore', {
 			
 			var me = this;
 			if ( this.getStoresToUpdate().length ){
-				if ( this.getAskBeforeUpdating() ){
+				if ( false && this.getAskBeforeUpdating() ){
 					the_app.app.confirm({
 						id: 'download-zip', 
 						title: WP.__("Updates Available"),
@@ -73,6 +73,7 @@ Ext.define('Ext.ux.OfflineSyncStatusStore', {
 					});
 				}
 				else{
+					me.fireEvent( 'syncdecision', true );
 					me.performUpdates( records, successful );
 				}
 			}
