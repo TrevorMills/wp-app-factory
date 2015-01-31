@@ -266,9 +266,13 @@ Ext.define('the_app.controller.Main', {
 		)
 	},
 
-	onMainPanelActiveItemChange: function(panel){
+	onMainPanelActiveItemChange: function(panel, item){
 		// this === the Main Controller
 		this.setCardJustSwitched(true);
+		item.addAfterListener( 'activate', function( panel, item ){
+			this.maybeSetupMenuSheet( panel );
+		}, this, { single: true } );
+		
 	},
 	
 	onMainPanelTabBarTabTap: function(tab){
@@ -707,9 +711,23 @@ Ext.define('the_app.controller.Main', {
 			toolbar = panel.getNavigationBar();
 			break;
 		default:
-			toolbar = panel.down( 'toolbar' );
+			toolbar = panel.down( 'titlebar' );
+			if ( !toolbar ) {
+				toolbar = panel.down( 'toolbar' );
+			}
 			break;
 		}
+		
+		if ( panel.isXType( 'lazypanel' ) && !toolbar ) {
+			panel.addAfterListener( 'add', function( panel, item ){
+				this.maybeSetupMenuSheet( panel );
+			},this,{single:true});
+			return;
+		}
+		if ( !toolbar ){
+			return;
+		}
+		
 		
 		if ( button.length ){
 			// already exists, nothing to do but show it

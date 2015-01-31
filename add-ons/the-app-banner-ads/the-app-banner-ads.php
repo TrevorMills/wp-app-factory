@@ -7,7 +7,6 @@ class TheAppBannerAds{
 	private $delay;
 	
 	public function __construct(){
-		add_shortcode( 'app_banner_adds', create_function('', 'return "";')); // a void shortcode for no output - only use this shortcode in apps
 		add_filter('TheAppFactory_init', array( &$this,'init') );
 	}
 	

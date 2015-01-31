@@ -488,6 +488,13 @@ class TheAppFactory {
 			elseif ( $value === 'true' ){
 				$atts[ $key ] = true;
 			}
+			// Add in a camelCaseKey for any camel_case_key attributes;
+			if ( strpos( $key, '_' ) !== false ) {
+				$pieces = array_map( 'ucfirst', explode( '_', $key ) );
+				$pieces[0] = strtolower( $pieces[0] );
+				$camelCaseKey = implode( '', $pieces);
+				$atts[ $camelCaseKey ] = $atts[ $key ];
+			}
 		}
 		if ( isset($shortcode) ){
 			$defaults = $this->get_default_atts($shortcode);
