@@ -18,7 +18,7 @@ class TheAppForm{
 		'radiofield' => 'Radio',
 		'sliderfield' => 'Slider',
 		'togglefield' => 'Toggle',
-		'filefield' => 'File'
+		// 'filefield' => 'File' - doesn't work, needs more testing
 	);
 	
 	public function __construct()
@@ -59,7 +59,7 @@ class TheAppForm{
 		switch( $code ){
 		case 'app_form':
 			$defaults = array(
-				'id' => '',						// To give the form a particular id
+				'id' => null,					// To give the form a particular id
 				'xtype' => 'formpanel',			// The xtype to use for the form.  Must be 'formpanel', or a subclass of 'formpanel'
 				'url' => '',					// The url to submit the form to.  
 				'method' => 'POST',				// The method to use when submitting the form
@@ -248,7 +248,8 @@ class TheAppForm{
 						),
 						array(
 							'ui' => 'round',
-							'text' => $atts['submitText']
+							'text' => $atts['submitText'],
+							'cls' => 'submit'
 						)
 					)
 				),
