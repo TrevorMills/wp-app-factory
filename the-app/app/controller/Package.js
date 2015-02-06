@@ -97,7 +97,7 @@ Ext.define('the_app.controller.Package', {
 						
 			Ext.Ajax.request({
 				url: WP.getAjaxUrl(),
-				timeout: 120000,
+				timeout: 300000,
 				params: commands[which],
 				success: function(data){
 					try{
