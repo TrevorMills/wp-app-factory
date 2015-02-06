@@ -214,6 +214,7 @@ function the_app_factory_init()
 	include_once('add-ons/the-app-push-plugin/the-app-push-plugin.php');
 	include_once('add-ons/sqlite-storage/sqlite-storage.php');
 	include_once('add-ons/the-app-form/the-app-form.php');
+	include_once('add-ons/google-analytics/google-analytics.php');
 	do_action('TheAppFactory_load_plugins');
 }
 
