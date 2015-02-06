@@ -735,6 +735,12 @@ Ext.define('the_app.controller.Main', {
 			return;
 		}
 		
+		// slightly hacky non-generic way of handling case where it's a formpanel and the panel that we want to 
+		// add the menu sheet to is actually the formpanel.
+		if ( panel.down( 'formpanel' ) ) {
+			panel = panel.down( 'formpanel' );
+		}
+		
 		var sheetItems = this.getMainPanel().getSheetMenuItems();
 		Ext.each( sheetItems, function( item, index ){
 			if ( item.xtype == 'list' ){
