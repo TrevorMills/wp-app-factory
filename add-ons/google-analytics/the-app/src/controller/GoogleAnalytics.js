@@ -8,9 +8,6 @@ Ext.define('the_app.controller.GoogleAnalytics', {
 			mainPanel: 'mainpanel'
 		},
 
-		control: {
-		},
-		
 		lastPath: null
 	},
 
@@ -36,6 +33,29 @@ Ext.define('the_app.controller.GoogleAnalytics', {
 		}
 	},
 	
+	getCurrentTitle: function(){
+		var active = this.getMainPanel().getActiveItem(),
+			title;
+		
+		if ( active.isXType( 'lazypanel' ) ) {
+			var original = active.getOriginalItem();
+			
+			title = original.title;
+			switch( original.xtype ) {
+			case 'itemlist':
+				var items = active.getActiveItem().getItems(),
+					last = items.getAt( items.length - 1 );
+				
+				if ( items.length > 2 && typeof last.getTitle == 'function' ) {
+					title += ' - ' + last.getTitle();
+				}
+				break;
+			}
+		}
+		
+		return title;
+	},
+	
 	afterRouting: function(action){
 		// the this reference is to the Main controller
 		var me = the_app.app.getController('GoogleAnalytics');
@@ -56,38 +76,17 @@ Ext.define('the_app.controller.GoogleAnalytics', {
 			return;
 		}
 		me.setLastPath(path);
-		var activeItem = me.getMainPanel().getActiveItem();
-		var top = me.getTopXType(activeItem);
 		
-		switch(top){
-		case 'itemlist':
-		case 'itemwrapper':
-			// These xtypes are index pages, let's see if there's an active item
-			if (me.getTopXType(activeItem.getActiveItem()) == 'list'){
-				// It's the index page of either itemlist or itemwrapper
-				GoogleAnalytics.push(['_trackEvent',me.getTitle(activeItem),'pageview',WP.__('Index')]);
-			}
-			else{
-				// It's a list item we're looking at...
-				GoogleAnalytics.push(['_trackEvent',me.getTitle(activeItem),'itemview',me.getTitle(activeItem.getActiveItem())]);
-			}
-			break;
-		default: 
-			GoogleAnalytics.push(['_trackEvent',me.getTitle(activeItem),'pageview','']);
-			break;
-		}
+		me.trackEvent({
+			category: 'screenview',
+			action: 'routing',
+			label: me.getCurrentTitle(),
+			value: path
+		});
 	},
 	
-	trackEvent: function(args){
-		if (args.label == undefined) args.label = '';
-		var commandArray = ['_trackEvent',args.category,args.action,args.label];
-		if (args.value != undefined){
-			commandArray.push(args.value);
-		}
-		if (args.noninteraction != undefined){
-			commandArray.push(args.noninteraction);
-		}
-		GoogleAnalytics.push(commandArray);
+	trackEvent: function( event ){
+		GoogleAnalytics.send( event );
 	}
 	
 });

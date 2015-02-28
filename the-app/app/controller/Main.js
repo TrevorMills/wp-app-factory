@@ -135,6 +135,11 @@ Ext.define('the_app.controller.Main', {
 							var target = a.target == '' ? '_blank' : '_system';
 							handled = true;
 						  	window.open( a.href, target );
+							the_app.app.getController( 'Main' ).fireEvent('trackevent',{
+								category: 'external_link',
+								action: 'open',
+								label: a.href
+							});
 						}
 					}
 					delete this.startPoint;
@@ -178,6 +183,18 @@ Ext.define('the_app.controller.Main', {
 		});
 	},
 	
+	/**
+	 * It's recommendended you don't call this method directly.  Rather, just fire a 'trackevent' event on this controller.  
+	 * 
+     * Example:
+	 * 
+	 * the_app.app.getController('Main').fireEvent('trackevent',{
+ 	 * 		category: 'my_category', // required - a way to categorize events.  Could be 'screenview', 'pageview', 'external_link', or any arbitrary string
+	 * 		action:   'my_action',   // required - the action that is being performed
+	 *  	label:    'My Label',    // optional, but recommended - a plain language description of the event. for screenview/pageview, use the title of the panel
+	 *  	value:    12345			 // optional - any value that is associated with the event
+	 * })	
+	 */
 	trackEvent: function(category,action,label,value,noninteraction){
 		// a stub for Google Analytics, or other tracking solutions
 		var args = {};

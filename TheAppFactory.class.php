@@ -815,6 +815,7 @@ class TheAppFactory {
 			'ID' => get_the_ID(),
 			'appId' => md5(get_the_ID()), // This is the app id in the app.json file
 			'localStorageKey' => $this->get( 'app_id' ),
+			'appName' => get_the_title()
 		);
 		
 		$this->set('helpers',apply_filters('TheAppFactory_helpers',$helpers,array(&$this)));

@@ -211,6 +211,13 @@ Ext.define('the_app.controller.Search', {
 				store.fireAction( 'searchFilter', [ panel, stillTyping ] , function(){
 					store.sort();
 				});
+				the_app.app.getController( 'Main' ).fireEvent('trackevent',{
+					category: 'search',
+					action: 'search',
+					label: store.getStoreId().replace(/Store$/,''),
+					value: value
+				});
+				
 			}
 			this._lastSearch[panel.getItemId()] = value;
 		

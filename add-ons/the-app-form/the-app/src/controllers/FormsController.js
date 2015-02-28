@@ -48,6 +48,13 @@ Ext.define('the_app.controller.FormsController', {
 						}
 						form.reset();
 					}
+					the_app.app.getController( 'Main' ).fireEvent('trackevent',{
+						event: 'event',
+						category: 'form',
+						action: 'success',
+						label: form.title,
+						value: result.message
+					});
 				},
 				failure: function( form, result ){
 					if ( form.fireEvent('submitfailure', form, arguments) !== false ) {
@@ -62,8 +69,23 @@ Ext.define('the_app.controller.FormsController', {
 							console.log( result );
 						}
 					}
+					the_app.app.getController( 'Main' ).fireEvent('trackevent',{
+						event: 'event',
+						category: 'form',
+						action: 'failure',
+						label: form.title,
+						value: result.message
+					});
 				}
-			})
+			});
+
+			the_app.app.getController( 'Main' ).fireEvent('trackevent',{
+				event: 'event',
+				category: 'form',
+				action: 'submit',
+				label: form.title,
+			});
+			
 		}
 	}
 });

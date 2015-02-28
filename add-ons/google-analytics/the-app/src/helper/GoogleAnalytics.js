@@ -23,16 +23,39 @@ Ext.define('the_app.helper.GoogleAnalytics', {
 				'cookieDomain': 'none'
 			}
 		}
-
+		
 		ga('create', GoogleAnalyticsConfig.getAccount(), config);
-		ga('send','pageview');
+		ga('set','appName',WP.getAppName());
+
     },
 
-	push: function(commandArray){
-		if (GoogleAnalyticsConfig.getDebug() == 'true'){
-			console.log(commandArray);
+	send: function( event ){
+		
+		
+		switch ( event.category ) {
+		case 'screenview':
+		case 'pageview':
+			// For some testing, I'm going to send both screenview and pageview events, 
+			ga( 'send', 'screenview', { screenName: event.label } );
+			ga( 'send', 'pageview', { title: event.label } );
+			break;
 		}
-		//_gaq.push(commandArray);
+		
+		// for every event, I'm going to send an 'event' event
+		var args = {
+			hitType: 'event',
+			eventCategory: event.category, // required
+			eventAction: event.action, // required
+		}
+		
+		if ( Ext.isDefined( event.label ) ) {
+			args.eventLabel = event.label;
+		}
+		if ( Ext.isDefined( event.value ) ) {
+			args.eventValue = event.value;
+		}
+		
+		ga( 'send', args )
 	}
 
 });
