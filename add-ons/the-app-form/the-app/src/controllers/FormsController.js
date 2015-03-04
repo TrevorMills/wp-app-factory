@@ -40,13 +40,15 @@ Ext.define('the_app.controller.FormsController', {
 				method: form.getMethod(),
 				waitMsg: WP.__( 'Submitting' ),
 				success: function( form, result, responseText ){
+					console.log("Result: " + result);
 					if ( form.fireEvent('submitsuccess', form, arguments) !== false ) {
 						if ( typeof result.message != 'undefined' ) {
 							the_app.app.alert({
 								html: result.message,
 							});
 						}
-						form.reset();
+					/* On any successful submission, re-set the form */
+					form.reset();
 					}
 				},
 				failure: function( form, result ){

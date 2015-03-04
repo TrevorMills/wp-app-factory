@@ -814,6 +814,7 @@ class TheAppFactory {
 			'url' => get_permalink(),
 			'ID' => get_the_ID(),
 			'appId' => md5(get_the_ID()), // This is the app id in the app.json file
+			'localStorageKey' => $this->get('app_id'),
 		);
 		
 		$this->set('helpers',apply_filters('TheAppFactory_helpers',$helpers,array(&$this)));
@@ -918,7 +919,6 @@ class TheAppFactory {
 	
 	private function setupStores(){
 		$stores = array();
-		
 		if ($this->get('wrapper_store_contents')){
 			$stores['WrapperPageStore'] = array(
 				'fields' => array('id','title','content')

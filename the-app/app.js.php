@@ -140,6 +140,215 @@ else{
 				installApp: true,
 				<?php endif; ?>				
 			});
+ 	/* 
+    Here we set the initial data model user in localstorage. This model will be constructed with user information to better communicate with the X-CD web app.
+    xcduuid is the unique user identifier of each user
+    AppOpen will always be set to false until the user inputs the password to unlock the app. Then it will equal true. */
+    Ext.define('user', {
+    extend: 'Ext.data.Model',
+    config: {
+    fields: [ {name: 'xcddeviceuuid', type: 'string'}, 
+              {name: 'AppOpen', type: 'boolean'},
+              {name: 'LockedOut', type: 'boolean'} ],
+    proxy: {
+    type: 'localstorage',
+    id  : 'users_' + WP.getLocalStorageKey()
+    }
+    }  
+    });
+    /* Create a proxy to access the model as a store */
+    var storeModel = Ext.create('Ext.data.Store', {
+    model: 'user'
+    });
+    /* Grab the model here we just created */
+    var user = Ext.ModelManager.getModel('user');
+    /* Load the store we created */
+    var userObject = storeModel.load();
+    var recordOne = userObject.data.keys[0];
+    console.log('Record one: ' + recordOne);
+    if ( recordOne ) {
+    user.load(recordOne, {
+    success: function(user) {
+    console.log('SuccessUser: ' + user);
+    /* Now check if the user has unlocked the app */
+    var unlocked = user.get('AppOpen');
+    if ( unlocked ) {
+    /* The user may access the app. */
+    } else {
+    /* Show the password prompt screen. Hide app menu. */
+    Ext.Msg.prompt('Conference Key', '******', function(btn, text, cfg) {
+    if( text == 55555 && btn == "ok" ) {
+    /* Allow the user to access the app */
+    /* Update the user's object to show true and grant them access */
+    user.set('AppOpen', true);
+    /* Now save the change */
+    user.save();
+    /* Unlock the app for the user */
+    } else if ( btn == "cancel" ) {
+    window.location.reload();
+    } else {
+    /* Show the password prompt screen. Hide app menu. */
+    Ext.Msg.prompt('Conference Key', '******', function(btn, text, cfg) {
+    if( text == 55555 && btn == "ok" ) {
+    /* Allow the user to access the app */
+    /* Update the user's object to show true and grant them access */
+    user.set('AppOpen', true);
+    /* Now save the change */
+    user.save();
+    /* Unlock the app for the user */
+    } else if ( btn == "cancel" ) {
+    window.location.reload();
+    } else {
+    /* Show the password prompt screen. Hide app menu. */
+    Ext.Msg.prompt('Conference Key', '******', function(btn, text, cfg) {
+    if( text == 55555 && btn == "ok" ) {
+    /* Allow the user to access the app */
+    /* Update the user's object to show true and grant them access */
+    user.set('AppOpen', true);
+    /* Now save the change */
+    user.save();
+    /* Unlock the app for the user */
+    } else if ( btn == "cancel" ) {
+    window.location.reload();
+    } else {
+        /* Show the password prompt screen. Hide app menu. */
+    Ext.Msg.prompt('Conference Key', '******', function(btn, text, cfg) {
+    if( text == 55555 && btn == "ok" ) {
+    /* Allow the user to access the app */
+    /* Update the user's object to show true and grant them access */
+    user.set('AppOpen', true);
+    /* Now save the change */
+    user.save();
+    /* Unlock the app for the user */
+    } else if ( btn == "cancel" ) {
+    window.location.reload();
+    } else {
+    /* Show the password prompt screen. Hide app menu. */
+    Ext.Msg.prompt('Conference Key', '******', function(btn, text, cfg) {
+    if( text == 55555 && btn == "ok" ) {
+    /* Allow the user to access the app */
+    /* Update the user's object to show true and grant them access */
+    user.set('AppOpen', true);
+    /* Now save the change */
+    user.save();
+    /* Unlock the app for the user */
+    } else if ( btn == "cancel" ) {
+    window.location.reload();
+    } else {
+    alert('You have entered the password incorrectly 5 times.')
+    user.set('LockedOut', true);
+    /* Reload the page. Make the user try again. Potential for lockout features to be added here. */
+    window.location.reload();
+    }
+    });   
+    }
+    });   
+    }
+    });   
+    }
+    });   
+    }
+    });   
+    }
+    },
+    failure: function(user) {
+    console.log('Load failed. Please alert the administrator.');
+    }
+    });
+    } else {
+    /* The user does not have a UUID */
+    console.log('does not exist');
+    /* Now create a user in localstorage */
+    /* First, generate a unique UUID if the user does not have one assigned. */  
+    function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+    .toString(16)
+    .substring(1);
+    }
+    var UUID = s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+    s4() + '-' + s4() + s4() + s4();
+    /* Now we need to create a new user with a UUID and make them enter a code to unlock the app */
+    var newUser = Ext.create('user', {
+    xcddeviceuuid: UUID,
+    AppOpen: false,
+    });
+    newUser.save();
+    /* Show the password prompt screen. Hide app menu. */
+    Ext.Msg.prompt('Conference Key', '******', function(btn, text, cfg) {
+    if( text == 55555 && btn == "ok" ) {
+    /* Allow the user to access the app */
+    /* Update the user's object to show true and grant them access */
+    user.set('AppOpen', true);
+    /* Now save the change */
+    user.save();
+    /* Unlock the app for the user */
+    } else if ( btn == "cancel" ) {
+    window.location.reload();
+    } else {
+    /* Show the password prompt screen. Hide app menu. */
+    Ext.Msg.prompt('Conference Key', '******', function(btn, text, cfg) {
+    if( text == 55555 && btn == "ok" ) {
+    /* Allow the user to access the app */
+    /* Update the user's object to show true and grant them access */
+    user.set('AppOpen', true);
+    /* Now save the change */
+    user.save();
+    /* Unlock the app for the user */
+    } else if ( btn == "cancel" ) {
+    window.location.reload();
+    } else {
+    /* Show the password prompt screen. Hide app menu. */
+    Ext.Msg.prompt('Conference Key', '******', function(btn, text, cfg) {
+    if( text == 55555 && btn == "ok" ) {
+    /* Allow the user to access the app */
+    /* Update the user's object to show true and grant them access */
+    user.set('AppOpen', true);
+    /* Now save the change */
+    user.save();
+    /* Unlock the app for the user */
+    } else if ( btn == "cancel" ) {
+    window.location.reload();
+    } else {
+        /* Show the password prompt screen. Hide app menu. */
+    Ext.Msg.prompt('Conference Key', '******', function(btn, text, cfg) {
+    if( text == 55555 && btn == "ok" ) {
+    /* Allow the user to access the app */
+    /* Update the user's object to show true and grant them access */
+    user.set('AppOpen', true);
+    /* Now save the change */
+    user.save();
+    /* Unlock the app for the user */
+    } else if ( btn == "cancel" ) {
+    window.location.reload();
+    } else {
+    /* Show the password prompt screen. Hide app menu. */
+    Ext.Msg.prompt('Conference Key', '******', function(btn, text, cfg) {
+    if( text == 55555 && btn == "ok" ) {
+    /* Allow the user to access the app */
+    /* Update the user's object to show true and grant them access */
+    user.set('AppOpen', true);
+    /* Now save the change */
+    user.save();
+    /* Unlock the app for the user */
+    } else if ( btn == "cancel" ) {
+    window.location.reload();
+    } else {
+    alert('You have entered the password incorrectly 5 times.')
+    user.set('LockedOut', true);
+    /* Reload the page. Make the user try again. Potential for lockout features to be added here. */
+    window.location.reload();
+    }
+    });   
+    }
+    });   
+    }
+    });   
+    }
+    });   
+    }
+    });   
+    } 
+
 		},
 		
 		confirm: function( options ){
