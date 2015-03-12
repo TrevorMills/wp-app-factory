@@ -101,7 +101,7 @@ class AppGoogleAnalytics{
     }
 ];', $in);
 		$in = preg_replace( '/(module.exports.metadata[^}]*)/s', '$1
-		    ,"com.danielcwilson.plugins.googleanalytics": "' . ( $the_app->get( 'target' ) == 'pb' ? '0.7.0' : '0.7.0' ) . '"
+		    ,"com.danielcwilson.plugins.googleanalytics": "' . ( $the_app->get( 'target' ) == 'pb' ? '0.6.1' : '0.7.0' ) . '"
 		    ,"com.google.playservices": "19.0.0"
 ', $in);
 		file_put_contents( $source, $in );
