@@ -9,8 +9,7 @@ class AppGoogleAnalytics{
 		add_shortcode('google_analytics',array( &$this,'shortcodes'));
 
 		$the_app->register('controller','GoogleAnalytics',dirname(__FILE__).'/the-app/src/controller/GoogleAnalytics.js');
-		$the_app->register('helper','GoogleAnalytics',dirname(__FILE__).'/the-app/src/helper/GoogleAnalytics.js');
-		add_action( 'the_app_package_cordova', array( &$this, 'package_cordova' ) );
+		$the_app->register('helper','GoogleAnalyticsHelper',dirname(__FILE__).'/the-app/src/helper/GoogleAnalyticsHelper.js');
 	
 	}
 	
@@ -36,10 +35,11 @@ class AppGoogleAnalytics{
 			add_filter('TheAppFactory_helpers', array( &$this, 'helpers' ),10,2);
 			add_action( 'the_app_config_xml', array( &$this, 'config_xml' ), 10, 2 );
 			add_filter('unsupported_browser_controllers',create_function('$c','$c[] = "GoogleAnalytics"; return $c;'));
-			add_filter('unsupported_browser_requires',create_function('$c','$c[] = "the_app.helper.GoogleAnalytics"; $c[] = "the_app.helper.GoogleAnalyticsConfig"; return $c;'));
-			$the_app->enqueue('helper','GoogleAnalytics');
+			add_filter('unsupported_browser_requires',create_function('$c','$c[] = "the_app.helper.GoogleAnalyticsHelper"; $c[] = "the_app.helper.GoogleAnalyticsConfig"; return $c;'));
+			add_action( 'the_app_package_cordova', array( &$this, 'package_cordova' ) );
+			$the_app->enqueue('helper','GoogleAnalyticsHelper');
 			$the_app->enqueue('controller','GoogleAnalytics');
-			$the_app->enqueue('require','the_app.helper.GoogleAnalytics');
+			$the_app->enqueue('require','the_app.helper.GoogleAnalyticsHelper');
 			$the_app->enqueue('require','the_app.helper.GoogleAnalyticsConfig');
 			break;
 		}

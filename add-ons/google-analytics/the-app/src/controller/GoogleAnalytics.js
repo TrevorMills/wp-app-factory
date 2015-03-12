@@ -12,7 +12,7 @@ Ext.define('the_app.controller.GoogleAnalytics', {
 	},
 
 	init: function() {
-		GoogleAnalytics.initialize();
+		GoogleAnalyticsHelper.initialize();
 		the_app.app.getController('Main').on({
 			afterrouting: this.afterRouting,
 			trackevent: this.trackEvent
@@ -86,7 +86,7 @@ Ext.define('the_app.controller.GoogleAnalytics', {
 	},
 	
 	trackEvent: function( event ){
-		GoogleAnalytics.send( event );
+		GoogleAnalyticsHelper.send( event );
 	}
 	
 });
