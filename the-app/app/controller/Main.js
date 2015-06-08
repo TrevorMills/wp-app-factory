@@ -640,7 +640,7 @@ Ext.define('the_app.controller.Main', {
 				}
 			],
 			listeners: {
-				painted: {
+				initialize: {
 					fn: function(){
 						Ext.factory( Ext.Object.merge( {}, panel.getOriginalItem(), {
 							listeners: {
