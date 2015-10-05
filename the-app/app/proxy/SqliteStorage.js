@@ -638,7 +638,8 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 			values.push(newData[i]);
 		}
 
-		values.push(record.getId());
+        var id = record.getId();
+        values.push( Ext.isString( id ) ? me.encodeString( id ) : Ext.encode(id) );
 
 		var sql = 'UPDATE ' + tablename + ' SET ' + pairs.join(',') +
 				' WHERE ' + record.getIdProperty() + ' = ?';
@@ -660,7 +661,8 @@ Ext.define('Sqlite.data.proxy.SqliteStorage', {
 				};
 
 		var sql = 'DELETE FROM ' + tablename + ' WHERE ' + record.getIdProperty() + ' = ?';
-		values.push(record.getId());
+        var id = record.getId();
+        values.push( Ext.isString( id ) ? me.encodeString( id ) : Ext.encode(id) );
 
 		return function (tx) {
 			me.executeSql(tx, sql, values, onSuccess, onError);
